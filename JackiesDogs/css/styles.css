@@ -1,0 +1,68 @@
+.orderTable {
+	border:1px solid black;
+}
+
+.orderTable th {
+	text-align:center;
+	border:1px solid black;
+}
+
+.orderTable td {
+	text-align:center;
+	border:1px solid black;
+}
+
+.holder {
+	width:100%;
+}
+
+#leftOrder {
+	width:49%;
+	float:left;
+	white-space:nowrap;
+	overflow:auto;
+}
+
+#rightOrder {
+	float:right;
+	width:49%;
+}
+
+#leftSearch {
+	width:19%;
+	float:left;
+	white-space:nowrap;
+	overflow:auto;
+}
+
+#rightSearch {
+	float:right;
+	width:79%;
+}
+
+#leftAdmin {
+	width:19%;
+	float:left;
+	white-space:nowrap;
+	overflow:auto;
+}
+
+#rightAdmin {
+	float:right;
+	width:79%;
+}
+
+.tableDiv {
+	width:100%;
+	height:100%;
+	overflow-x:auto;
+}
+
+.tooltip {
+   position: absolute;
+   top: 0;
+   left: 0;
+   z-index: 3;
+   display: none;
+}
+            
