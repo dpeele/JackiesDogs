@@ -5,10 +5,13 @@ import javax.servlet.http.*;
 import javax.servlet.annotation.WebServlet;
 
 import org.apache.log4j.Logger;
+import org.json.JSONArray;
 
 import java.io.*;
+import java.util.List;
 
 import jackiesdogs.file.*;
+import jackiesdogs.utility.UploadLog;
 import jackiesdogs.web.*;
 
 import org.springframework.context.ApplicationContext;
@@ -46,7 +49,7 @@ public class AdminServlet extends HttpServlet {
 		
 		String command = ServletUtilities.getParameter(request, "command");
 		if (command != null && command.length() > 0) {
-			String output = null;
+			List<UploadLog> output = null;
 			if (command.equals("uploadProducts")) {
 				String file = ServletUtilities.getParameter(request, "pricelist");
 				if (file != null && file.length() > 0) {
@@ -72,7 +75,7 @@ public class AdminServlet extends HttpServlet {
 				}
 			}			
 			PrintWriter out = response.getWriter();
-			out.print(output);
+			out.print("{\"uploadLogs\":"+new JSONArray(output)+"}");
 		} else {
 			log.debug("No command passed");
 		}

@@ -762,7 +762,16 @@ CREATE PROCEDURE product_update
 )
 BEGIN
 
-	/* if we passed an id, this is an update*/
+	/*we aren't passed product id so we'll try to look it up*/
+	IF in_id IS NULL THEN
+		SELECT 	id
+		INTO 	in_id
+		FROM 	product
+		WHERE  	vendor_id = vendor_id;
+
+	END IF;
+
+	/* if we passed or looked up a product id, this is an update*/
 	IF in_id IS NOT NULL THEN
 
 		UPDATE 	product 
@@ -1340,6 +1349,13 @@ BEGIN
 								WHERE   last_modified_date > DATE_SUB(NOW(), INTERVAL 1 HOUR))
 	ORDER BY 	pg.id; 
 
+	/*select out of date product group images*/
+	SELECT 	pgi.product_group_id
+		  , pgi.product_image_url
+		  , pgi.last_modified_date
+	FROM 	product_group_image pgi
+	WHERE   last_modified_date < DATE_SUB(NOW(), INTERVAL 1 HOUR);
+
 	/*select out of date product group categories*/
 	SELECT 	pgc.product_group_id
 		  , pgc.category_id
@@ -1349,13 +1365,6 @@ BEGIN
 		  , category c
 	WHERE   c.id = pgc.category_id 
 		AND last_modified_date < DATE_SUB(NOW(), INTERVAL 1 HOUR);
-
-	/*select out of date product group images*/
-	SELECT 	pgi.product_group_id
-		  , pgi.product_image_url
-		  , pgi.last_modified_date
-	FROM 	product_group_image pgi
-	WHERE   last_modified_date < DATE_SUB(NOW(), INTERVAL 1 HOUR);
 
 END
 //

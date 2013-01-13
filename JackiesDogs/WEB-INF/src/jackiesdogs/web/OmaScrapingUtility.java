@@ -4,6 +4,8 @@ import org.apache.log4j.Logger;
 
 import org.springframework.context.ApplicationContext;
 
+import jackiesdogs.utility.*;
+
 import java.util.concurrent.*;
 
 import java.util.*;
@@ -11,15 +13,18 @@ import java.util.*;
 public class OmaScrapingUtility implements ScrapingUtility{
 	
 	private final Logger log = Logger.getLogger(OmasCategoryScraper.class);
+	private ProductUtility productUtility;
 	
 	private ApplicationContext applicationContext;
 	private final int THREAD_POOL_SIZE = 30; //max threads - CHANGE TO 30 ONCE IT STARTS WORKING
 	
 	public void setApplicationContext (ApplicationContext applicationContext) { //set the Spring application context
 		this.applicationContext = applicationContext;
+		productUtility = (ProductUtility) applicationContext.getBean("productUtility"); //lookup ProductUtility bean
+		productUtility.setApplicationContext(applicationContext); //set ApplicationContext for bean		
 	}
 	
-	public String scrapeSite (String url) { //scrape all product information off the site 
+	public List<UploadLog> scrapeSite (String url) { //scrape all product information off the site 
 		ExecutorService executorService = Executors.newFixedThreadPool(THREAD_POOL_SIZE); //create fixed thread pool
 		String[] urlPieces = url.split("=\\d+"); //split url up
 		url = urlPieces[0]+"=%d"+urlPieces[1]; //convert string into input for String.format
@@ -49,6 +54,6 @@ public class OmaScrapingUtility implements ScrapingUtility{
 		executorService.shutdown();
 		while (!executorService.isTerminated()) {} //wait until all threads are finished		
 		//then go to database and retrieve list of products that weren't scraped
-		return new String(); //report of items that don't have scraped info
+		productUtility.generateProductGroupErrorReport(); //report of items that don't have scraped info
 	}
 }

@@ -37,7 +37,9 @@ public class OrderUtilityImpl implements OrderUtility{
 		try {
 			DataSource dataSource = (DataSource) applicationContext.getBean("springDataSource"); //lookup datasource name			
 			connection = dataSource.getConnection(); //get connection from dataSource
+			connection.setTransactionIsolation(Connection.TRANSACTION_REPEATABLE_READ); //prevent dirty reads, phantom reads, and nonrepeatable reads
 			callableStatement = connection.prepareCall(findOrderSql); //prepare callable statement
+			
 			int id = terms.getId();
 			if (id != 0) { //we need to filter by id
 				callableStatement.setInt(1,id);
@@ -130,6 +132,14 @@ public class OrderUtilityImpl implements OrderUtility{
 										  resultSet.getBoolean("personal"));	
 						Customer customer = new Customer(resultSet.getString("customer_id"));
 						order.setCustomer(customer);
+						List<OrderItem> orderItems = null;
+						if (id != 0) {
+							orderItems = findOrderItemsByOrderId(id);
+							if (orderItems == null) {
+								throw new SQLException ("Unable to retrieve items for this order.");
+							}
+							order.setOrderItems(orderItems);
+						}
 						orders.add(order);
 					}
 				}
@@ -171,7 +181,8 @@ public class OrderUtilityImpl implements OrderUtility{
 		int status;
 		try {
 			DataSource dataSource = (DataSource) applicationContext.getBean("springDataSource"); //lookup datasource name			
-			connection = dataSource.getConnection(); //get connection from dataSource			
+			connection = dataSource.getConnection(); //get connection from dataSource		
+			connection.setAutoCommit(false); //don't automatically commit statements
 			callableStatement = connection.prepareCall(updateOrderSql); //prepare callable statement
 			id = order.getId();			
 			if (id == null) {
@@ -220,7 +231,7 @@ public class OrderUtilityImpl implements OrderUtility{
 				if (resultSet.next()) {
 					id = resultSet.getString(1);
 					List<OrderItem> orderItems = order.getOrderItems(); 
-					orderItems = updateOrderItems(order.getOrderItems(),Integer.parseInt(id));
+					orderItems = updateOrderItems(order.getOrderItems(),Integer.parseInt(id), connection);
 					if (orderItems == null) {
 						throw new SQLException("Unable to update order items.");						
 					}
@@ -230,8 +241,17 @@ public class OrderUtilityImpl implements OrderUtility{
 			} else {
 				throw new SQLException("Unable to update order.");
 			}
+			connection.commit();// commit all statement for this connection
 		} catch (SQLException se) {
 			log.error ("SQL error: " + se);
+			if (connection != null) {
+				log.error ("Transaction is being rolled back.");
+				try {
+					connection.rollback();
+				} catch (SQLException se2) {
+					log.error("Unable to rollback transaction.");
+				}
+			}			
 			return null;
 		} finally {
 			try {
@@ -256,7 +276,7 @@ public class OrderUtilityImpl implements OrderUtility{
 		return order;
 	}		
 
-	public List<OrderItem> findOrderItemsByOrderId (String orderId) {
+	public List<OrderItem> findOrderItemsByOrderId (int orderId) {
 		Connection connection = null;
 		CallableStatement callableStatement = null;
 		ResultSet resultSet = null;
@@ -267,8 +287,9 @@ public class OrderUtilityImpl implements OrderUtility{
 		try {
 			DataSource dataSource = (DataSource) applicationContext.getBean("springDataSource"); //lookup datasource name			
 			connection = dataSource.getConnection(); //get connection from dataSource			
+			connection.setTransactionIsolation(Connection.TRANSACTION_REPEATABLE_READ); //prevent dirty reads, phantom reads, and nonrepeatable reads			
 			callableStatement = connection.prepareCall(findOrderItemsSql); //prepare callable statement
-			callableStatement.setInt(1, Integer.parseInt(orderId ));
+			callableStatement.setInt(1, orderId);
 			hasResults = callableStatement.execute();
 			if (hasResults) {
 				resultSet = callableStatement.getResultSet();
@@ -326,15 +347,17 @@ public class OrderUtilityImpl implements OrderUtility{
 		return orderItems;
 	}	
 	
-	public List<OrderItem> updateOrderItems (List<OrderItem> orderItems, int orderId) {
-		Connection connection = null;
+	public List<OrderItem> updateOrderItems (List<OrderItem> orderItems, int orderId, Connection previousConnection) {
+		Connection connection = previousConnection; //set connection equal to previous connection so that we can commit in one transaction
 		CallableStatement callableStatement = null;
 		ResultSet resultSet = null;
 		boolean hasResults;
 		String id;
 		try {
-			DataSource dataSource = (DataSource) applicationContext.getBean("springDataSource"); //lookup datasource name			
-			connection = dataSource.getConnection(); //get connection from dataSource
+			if (connection == null) { //if we didn't pass a previous connection
+				DataSource dataSource = (DataSource) applicationContext.getBean("springDataSource"); //lookup datasource name			
+				connection = dataSource.getConnection(); //get connection from dataSource
+			}
 			callableStatement = connection.prepareCall(updateOrderItemSql); //prepare callable statement			
 			for (OrderItem orderItem: orderItems) {
 				id = orderItem.getId();  

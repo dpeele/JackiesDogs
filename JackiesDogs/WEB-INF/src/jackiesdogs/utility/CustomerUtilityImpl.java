@@ -32,6 +32,7 @@ public class CustomerUtilityImpl implements CustomerUtility {
 		try {
 			DataSource dataSource = (DataSource) applicationContext.getBean("springDataSource"); //lookup datasource name			
 			connection = dataSource.getConnection(); //get connection from dataSource
+			connection.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED); //prevent dirty reads
 			callableStatement = connection.prepareCall(listCustomersSql); //prepare callable statement	
 			if (id == null) {
 				callableStatement.setNull(1, Types.INTEGER);

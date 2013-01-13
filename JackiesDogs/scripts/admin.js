@@ -41,15 +41,31 @@ admin.executeAdminTask = function (input) {
 	if ($("#"+input).val().length > 0) {
 		$.ajax({
 			url: "admin",
-			dataType: "html",
+			dataType: "json",
 			cache: false,
 			type: "post",                
 			data: $("#adminForm").serialize(),
 			success: function( data ) {
-				$("#adminTableDiv").html(data);	
+				$("#adminTableDiv").html(data.reduce(order.extractTableData));	
 			}
 		});
 	} else {
 		$("#"+div).dialog();
 	}
+};
+
+admin.extractTableData = function (string) {//generate log table and add it to html string
+	return (string+"<table border=1><caption>"+this.logDescription+"</caption><tr>"+this.headings.reduce(admin.extractHeaderData)+"</tr>"+this.log.reduce(order.extractRowData)+"</tr>");
+};
+
+admin.extractRowData = function (string) {//generate row of log table and add it to table string
+		return (string+"<tr>"+this.reduce(order.extractCellData)+"</tr>");
+};
+
+admin.extractCellData = function (string) {//generate cell of log table row and add it to row string
+	return (string"<td>"+this+"</td>");
+};
+
+admin.extractHeaderData = function (string) {//generate cell of log table row and add it to row string
+	return (string"<th>"+this+"</th>");
 };

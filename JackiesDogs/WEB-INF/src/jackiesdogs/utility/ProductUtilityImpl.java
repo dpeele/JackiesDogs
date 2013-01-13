@@ -5,6 +5,7 @@ import javax.sql.*;
 import org.apache.log4j.Logger;
 
 import java.sql.*;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 import org.springframework.context.ApplicationContext;
@@ -23,6 +24,10 @@ public class ProductUtilityImpl implements ProductUtility {
 	private final String updateProductGroupSql = "{CALL product_group_update (?, ?, ?, ?)}";
 	
 	private final String updateProductGroupCategorySql = "{CALL product_group_category_update (?, ?)}";
+	
+	private final String productReportSql = "{CALL product_report ()}";
+	
+	private final String productGroupReportSql = "{CALL product_group_report ()}";
 	
 	private final String updateProductGroupMemberSql = "{CALL product_group_member_update (?, ?)}";
 	
@@ -48,6 +53,7 @@ public class ProductUtilityImpl implements ProductUtility {
 		try {
 			DataSource dataSource = (DataSource) applicationContext.getBean("springDataSource"); //lookup datasource name
 			connection = dataSource.getConnection(); //get connection from dataSource
+			connection.setTransactionIsolation(Connection.TRANSACTION_REPEATABLE_READ); //prevent dirty reads and nonrepeatable reads
 			callableStatement = connection.prepareCall(findProductsSql); //prepare call
 			if (id == null) {
 				callableStatement.setNull(1, Types.INTEGER);
@@ -134,11 +140,11 @@ public class ProductUtilityImpl implements ProductUtility {
 		ResultSet resultSet = null;
 		Inventory inventory;
 		boolean hasResults;
-		int id;
 		String stringId;
 		try {
 			DataSource dataSource = (DataSource) applicationContext.getBean("springDataSource"); //lookup datasource name
 			connection = dataSource.getConnection(); //get connection from dataSource
+			connection.setAutoCommit(false); //we want an atomic transaction with possible inventory update
 			callableStatement = connection.prepareCall(updateProductSql); //prepare call
 			stringId = product.getId();
 			if (stringId == null) {
@@ -160,18 +166,29 @@ public class ProductUtilityImpl implements ProductUtility {
 					throw new SQLException ("Update of product failed.");			
 				} else {
 					resultSet.next();
-					id = resultSet.getInt(1);
-					product.setId(Integer.toString(id));
+					stringId = resultSet.getString(1);
+					product.setId(stringId);
 					inventory = product.getInventory();
 					if (inventory != null) {
-						inventory = updateInventory(inventory, id);
-					}					
+						inventory = updateInventory(inventory, stringId, null, connection);
+					} else {
+						throw new SQLException ("Update of product failed.");
+					}		
+					connection.commit();  //commit all statements
 				}
 			} else {
 				throw new SQLException ("Update of product failed.");
 			}			
 		} catch (SQLException se) {
 			log.error ("SQL error: " + se);
+			if (connection != null) {
+				log.error ("Transaction is being rolled back.");
+				try {
+					connection.rollback();
+				} catch (SQLException se2) {
+					log.error("Unable to rollback transaction.");
+				}
+			}
 			return null;
 		} finally {
 			try {
@@ -196,15 +213,17 @@ public class ProductUtilityImpl implements ProductUtility {
 		return product;
 	}		
 
-	public Inventory updateInventory (Inventory inventory, String productId, String vendorId) {
-		Connection connection = null;
+	public Inventory updateInventory (Inventory inventory, String productId, String vendorId, Connection previousConnection) {
+		Connection connection = previousConnection; //set connection to previous connection if this is part of a larger transaction
 		CallableStatement callableStatement = null;
 		ResultSet resultSet = null;
 		String id = null;
 		boolean hasResults;
 		try {
-			DataSource dataSource = (DataSource) applicationContext.getBean("springDataSource"); //lookup datasource name
-			connection = dataSource.getConnection(); //get connection from dataSource
+			if (connection == null) { //if we didn't pass a connection as a parameter
+				DataSource dataSource = (DataSource) applicationContext.getBean("springDataSource"); //lookup datasource name
+				connection = dataSource.getConnection(); //get connection from dataSource
+			}
 			callableStatement = connection.prepareCall(updateInventorySql); //prepare call
 			id = inventory.getId();			
 			if (id == null) {
@@ -275,6 +294,7 @@ public class ProductUtilityImpl implements ProductUtility {
 		try {
 			DataSource dataSource = (DataSource) applicationContext.getBean("springDataSource"); //lookup datasource name
 			connection = dataSource.getConnection(); //get connection from dataSource
+			connection.setAutoCommit(false); //commit all group changes at once
 			callableStatement = connection.prepareCall(updateProductGroupSql); //update product group information
 			callableStatement.setString(1, productGroup.getUrl());
 			callableStatement.setString(2, productGroup.getDescription());
@@ -334,8 +354,17 @@ public class ProductUtilityImpl implements ProductUtility {
 					}
 				}
 			}			
+			connection.commit(); //commit all statements
 		} catch (SQLException se) {
 			log.error ("SQL error: " + se);
+			if (connection != null) {
+				log.error ("Transaction is being rolled back.");
+				try {
+					connection.rollback();
+				} catch (SQLException se2) {
+					log.error("Unable to rollback transaction.");
+				}
+			}			
 			return null;
 		} finally {
 			try {
@@ -359,4 +388,162 @@ public class ProductUtilityImpl implements ProductUtility {
 		}
 		return productGroup;
 	}	
+	
+	private UploadLog generateUploadLog (String logDescription, List<String> headings, ResultSet resultSet) throws SQLException{
+		List<String> row;
+		List<List<String>> logRows = new ArrayList<List<String>>();
+		int size = headings.size();
+		if (resultSet.isBeforeFirst()) { // there are rows in the product report
+			while (resultSet.next()) {
+				row = new ArrayList<String>();
+				for (int i=1; i<size; i++) {
+					row.add(resultSet.getString(i)); //add string columns to log
+				}
+				row.add(new SimpleDateFormat("MM/d/yyyy h:mm a", Locale.ENGLISH).format(resultSet.getDate(size)));
+				logRows.add(row);
+			}
+			return new UploadLog(logDescription, headings,logRows);
+		}
+		return null; //empty log resultSet
+	}
+	
+	public List<UploadLog> generateProductErrorReport () {
+		Connection connection = null;
+		CallableStatement callableStatement = null;
+		ResultSet resultSet = null;
+		List<UploadLog> uploadLogs = new ArrayList<UploadLog>();
+		UploadLog uploadLog;
+		boolean hasResults;
+		try {
+			DataSource dataSource = (DataSource) applicationContext.getBean("springDataSource"); //lookup datasource name
+			connection = dataSource.getConnection(); //get connection from dataSource			
+			connection.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED); //prevent dirty reads			
+			callableStatement = connection.prepareCall(productReportSql); //prepare call
+			hasResults = callableStatement.execute();
+			String logDescription = "Products that are out of date.";			
+			List<String> headings = Arrays.asList("Id", "Name", "Vendor", "Url", "Website Id", "Vendor Id", "Last Modified Date"); //log headers
+			if (hasResults) { 
+				resultSet = callableStatement.getResultSet();
+				uploadLog = generateUploadLog(logDescription, headings, resultSet);
+				if (uploadLog != null) {
+					uploadLogs.add(uploadLog);
+				}			
+			} else {
+				throw new SQLException("Retrieval of product log failed.");				
+			}
+		} catch (SQLException se) {
+			log.error ("SQL error: " + se);
+			return null;
+		} finally {
+			try {
+				resultSet.close();
+			} catch (Exception se) {
+				log.error("Unable to close resultSet: " + se);
+				se.printStackTrace();
+			}			
+			try {
+				callableStatement.close();
+			} catch (Exception se) {
+				log.error("Unable to close callableStatement: " + se);
+				se.printStackTrace();
+			}						
+			try {
+				connection.close();
+			} catch (Exception se) {
+				log.error("Unable to close connection: " + se);
+				se.printStackTrace();
+			}			
+		}
+		return uploadLogs;
+	}
+	
+	public List<UploadLog> generateProductGroupErrorReport () {
+		Connection connection = null;
+		CallableStatement callableStatement = null;
+		ResultSet resultSet = null;
+		boolean hasResults;
+		List<UploadLog> uploadLogs = new ArrayList<UploadLog>();		
+		try {
+			DataSource dataSource = (DataSource) applicationContext.getBean("springDataSource"); //lookup datasource name
+			connection = dataSource.getConnection(); //get connection from dataSource
+			connection.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED); //prevent dirty reads			
+			callableStatement = connection.prepareCall(productGroupReportSql); //prepare call
+			UploadLog uploadLog;
+			String logDescription = "Products that aren't in any product group.";
+			List<String> headings = Arrays.asList("Id", "Name", "Vendor Id", "Last Modified Date"); //log headers
+			hasResults = callableStatement.execute();
+			if (hasResults) { 
+				resultSet = callableStatement.getResultSet();
+				uploadLog = generateUploadLog(logDescription, headings, resultSet);
+				if (uploadLog != null) {
+					uploadLogs.add(uploadLog);
+				}
+				logDescription = "Product groups that are out of date.";
+				headings = Arrays.asList("Id", "Url", "Website Id", "Vendor Name", "Last Modified Date"); //log headers
+				callableStatement.getMoreResults();
+				resultSet = callableStatement.getResultSet();
+				uploadLog = generateUploadLog(logDescription, headings, resultSet);
+				if (uploadLog != null) {
+					uploadLogs.add(uploadLog);
+				}			
+				logDescription = "Product groups that have no up to date images.";
+				headings = Arrays.asList("Id", "Url", "Website Id", "Vendor Name", "Last Modified Date"); //log headers
+				callableStatement.getMoreResults();			
+				resultSet = callableStatement.getResultSet();
+				uploadLog = generateUploadLog(logDescription, headings, resultSet);
+				if (uploadLog != null) {
+					uploadLogs.add(uploadLog);
+				}			
+				logDescription = "Product groups that have no up to date categories.";
+				headings = Arrays.asList("Id", "Url", "Website Id", "Vendor Name", "Last Modified Date"); //log headers
+				callableStatement.getMoreResults();			
+				resultSet = callableStatement.getResultSet();
+				uploadLog = generateUploadLog(logDescription, headings, resultSet);
+				if (uploadLog != null) {
+					uploadLogs.add(uploadLog);
+				}			
+				logDescription = "Out of date product group images.";
+				headings = Arrays.asList("Group Id", "Image url", "Last Modified Date"); //log headers
+				callableStatement.getMoreResults();			
+				resultSet = callableStatement.getResultSet();
+				uploadLog = generateUploadLog(logDescription, headings, resultSet);
+				if (uploadLog != null) {
+					uploadLogs.add(uploadLog);
+				}			
+				logDescription = "Out of date product group categories.";
+				headings = Arrays.asList("Group Id", "Category Id", "Category Name", "Last Modified Date"); //log headers
+				callableStatement.getMoreResults();			
+				resultSet = callableStatement.getResultSet();
+				uploadLog = generateUploadLog(logDescription, headings, resultSet);
+				if (uploadLog != null) {
+					uploadLogs.add(uploadLog);
+				}
+			} else {
+				throw new SQLException ("Retrieval of product log failed.");
+			}
+		} catch (SQLException se) {
+			log.error ("SQL error: " + se);
+			return null;
+		} finally {
+			try {
+				resultSet.close();
+			} catch (Exception se) {
+				log.error("Unable to close resultSet: " + se);
+				se.printStackTrace();
+			}			
+			try {
+				callableStatement.close();
+			} catch (Exception se) {
+				log.error("Unable to close callableStatement: " + se);
+				se.printStackTrace();
+			}						
+			try {
+				connection.close();
+			} catch (Exception se) {
+				log.error("Unable to close connection: " + se);
+				se.printStackTrace();
+			}			
+		}
+		return uploadLogs;
+	}
 }
