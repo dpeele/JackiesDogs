@@ -1297,16 +1297,14 @@ CREATE PROCEDURE product_group_report
 BEGIN
 
 	/* select products that aren't in any product groups*/
-	SELECT 		id
+	SELECT 		p.id
 			  , product_name
 			  , vendor_id
 			  , last_modified_date
 	FROM   		product
 	WHERE 		id NOT IN (	SELECT 	DISTINCT product_id
 							FROM 	product_group_member
-								  , product_group
 							WHERE 	last_modified_date > DATE_SUB(NOW(), INTERVAL 1 HOUR))
-								AND pg.id = pgm.product_group_id
 	ORDER BY 	product_name; 
 
 	/* select product groups that are out of date*/

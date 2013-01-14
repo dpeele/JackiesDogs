@@ -37,6 +37,10 @@ public class OmaScrapingUtility implements ScrapingUtility{
 			categoryFutures.put(i,categoryScraperFuture); //add category and future to map of categories and category scraper futures
 		}
 		List<String> productUrls = null;
+		Callable<ProductGroup> request;
+		Future<ProductGroup> productScraperFuture;
+		List<Future<ProductGroup>> productFutures = new ArrayList<Future<ProductGroup>>();
+		List<ProductGroup> errorProductGroups = new ArrayList<ProductGroup>();
 		for (int i=1; i<=30; i++) {
 			categoryScraperFuture = categoryFutures.get(i); //get future for each category
 			try {
@@ -47,13 +51,37 @@ public class OmaScrapingUtility implements ScrapingUtility{
 				log.error("Unable to execute category scrape for category: " + i + " with InterruptedException: " + ie);
 			}
 			for (String productUrl: productUrls) { //if there are any urls, scrape them
-				Runnable request = new OmasProductScraper(applicationContext, productUrl, i); //create Runnable object to scrape site
-				executorService.execute(request); //and add to ExecutorService so it can be run with a thread when available
-			}			
+				request = new OmasProductScraper(applicationContext, productUrl, i); //create Callable object to scrape site
+				productScraperFuture = executorService.submit(request); //add to ExecutorService so it can be run with a thread when available and set future
+				productFutures.add(productScraperFuture);
+			}
+			ProductGroup productGroup = null;
+			for (Future<ProductGroup> productFuture: productFutures) { //for each Callable thread that scraped a url, get the future 
+				try {
+					productGroup = productFuture.get(); //get the productGroup object
+				} catch (ExecutionException ee) {
+					log.error("Unable to extract productGroup from product scrape for with ExecutionException: " + ee);
+				} catch (InterruptedException ie) {
+					log.error("Unable to extract productGroup from product scrape for with ExecutionException: " + ie);
+				}
+				if (productGroup != null) {
+					errorProductGroups.add(productGroup);
+				}
+			}
 		}
 		executorService.shutdown();
 		while (!executorService.isTerminated()) {} //wait until all threads are finished		
 		//then go to database and retrieve list of products that weren't scraped
-		productUtility.generateProductGroupErrorReport(); //report of items that don't have scraped info
+		List<UploadLog> uploadLogs = productUtility.generateProductGroupErrorReport(); //report of items that don't have scraped info
+		if (errorProductGroups.size() != 0) {
+			String logDescription = "Product Groups that failed in upload to Database";
+			List<String> headings = Arrays.asList("Website Id", "url", "Vendor");
+			List<List<String>> logRows = new ArrayList<List<String>>();
+			for (ProductGroup productGroup : errorProductGroups) {
+				logRows.add(Arrays.asList(productGroup.getWebsiteId(),productGroup.getUrl(),productGroup.getVendorName())); //add information about each productGroup with error to log
+			}
+			uploadLogs.add(new UploadLog(logDescription,headings,logRows));
+		}
+		return uploadLogs;
 	}
 }

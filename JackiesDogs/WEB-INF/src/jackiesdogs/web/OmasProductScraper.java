@@ -3,15 +3,8 @@ package jackiesdogs.web;
 import jackiesdogs.utility.*;
 
 import java.io.*;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.*;
-
-import javax.sql.DataSource;
-
+import java.util.concurrent.Callable;
 import org.apache.log4j.Logger;
 
 import org.jsoup.*;
@@ -20,9 +13,8 @@ import org.jsoup.select.*;
 
 import org.springframework.context.ApplicationContext;
 
-public class OmasProductScraper implements Runnable{
+public class OmasProductScraper implements Callable<ProductGroup>{
 
-	private final ApplicationContext applicationContext;
 	private final ProductUtility productUtility;	
 	
 	private final String websiteIdName = "product_id"; 
@@ -35,14 +27,14 @@ public class OmasProductScraper implements Runnable{
 	
 	/*constructor to pass applicationContext for database access, url to be tested, website product id, and product category*/ 
 	public OmasProductScraper (ApplicationContext applicationContext, String urlString, int category) {
-		this.applicationContext = applicationContext;
 		productUtility = (ProductUtility) applicationContext.getBean("productUtility"); //lookup ProductUtility bean
 		productUtility.setApplicationContext(applicationContext); //set ApplicationContext for bean		
 		this.urlString = urlString;
 		this.category = category;
 	}
 	
-	public void run () {
+	public ProductGroup call () {
+		ProductGroup productGroup = null;
 		try {
 			Document doc = Jsoup.connect(urlString).get();
 			Elements images = doc.select("table[border=0][style=width: 750px;] a"); //all images for this product- if image is http://www.omaspride.com/components/com_virtuemart/themes/default/images/noimage.gif then ignore
@@ -61,13 +53,19 @@ public class OmasProductScraper implements Runnable{
 			String websiteId = doc.getElementsByAttributeValue("name", websiteIdName).val(); //get website id value
 			List<String> headings = new ArrayList<String>(Arrays.asList("Ingredients","Benefits","Cat Friendly", "Suggested", "Guaranteed")); //headings list
 			String description = getDescription(doc,headings); //get the description for this html document using the headings listed
-			ProductGroup productGroup = new ProductGroup(urlString, description, websiteId, "Omas", imageUrls, products, (new ArrayList<String>(ProductGroup.CATEGORIES.keySet())).get(category-1));
+			productGroup = new ProductGroup(urlString, description, websiteId, "Omas", imageUrls, products, (new ArrayList<String>(ProductGroup.CATEGORIES.keySet())).get(category-1));
 			if (productUtility.updateProductGroup(productGroup) == null) {
 				log.error("Unable to update for product group with website id: " + websiteId + " with url: " + urlString);
+				return productGroup;
 			}
 		} catch (IOException ioe) {
 			log.error("Jsoup error with product url: " + urlString + " with exception " + ioe);
+			if (productGroup == null) {
+				productGroup = new ProductGroup(urlString,"","","Omas",null,null,null);
+			}
+			return productGroup;
 		}		
+		return null;
 	}
 	
 	private String getDescription (Document doc, List<String> headings) {

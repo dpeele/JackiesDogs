@@ -37,7 +37,9 @@ public class ProductGroup {
 		CATEGORIES.put("Freeze Dried- 4oz", 25);
 		CATEGORIES.put("Freeze Dried- Bulk", 26);			
 	}	
-
+	
+	public ProductGroup() {}
+	
 	public ProductGroup(String url, String description, String websiteId,
 			String vendorName, List<String> imageUrls, List<Product> products, String categoryName) {
 		this.url = url;

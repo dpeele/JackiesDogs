@@ -109,9 +109,19 @@ public class OmaUploader implements UploadUtility{
         		}
         	}
     	}
-		return productUtility.generateProductErrorReport(); //this should be report of orphaned products/inventory
-    }
-	
+		List<UploadLog> uploadLogs = productUtility.generateProductErrorReport(); //report of items that don't have uploaded info from Excel file
+		if (errorProducts.size() != 0) {
+			String logDescription = "Products that failed in upload to Database";
+			List<String> headings = Arrays.asList("Vendor Id", "Name", "price","Order By", "Bill By", "Estimated Weight", "Vendor");
+			List<List<String>> logRows = new ArrayList<List<String>>();
+			for (Product errorProduct : errorProducts) {
+
+				logRows.add(Arrays.asList(errorProduct.getVendorId(),errorProduct.getProductName(),Double.toString(errorProduct.getPrice()),errorProduct.getOrderBy(), errorProduct.getBillBy(),Integer.toString(errorProduct.getEstimatedWeight()),"Omas")); //add information about each product with error to log
+			}
+			uploadLogs.add(new UploadLog(logDescription,headings,logRows));
+		}
+		return uploadLogs;    
+	}
 
     public void printCellData(List<List<String>> dataHolder) { //test function to print data to standard output
         String name = null; //name of current item
