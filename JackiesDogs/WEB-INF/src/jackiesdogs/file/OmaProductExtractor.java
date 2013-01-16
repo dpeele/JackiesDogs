@@ -19,11 +19,12 @@ public class OmaProductExtractor implements ExcelExtractorUtility{
         return dataHolder; //return data
     }
 
-    private List<List<String>> ReadExcel(String file) { //read excel file and put data into list of lists
+    private List<List<String>> ReadExcel(String fileName) { //read excel file and put data into list of lists
         List<List<String>> sheetHolder = new ArrayList<List<String>>(); //list to hold output of sheet
 
         try {
-            ByteArrayInputStream myInput = new ByteArrayInputStream(file.getBytes());//stream from file
+        	File file = new File(fileName);
+            FileInputStream myInput = new FileInputStream(fileName);//stream from file with fileName
             POIFSFileSystem myFileSystem = new POIFSFileSystem(myInput); //poi filesystem object fed my stream
             HSSFWorkbook myWorkBook = new HSSFWorkbook(myFileSystem); //excel workbook from poi filesystem object
             HSSFSheet mySheet = myWorkBook.getSheetAt(0); //sheet from workbook
@@ -38,10 +39,13 @@ public class OmaProductExtractor implements ExcelExtractorUtility{
                 }
                 sheetHolder.add(rowHolder);
             }
+            if (!file.delete()) {
+            	log.error("Unable to delete file.");
+            }
         } catch (Exception e) {
         	log.error("Error extracting data: " + e);
             e.printStackTrace();
-        }
+        }        
         return sheetHolder;
     }
 

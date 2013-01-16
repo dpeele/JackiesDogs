@@ -15,42 +15,31 @@ admin.onload = function () { //called onload of this panel
     //add class ui-widget to all text elements and set their name attribute = to their id attribute
     $(":input").addClass("ui-widget").attr("name",$(this).attr("id"));
     
-    //buttons
-    $("#uploadPricelistButton").button().click(function () {admin.executeAdminTask("pricelist");});
-    $("#uploadInvoiceButton").button().click(function () {admin.executeAdminTask("invoice");});
-    $("#scrapeSiteButton").button().click(function () {admin.executeAdminTask("url");});
+    //format buttons
+    $(":submit").button();
+    
+    //set up form for ajax submit
+    $("#adminForm").attr( "enctype", "multipart/form-data" ).attr( "encoding", "multipart/form-data" ).submit(admin.executeAdminTask);
 };
 
-admin.executeAdminTask = function (input) {
+admin.executeAdminTask = function () {
 	var parameter;
 	var div;
-	switch (input) {
-		case ("pricelist"):
-			parameter = "&command=uploadProducts";
-			div = "missingFilename";;
-			break;
-		case ("invoice"):
-			parameter = "&command=uploadInvoice";
-			div = "missingFilename";
-			break;			
-		case ("url"):
-			parameter = "&command=scrape";
-			div = "missingWebSite";
-			break;
-	}
-	if ($("#"+input).val().length > 0) {
+	var button = event.target;
+    var buttonData = data + "&command=" + button.name
+	if ($("#"+button+"Input").val().length > 0) {
 		$.ajax({
 			url: "admin",
 			dataType: "json",
 			cache: false,
 			type: "post",                
-			data: $("#adminForm").serialize(),
+			data: $("#adminForm").serialize()+buttonData,
 			success: function( data ) {
 				$("#adminTableDiv").html(data.reduce(order.extractTableData));	
 			}
 		});
 	} else {
-		$("#"+div).dialog();
+		$("#"+button+"Missing").dialog();
 	}
 };
 

@@ -20,12 +20,15 @@ import org.springframework.web.context.support.WebApplicationContextUtils;
 @WebServlet("/admin")
 public class AdminServlet extends HttpServlet {
 	
+	
 	private UploadUtility uploadUtility;
 	private ScrapingUtility scrapingUtility;
 	
 	private final Logger log = Logger.getLogger(OrderSubmit.class);
 
 	private ApplicationContext applicationContext;
+	
+	private final String fileDirectory = "files";
 
 	@Override
 	public void init(ServletConfig servletConfig) throws ServletException {
@@ -46,28 +49,31 @@ public class AdminServlet extends HttpServlet {
 	@Override
 	public void doPost (HttpServletRequest request, HttpServletResponse response)
 		throws ServletException, IOException {
-		
+		Part filePart;
+		String fileName;
 		String command = ServletUtilities.getParameter(request, "command");
 		if (command != null && command.length() > 0) {
 			List<UploadLog> output = null;
-			if (command.equals("uploadProducts")) {
-				String file = ServletUtilities.getParameter(request, "pricelist");
-				if (file != null && file.length() > 0) {
-					output = uploadUtility.uploadProducts(file);
+			if (command.equals("pricelist")) {
+				filePart = request.getPart("pricelistInput");
+				fileName = saveFile(filePart);
+				if (fileName != null) {
+					output = uploadUtility.uploadProducts(fileName);
 				} else {
-					log.error("No filename passed");
+					log.error("Unable to write file to local server.");
 				}
 			}
-			if (command.equals("uploadInvoice")) {
-				String file = ServletUtilities.getParameter(request, "invoice");
-				if (file != null && file.length() > 0) {
-					output = uploadUtility.uploadProducts(file);
+			if (command.equals("invoice")) {
+				filePart = request.getPart("invoiceInput");
+				fileName = saveFile(filePart);
+				if (fileName != null) {
+					output = uploadUtility.uploadInvoice(fileName);
 				} else {
-					log.error("No filename passed");
+					log.error("Unable to write file to local server.");
 				}
 			}			
 			if (command.equals("scrape")) {
-				String url = ServletUtilities.getParameter(request, "url");
+				String url = ServletUtilities.getParameter(request, "scrapeInput");
 				if (url != null && url.length() > 0) {
 					output = scrapingUtility.scrapeSite(url);
 				} else {
@@ -80,5 +86,48 @@ public class AdminServlet extends HttpServlet {
 			log.debug("No command passed");
 		}
 	}
+	
+	//write file from form part to local server directory with same filename 1024 bytes at a time
+	private String saveFile (Part filePart) throws IOException {
+		String fileName = getFileName(filePart);
+		if (fileName == null) {
+			return null;
+		}
+		fileName = fileDirectory + File.pathSeparator + fileName;
+		InputStream inputStream = null;
+		FileOutputStream fileOutputStream = null;
+		try {
+			fileOutputStream = new FileOutputStream(new File(fileName)); //output stream to local copy of file
+			inputStream = filePart.getInputStream(); //get input stream for uploaded file
+			int read = 0;
+			final byte[] bytes = new byte[1024];
+			while ((read = inputStream.read(bytes)) != -1) {
+				fileOutputStream.write(bytes,0,read);
+			}
+		} catch (FileNotFoundException fnfe) {
+			log.error("Unable to find file.");
+			return null;
+		} finally {
+			if (fileOutputStream != null) {
+				fileOutputStream.close();
+			}
+			if (inputStream != null) {
+				inputStream.close();
+			}
+		}
+		return fileName;
+	}
+	
+	//get file name from content disposition header of form part containing file
+	private String getFileName (Part filePart) {
+		String partHeader = filePart.getHeader("content-disposition");
+		for (String content: partHeader.split(";")) {
+			if (content.trim().startsWith("filename")) {
+				return content.substring(content.indexOf("=")+1).replace("\"", "");
+			}
+		}
+		return null;
+	}
+	
 }
 

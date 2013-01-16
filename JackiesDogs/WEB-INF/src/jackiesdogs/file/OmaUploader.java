@@ -3,46 +3,53 @@ package jackiesdogs.file;
 import jackiesdogs.utility.*;
 
 import java.util.*;
-import java.sql.*;
-
-import javax.sql.DataSource;
+import java.io.*;
+import java.nio.charset.*;
 
 import org.springframework.context.ApplicationContext;
 
 import org.apache.log4j.Logger;
 
-public class OmaUploader implements UploadUtility{
+public class OmaUploader { //implements UploadUtility{
 
-	private ApplicationContext applicationContext;
 	private ProductUtility productUtility;
 	private ExcelExtractorUtility excelExtractorUtility;
-	private PdfExtractorUtility pdfExtractorUtility;
+	private static PdfExtractorUtility pdfExtractorUtility;
 	private final Logger log = Logger.getLogger(OmaProductExtractor.class);
 	
 	public void setApplicationContext (ApplicationContext applicationContext) {
-		this.applicationContext = applicationContext;
 		productUtility = (ProductUtility) applicationContext.getBean("productUtility"); //lookup ProductUtility bean
 		productUtility.setApplicationContext(applicationContext); //set ApplicationContext for bean
 		pdfExtractorUtility = (PdfExtractorUtility) applicationContext.getBean("pdfExtractorUtility"); //lookup utility to extract data from file
 		excelExtractorUtility = (ExcelExtractorUtility) applicationContext.getBean("excelExtractorUtility"); //lookup utility to extract data from file
 	}
 	
-	/** upload product data to database from file and return report
+	public static void main (String[] args) {
+		uploadInvoice(AdminUtilities.fileToString("c:\\users\\dana new\\my documents\\Peele132379.pdf"));
+		uploadInvoice(AdminUtilities.fileToString("c:\\users\\dana new\\my documents\\Peele132456.pdf"));
+	}
+
+	/** upload inventory data from order to database from String containing file and return report
 	 * 
 	 */
-	public List<UploadLog> uploadInvoice(String file) { //upload products to database
+	public static List<UploadLog> uploadInvoice(String fileName) { //upload products to database
 		
 		String line;
-		List<String> dataHolder = pdfExtractorUtility.extractOrder(file); //extract data from given file
+		pdfExtractorUtility = new OmaOrderExtractor();
+		List<String> dataHolder = pdfExtractorUtility.extractOrder(fileName); //extract data from given fileName
 		List<Inventory> insertionErrors = new ArrayList<Inventory>();
 		for (int i=0; i<dataHolder.size();i++) { //for each row in sheet
         	line = dataHolder.get(i); //get current row
+        	System.out.println(line);
     	}	    	
 		return new ArrayList<UploadLog>(); //this should be report of orphaned products/inventory
     }
 	
-	public List<UploadLog> uploadProducts(String file) { //upload products to database
-		List<List<String>> dataHolder = excelExtractorUtility.extractProducts(file); //extract products
+	/** upload product data to database from String containing file and return report
+	 * 
+	 */
+	public List<UploadLog> uploadProducts(String fileName) { //upload products to database
+		List<List<String>> dataHolder = excelExtractorUtility.extractProducts(fileName); //extract products
         String name = null; //name of current item
     	String previousName = null; // name of previous item
         int size; //number of cells in row
