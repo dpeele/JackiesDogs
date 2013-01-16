@@ -28,11 +28,12 @@ public class AdminServlet extends HttpServlet {
 
 	private ApplicationContext applicationContext;
 	
-	private final String fileDirectory = "files";
+	private String fileDirectory;
 
 	@Override
 	public void init(ServletConfig servletConfig) throws ServletException {
 		super.init(servletConfig);		
+		fileDirectory = servletConfig.getServletContext().getInitParameter("fileDirectory"); //get file directory location from servlet context init param in web.xml 
 		applicationContext = WebApplicationContextUtils.getWebApplicationContext(servletConfig.getServletContext());			
 		uploadUtility = (UploadUtility) applicationContext.getBean("uploadUtility"); //lookup uploadUtility bean
 		uploadUtility.setApplicationContext(applicationContext); //set ApplicationContext for bean
