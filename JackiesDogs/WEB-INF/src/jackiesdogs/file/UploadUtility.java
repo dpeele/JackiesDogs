@@ -1,14 +1,12 @@
 package jackiesdogs.file;
 
-import jackiesdogs.utility.UploadLog;
+import jackiesdogs.bean.UploadLog;
 
 import java.util.List;
 
 import org.springframework.context.ApplicationContext;
 
 public interface UploadUtility {
-	
-	public void setApplicationContext (ApplicationContext applicationContext);
 	
 	public List<UploadLog> uploadProducts (String fileName);
 	

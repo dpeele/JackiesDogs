@@ -917,8 +917,12 @@ BEGIN
 			  , oi.personal
 			  , oi.notes
 			  , s.status_name 
-	FROM 		order_info oi 
-	WHERE 		(in_id IS NULL OR id = in_id)
+			  , c.first_name
+			  , c.last_name
+	FROM 		order_info oi
+			  , customer c
+	WHERE 		c.id = oi.customer_id
+				(in_id IS NULL OR id = in_id)
 			AND (in_start_order_date IS NULL OR order_date > in_start_order_date)
 			AND (in_end_order_date IS NULL OR order_date < in_end_order_date)
 			AND (in_customer_id IS NULL OR customer_id IN (in_customer_id))
@@ -926,6 +930,13 @@ BEGIN
 			AND (in_personal IS NULL OR personal = in_personal)	
 			AND (in_delivered IS NULL OR delivered = in_delivered)	
 	ORDER BY 	order_date;
+
+	/*If this is a single order to be retrieved and we need full customer information*/
+	IF in_id IS NOT NULL THEN
+		
+		CALL customer_retrieve(NULL, NULL, 1, in_id);
+	
+	END IF;
 
 END
 //
@@ -1150,6 +1161,7 @@ CREATE PROCEDURE customer_retrieve
 	IN in_id INT
   , IN in_match VARCHAR(32)
   , IN in_limit INT
+  , IN in_order_id INT
 )
 BEGIN
 
@@ -1170,6 +1182,9 @@ BEGIN
 			 OR (in_match IS NULL OR email LIKE CONCAT('%',in_match,'%'))
 			 OR (in_match IS NULL OR phone LIKE CONCAT('%',in_match,'%')))
 			AND (in_id IS NULL OR id = in_id)
+			AND (in_order_id IS NULL OR id IN (SELECT 	customer_id 
+											   FROM 	order_info
+											   WHERE 	id = in_order_id))
 			AND inactive = FALSE
 	ORDER BY 	last_name 
 	LIMIT 		in_limit;

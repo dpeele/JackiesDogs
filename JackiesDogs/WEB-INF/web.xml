@@ -6,10 +6,6 @@
         <param-name>contextConfigLocation</param-name>
         <param-value>classpath*:applicationContext.xml</param-value>
     </context-param>
-	<context-param>
-		<param-name>fileDirectory</param-name>
-		<param-value>c:\Users\Dana New\files</param-value>
-	</context-param>
     <listener>
       <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
    </listener>

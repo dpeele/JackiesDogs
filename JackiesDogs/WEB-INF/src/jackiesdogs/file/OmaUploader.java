@@ -1,27 +1,24 @@
 package jackiesdogs.file;
 
+import jackiesdogs.bean.*;
+import jackiesdogs.dataAccess.ProductUtility;
 import jackiesdogs.utility.*;
 
 import java.util.*;
-import java.io.*;
-import java.nio.charset.*;
-
-import org.springframework.context.ApplicationContext;
 
 import org.apache.log4j.Logger;
 
-public class OmaUploader { //implements UploadUtility{
+public class OmaUploader { //implements UploadUtility {
 
-	private ProductUtility productUtility;
-	private ExcelExtractorUtility excelExtractorUtility;
-	private static PdfExtractorUtility pdfExtractorUtility;
+	private final ProductUtility productUtility;
+	private final ExcelExtractorUtility excelExtractorUtility;
+	private final PdfExtractorUtility pdfExtractorUtility;
 	private final Logger log = Logger.getLogger(OmaProductExtractor.class);
 	
-	public void setApplicationContext (ApplicationContext applicationContext) {
-		productUtility = (ProductUtility) applicationContext.getBean("productUtility"); //lookup ProductUtility bean
-		productUtility.setApplicationContext(applicationContext); //set ApplicationContext for bean
-		pdfExtractorUtility = (PdfExtractorUtility) applicationContext.getBean("pdfExtractorUtility"); //lookup utility to extract data from file
-		excelExtractorUtility = (ExcelExtractorUtility) applicationContext.getBean("excelExtractorUtility"); //lookup utility to extract data from file
+	public OmaUploader (ProductUtility productUtility, ExcelExtractorUtility excelExtractorUtility, PdfExtractorUtility pdfExtractorUtility) { //set dependencies
+		this.productUtility = productUtility;
+		this.pdfExtractorUtility = pdfExtractorUtility;
+		this.excelExtractorUtility = excelExtractorUtility;
 	}
 	
 	public static void main (String[] args) {
@@ -35,8 +32,8 @@ public class OmaUploader { //implements UploadUtility{
 	public static List<UploadLog> uploadInvoice(String fileName) { //upload products to database
 		
 		String line;
-		pdfExtractorUtility = new OmaOrderExtractor();
-		List<String> dataHolder = pdfExtractorUtility.extractOrder(fileName); //extract data from given fileName
+		PdfExtractorUtility testPdfExtractorUtility = new OmaOrderExtractor();
+		List<String> dataHolder = testPdfExtractorUtility.extractOrder(fileName); //extract data from given fileName
 		List<Inventory> insertionErrors = new ArrayList<Inventory>();
 		for (int i=0; i<dataHolder.size();i++) { //for each row in sheet
         	line = dataHolder.get(i); //get current row

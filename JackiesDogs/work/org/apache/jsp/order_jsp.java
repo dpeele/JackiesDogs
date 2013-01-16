@@ -12,6 +12,11 @@ import javax.servlet.*;
 import javax.servlet.http.*;
 import javax.servlet.jsp.*;
 import java.util.*;
+
+import jackiesdogs.bean.Customer;
+import jackiesdogs.bean.Order;
+import jackiesdogs.bean.OrderItem;
+import jackiesdogs.bean.Product;
 import jackiesdogs.utility.*;
 import java.text.SimpleDateFormat;
 
