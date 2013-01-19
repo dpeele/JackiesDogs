@@ -8,9 +8,11 @@ public class ProductGroup {
 	private List<Product> products;
 	public static Map<String,Integer> VENDORS = new HashMap<String,Integer>();
 	public static Map<String,Integer> CATEGORIES = new HashMap<String,Integer>();	
+	
+	public static final String OMAS = "Omas";
 
 	static {
-		VENDORS.put("Omas", 1);
+		VENDORS.put(OMAS, 1);
 		
 		CATEGORIES.put("Chicken", 1); // assign values for category lookup 
 		CATEGORIES.put("Turkey", 2);

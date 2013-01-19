@@ -31,6 +31,15 @@ public class Product {
 	public Product() {
 	}		
 	
+	public Product(String id, String productName, String description,
+			double price, String notes) {
+		this.id = id;
+		this.productName = productName;
+		this.description = description;
+		this.price = price;
+		this.notes = notes;
+	}
+
 	public Product(String id, String productName, String description, double price, 
 			String orderBy, String billBy, int estimatedWeight, String vendorId, Inventory inventory) {
 		this.id = id;

@@ -23,13 +23,15 @@
 	</bean>
 	<bean id="orderUtility" class="jackiesdogs.utility.OrderUtilityImpl">
 		<constructor-arg index="0"><ref bean="springDataSource"/></constructor-arg>
+		<constructor-arg index="1"><ref bean="productUtility"/></constructor-arg>
 	</bean>
 	<bean id="pdfExtractorUtility" class="jackiesdogs.file.OmaOrderExtractor"/>
 	<bean id="excelExtractorUtility" class="jackiesdogs.file.OmaProductExtractor"/>	
 	<bean id="uploadUtility" class="jackiesdogs.file.OmaUploader">
-		<constructor-arg index="0"><ref bean="productUtility"/></constructor-arg>		
-		<constructor-arg index="1"><ref bean="excelExtractorUtility"/></constructor-arg>
-		<constructor-arg index="2"><ref bean="pdfExtractorUtility"/></constructor-arg>
+		<constructor-arg index="0"><ref bean="productUtility"/></constructor-arg>
+		<constructor-arg index="1"><ref bean="orderUtility"/></constructor-arg>			
+		<constructor-arg index="2"><ref bean="excelExtractorUtility"/></constructor-arg>
+		<constructor-arg index="3"><ref bean="pdfExtractorUtility"/></constructor-arg>
 	</bean>	
 	<bean id="scrapingUtility" class="jackiesdogs.web.OmaScrapingUtility">
 		<constructor-arg index="0"><ref bean="productUtility"/></constructor-arg>		

@@ -1,10 +1,6 @@
 package jackiesdogs.dataAccess;
 
-import jackiesdogs.bean.Customer;
-import jackiesdogs.bean.Order;
-import jackiesdogs.bean.OrderItem;
-import jackiesdogs.bean.OrderSearchTerms;
-import jackiesdogs.bean.Product;
+import jackiesdogs.bean.*;
 
 import java.sql.*;
 import java.util.*;
@@ -17,18 +13,25 @@ public class OrderUtilityImpl implements OrderUtility{
 
 	private final DataSource dataSource;
 	
+	private final ProductUtility productUtility;
+	
 	private final Logger log = Logger.getLogger(OrderUtilityImpl.class);
 	
 	private final String findOrderSql = "{CALL order_info_retrieve (?, ?, ?, ?, ?, ?, ?)}";
 	
+	private final String findVendorOrderSql = "{CALL vendor_order_info_retrieve (?, ?, ?, ?)}";	
+	
 	private final String updateOrderSql = "{CALL order_info_update(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}";
+	
+	private final String updateVendorOrderSql = "{CALL vendor_order_info_update(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}";	
 
 	private final String findOrderItemsSql = "{CALL order_item_retrieve (?)}";
 
 	private final String updateOrderItemSql = "{CALL order_item_update(?, ?, ?, ?, ?, ?)}";
 
-	public OrderUtilityImpl (DataSource dataSource) {
+	public OrderUtilityImpl (DataSource dataSource, ProductUtility productUtility) {
 		this.dataSource = dataSource; //set dataSource
+		this.productUtility = productUtility; //set productUtility
 	}
 	
 	public List<Order> findOrders (OrderSearchTerms terms) {
@@ -82,7 +85,7 @@ public class OrderUtilityImpl implements OrderUtility{
 				int statusSize = statusIds.size();
 				if (statusSize > 0) { //we need to filter by customerIds
 					String statusSet = "";					
-					for (int i=0; i<customerSize; i++) { //for each customer id, add "?, " to prepared statement and add customer id to where values
+					for (int i=0; i<statusSize; i++) { //for each customer id, add "?, " to prepared statement and add customer id to where values
 						statusSet = statusSet+statusIds.get(i)+",";
 					}
 					statusSet = statusSet.substring(0,statusSet.length()-1); //remove final ","
@@ -228,23 +231,24 @@ public class OrderUtilityImpl implements OrderUtility{
 				callableStatement.setNull(15, Types.VARCHAR);
 				callableStatement.setNull(16, Types.INTEGER);			
 				callableStatement.setByte(17, (byte)1);
+			} else {
+				callableStatement.setDate(2, new java.sql.Date(order.getOrderDate().getTime()));
+				callableStatement.setInt(3, Integer.parseInt(order.getCustomer().getId()));
+				callableStatement.setDate(4, new java.sql.Date(order.getDeliveryDateTime().getTime()));
+				callableStatement.setString(5, order.getDeliveryAddress());
+				callableStatement.setString(6, order.getDeliveryPhone());
+				callableStatement.setInt(7, order.getDiscount());
+				callableStatement.setDouble(8, order.getCredit());
+				callableStatement.setDouble(9, order.getDeliveryFee());
+				callableStatement.setDouble(10, order.getTollExpense());
+				callableStatement.setDouble(11, order.getTotalCost());
+				callableStatement.setInt(12, Order.STATUS.get(order.getStatus()));
+				callableStatement.setDouble(13, order.getChangeDue());
+				callableStatement.setByte(14, order.isDelivered()? (byte)1 : (byte)0);
+				callableStatement.setString(15, order.getNotes());
+				callableStatement.setByte(16, order.isPersonal()? (byte)1 : (byte)0);		
+				callableStatement.setByte(17, (byte)0);			
 			}
-			callableStatement.setDate(2, new java.sql.Date(order.getOrderDate().getTime()));
-			callableStatement.setInt(3, Integer.parseInt(order.getCustomer().getId()));
-			callableStatement.setDate(4, new java.sql.Date(order.getDeliveryDateTime().getTime()));
-			callableStatement.setString(5, order.getDeliveryAddress());
-			callableStatement.setString(6, order.getDeliveryPhone());
-			callableStatement.setInt(7, order.getDiscount());
-			callableStatement.setDouble(8, order.getCredit());
-			callableStatement.setDouble(9, order.getDeliveryFee());
-			callableStatement.setDouble(10, order.getTollExpense());
-			callableStatement.setDouble(11, order.getTotalCost());
-			callableStatement.setInt(12, Order.STATUS.get(order.getStatus()));
-			callableStatement.setDouble(13, order.getChangeDue());
-			callableStatement.setByte(14, order.isDelivered()? (byte)1 : (byte)0);
-			callableStatement.setString(15, order.getNotes());
-			callableStatement.setByte(16, order.isPersonal()? (byte)1 : (byte)0);		
-			callableStatement.setByte(17, (byte)0);			
 			hasResults = callableStatement.execute();
 			if (hasResults) {
 				resultSet = callableStatement.getResultSet();
@@ -296,6 +300,209 @@ public class OrderUtilityImpl implements OrderUtility{
 		return order;
 	}		
 
+	public List<VendorOrder> findVendorOrders (OrderSearchTerms terms) {
+		List<VendorOrder> vendorOrders = new ArrayList<VendorOrder>();
+		Connection connection = null;
+		CallableStatement callableStatement = null;
+		ResultSet resultSet = null;
+		VendorOrder vendorOrder = null;
+		List<VendorInventory> vendorInventoryItems = null;		
+		boolean hasResults;
+		try {			
+			connection = dataSource.getConnection(); //get connection from dataSource
+			connection.setTransactionIsolation(Connection.TRANSACTION_REPEATABLE_READ); //prevent dirty reads, phantom reads, and nonrepeatable reads
+			callableStatement = connection.prepareCall(findVendorOrderSql); //prepare callable statement
+			
+			int id = terms.getId();
+			if (id != 0) { //we need to filter by id
+				callableStatement.setInt(1,id);
+				callableStatement.setNull(2,Types.DATE);
+				callableStatement.setNull(3,Types.DATE);
+				callableStatement.setNull(4,Types.VARCHAR);
+			} else {
+				callableStatement.setNull(1,Types.INTEGER);
+				java.util.Date startDate = terms.getStartOrderDate();
+				if (startDate != null) { //we need to filter orderDate by a start value
+					callableStatement.setDate(2,new java.sql.Date(startDate.getTime()));
+				} else {
+					callableStatement.setNull(2,Types.DATE);
+				}
+				java.util.Date endDate = terms.getEndOrderDate();
+				if (startDate != null) { //we need to filter orderDate by an end value
+					callableStatement.setDate(3,new java.sql.Date(endDate.getTime()));
+				} else {
+					callableStatement.setNull(3,Types.DATE);		
+				}
+				List<Integer> statusIds = terms.getStatusIds();
+				int statusSize = statusIds.size();
+				if (statusSize > 0) { //we need to filter by customerIds
+					String statusSet = "";					
+					for (int i=0; i<statusSize; i++) { //for each customer id, add "?, " to prepared statement and add customer id to where values
+						statusSet = statusSet+statusIds.get(i)+",";
+					}
+					statusSet = statusSet.substring(0,statusSet.length()-1); //remove final ","
+					callableStatement.setString(5,statusSet);
+				} else {
+					callableStatement.setNull(5,Types.VARCHAR);
+				}							
+			}									
+			hasResults = callableStatement.execute();
+			if (hasResults) {
+				resultSet = callableStatement.getResultSet();
+				if (!resultSet.isBeforeFirst()) { //returns false if ResultSet is empty 
+					log.debug("No orders returned.");					
+				} else {
+					while (resultSet.next()) {
+						vendorOrder = new VendorOrder(resultSet.getString("id"),
+										  resultSet.getDate("order_date"),
+										  resultSet.getDate("delivery_date_time"),
+										  resultSet.getString("vendor_status_name"),
+										  resultSet.getString("vendor_name"),
+										  resultSet.getString("notes"),										 
+										  resultSet.getInt("discount"),
+										  resultSet.getDouble("credit"),
+										  resultSet.getInt("mileage"),
+										  resultSet.getDouble("delivery_fee"),
+										  resultSet.getDouble("toll_expense"),
+										  resultSet.getDouble("total_cost"));
+						vendorInventoryItems = null;
+						if (id != 0) {
+							vendorInventoryItems = productUtility.findVendorInventoryByOrderId(id);
+							if (vendorInventoryItems == null) {
+								log.debug("Unable to retrieve items for this order.");
+							}
+							vendorOrder.setVendorInventoryItems(vendorInventoryItems);
+						}
+						vendorOrders.add(vendorOrder);
+					}
+				}
+			} else {
+				log.debug("No orders returned.");
+			}
+		} catch (SQLException se) {
+			log.error ("SQL error: " + se);
+			return null;
+		} finally {
+			try {
+				resultSet.close();
+			} catch (Exception se) {
+				log.error("Unable to close resultSet: " + se);
+				se.printStackTrace();
+			}
+			try {
+				callableStatement.close();
+			} catch (Exception se) {
+				log.error("Unable to close callableStatement: " + se);
+				se.printStackTrace();
+			}							
+			try {
+				connection.close();
+			} catch (Exception se) {
+				log.error("Unable to close connection: " + se);
+				se.printStackTrace();
+			}			
+		}
+		return vendorOrders;
+	}	
+	
+	public VendorOrder updateVendorOrder (VendorOrder vendorOrder) {
+		Connection connection = null;
+		CallableStatement callableStatement = null;
+		ResultSet resultSet = null;
+		boolean hasResults;
+		String id;
+		int status;
+		List<VendorInventory> vendorInventoryItems;
+		try {			
+			connection = dataSource.getConnection(); //get connection from dataSource		
+			connection.setAutoCommit(false); //don't automatically commit statements
+			callableStatement = connection.prepareCall(updateVendorOrderSql); //prepare callable statement
+			id = vendorOrder.getId();			
+			if (id == null) {
+				callableStatement.setNull(1, Types.INTEGER);
+			} else {
+				callableStatement.setInt(1, Integer.parseInt(id));
+			}		
+			status = Order.STATUS.get(vendorOrder.getStatus());
+			if (status == Order.STATUS.get("Cancelled")) { //this is a cancellation request
+				callableStatement.setNull(2, Types.DATE);
+				callableStatement.setNull(3, Types.DATE);
+				callableStatement.setNull(4, Types.INTEGER);
+				callableStatement.setNull(5, Types.FLOAT);
+				callableStatement.setNull(6, Types.FLOAT);
+				callableStatement.setNull(7, Types.FLOAT);
+				callableStatement.setNull(8, Types.INTEGER);
+				callableStatement.setNull(9, Types.FLOAT);
+				callableStatement.setNull(10, Types.INTEGER);
+				callableStatement.setNull(11, Types.INTEGER);				
+				callableStatement.setNull(12, Types.VARCHAR);			
+				callableStatement.setByte(13, (byte)1);
+			} else {			
+				callableStatement.setDate(2, new java.sql.Date(vendorOrder.getOrderDate().getTime()));
+				callableStatement.setDate(3, new java.sql.Date(vendorOrder.getDeliveryDate().getTime()));
+				callableStatement.setInt(4, vendorOrder.getDiscount());
+				callableStatement.setDouble(5, vendorOrder.getCredit());
+				callableStatement.setDouble(6, vendorOrder.getDeliveryFee());
+				callableStatement.setDouble(7, vendorOrder.getTollExpense());
+				callableStatement.setInt(8, vendorOrder.getMileage());			
+				callableStatement.setDouble(9, vendorOrder.getTotalCost());
+				callableStatement.setInt(10, VendorOrder.STATUS.get(vendorOrder.getStatus()));
+				callableStatement.setInt(11, ProductGroup.VENDORS.get(vendorOrder.getVendor()));
+				callableStatement.setString(12, vendorOrder.getNotes());
+				callableStatement.setByte(13, (byte)0);
+			}
+			hasResults = callableStatement.execute();
+			if (hasResults) {
+				resultSet = callableStatement.getResultSet();
+				if (resultSet.next()) {
+					id = resultSet.getString(1);
+					vendorInventoryItems = vendorOrder.getVendorInventoryItems(); 
+					vendorInventoryItems = productUtility.updateVendorInventoryItems(vendorInventoryItems,Integer.parseInt(id), connection);
+					if (vendorInventoryItems == null) {
+						throw new SQLException("Unable to update vendor inventory items.");						
+					}
+				} else {
+					throw new SQLException("Unable to update vendor order.");					
+				}
+			} else {
+				throw new SQLException("Unable to update vendor order.");
+			}
+			connection.commit();// commit all statement for this connection
+		} catch (SQLException se) {
+			log.error ("SQL error: " + se);
+			if (connection != null) {
+				log.error ("Transaction is being rolled back.");
+				try {
+					connection.rollback();
+				} catch (SQLException se2) {
+					log.error("Unable to rollback transaction.");
+				}
+			}			
+			return null;
+		} finally {
+			try {
+				resultSet.close();
+			} catch (Exception se) {
+				log.error("Unable to close resultSet: " + se);
+				se.printStackTrace();
+			}			
+			try {
+				callableStatement.close();
+			} catch (Exception se) {
+				log.error("Unable to close callableStatement: " + se);
+				se.printStackTrace();
+			}							
+			try {
+				connection.close();
+			} catch (Exception se) {
+				log.error("Unable to close connection: " + se);
+				se.printStackTrace();
+			}			
+		}
+		return vendorOrder;
+	}		
+	
+	
 	public List<OrderItem> findOrderItemsByOrderId (int orderId) {
 		Connection connection = null;
 		CallableStatement callableStatement = null;
@@ -310,6 +517,8 @@ public class OrderUtilityImpl implements OrderUtility{
 			callableStatement = connection.prepareCall(findOrderItemsSql); //prepare callable statement
 			callableStatement.setInt(1, orderId);
 			hasResults = callableStatement.execute();
+			Product product;
+			OrderItem orderItem;
 			if (hasResults) {
 				resultSet = callableStatement.getResultSet();
 				if (!resultSet.isBeforeFirst()) { //returns false if ResultSet is empty 
@@ -320,11 +529,11 @@ public class OrderUtilityImpl implements OrderUtility{
 						if (categoryString != null && categoryString.contains("|")) {
 							categories = new ArrayList<String>(Arrays.asList(categoryString.split("|")));
 						}					
-						OrderItem orderItem = new OrderItem(resultSet.getString("order_item_id"),
+						orderItem = new OrderItem(resultSet.getString("order_item_id"),
 												 			resultSet.getInt("quantity"),
 												 			resultSet.getDouble("weight"),
 												 			resultSet.getString("notes"));										 
-						Product product = new Product (resultSet.getString("product_id"),
+						product = new Product (resultSet.getString("product_id"),
 													   resultSet.getString("product_name"),
 													   resultSet.getString("description"),
 													   resultSet.getDouble("price"),
@@ -367,6 +576,7 @@ public class OrderUtilityImpl implements OrderUtility{
 	}	
 	
 	public List<OrderItem> updateOrderItems (List<OrderItem> orderItems, int orderId, Connection previousConnection) {
+		boolean closeConnection = false;
 		Connection connection = previousConnection; //set connection equal to previous connection so that we can commit in one transaction
 		CallableStatement callableStatement = null;
 		ResultSet resultSet = null;
@@ -374,6 +584,7 @@ public class OrderUtilityImpl implements OrderUtility{
 		String id;
 		try {
 			if (connection == null) { //if we didn't pass a previous connection			
+				closeConnection = true;
 				connection = dataSource.getConnection(); //get connection from dataSource
 			}
 			callableStatement = connection.prepareCall(updateOrderItemSql); //prepare callable statement			
@@ -427,12 +638,14 @@ public class OrderUtilityImpl implements OrderUtility{
 				log.error("Unable to close callableStatement: " + se);
 				se.printStackTrace();
 			}				
-			try {
-				connection.close();
-			} catch (Exception se) {
-				log.error("Unable to close connection: " + se);
-				se.printStackTrace();
-			}			
+			if (closeConnection) { //if this connection was created in this method instead of passed to it, close the connection
+				try {				
+					connection.close();
+				} catch (Exception se) {
+					log.error("Unable to close connection: " + se);
+					se.printStackTrace();
+				}
+			}	
 		}
 		return orderItems;
 	}			

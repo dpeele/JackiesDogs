@@ -1,9 +1,6 @@
 package jackiesdogs.dataAccess;
 
-import jackiesdogs.bean.Inventory;
-import jackiesdogs.bean.Product;
-import jackiesdogs.bean.ProductGroup;
-import jackiesdogs.bean.UploadLog;
+import jackiesdogs.bean.*;
 
 import javax.sql.*;
 
@@ -25,6 +22,10 @@ public class ProductUtilityImpl implements ProductUtility {
 	
 	private final String updateInventorySql = "{CALL inventory_update (?, ?, ?, ?, ?, ?, ?, ?)}";
 	
+	private final String updateVendorInventorySql = "{CALL vendor_inventory_update (?, ?, ?, ?, ?, ?, ?, ?, ?)}";	
+	
+	private final String findVendorInventorySql = "{CALL vendor_inventory_retrieve (?)}";
+	
 	private final String updateProductGroupSql = "{CALL product_group_update (?, ?, ?, ?)}";
 	
 	private final String updateProductGroupCategorySql = "{CALL product_group_category_update (?, ?)}";
@@ -36,8 +37,6 @@ public class ProductUtilityImpl implements ProductUtility {
 	private final String updateProductGroupMemberSql = "{CALL product_group_member_update (?, ?)}";
 	
 	private final String updateProductGroupImageSql = "{CALL product_group_image_update (?, ?)}";	
-	
-	
 	
 	public ProductUtilityImpl (DataSource dataSource) {
 		this.dataSource = dataSource; //set dataSource
@@ -172,7 +171,7 @@ public class ProductUtilityImpl implements ProductUtility {
 					product.setId(stringId);
 					inventory = product.getInventory();
 					if (inventory != null) {
-						inventory = updateInventory(inventory, stringId, null, connection);
+						inventory = updateInventoryItems(Arrays.asList(inventory), stringId, null, connection).get(0);
 					} else {
 						throw new SQLException ("Update of product failed.");
 					}		
@@ -215,7 +214,8 @@ public class ProductUtilityImpl implements ProductUtility {
 		return product;
 	}		
 
-	public Inventory updateInventory (Inventory inventory, String productId, String vendorId, Connection previousConnection) {
+	public List<Inventory> updateInventoryItems (List<Inventory> inventoryItems, String productId, String vendorId, Connection previousConnection) {
+		boolean closeConnection = false;
 		Connection connection = previousConnection; //set connection to previous connection if this is part of a larger transaction
 		CallableStatement callableStatement = null;
 		ResultSet resultSet = null;
@@ -223,41 +223,44 @@ public class ProductUtilityImpl implements ProductUtility {
 		boolean hasResults;
 		try {
 			if (connection == null) { //if we didn't pass a connection as a parameter
+				closeConnection = true;
 				connection = dataSource.getConnection(); //get connection from dataSource
 			}
 			callableStatement = connection.prepareCall(updateInventorySql); //prepare call
-			id = inventory.getId();			
-			if (id == null) {
-				callableStatement.setNull(1, Types.INTEGER);
-			} else {
-				callableStatement.setInt(1, Integer.parseInt(id));
-			}						
-			if (productId == null) {
-				callableStatement.setNull(2, Types.INTEGER);
-			} else {
-				callableStatement.setInt(2, Integer.parseInt(productId));
-			}							
-			callableStatement.setInt(3, inventory.getQuantity());			
-			callableStatement.setDouble(4, inventory.getActualTotalWeight());
-			callableStatement.setDouble(5, inventory.getCost());
-			callableStatement.setDouble(6, inventory.getSpecialQuantity());
-			callableStatement.setDouble(7, inventory.getSpecialCost());
-			callableStatement.setString(8, inventory.getNotes());
-			if (vendorId == null) {
-				callableStatement.setNull(2, Types.VARCHAR);
-			} else {
-				callableStatement.setString(2, vendorId);
-			}			
-			hasResults = callableStatement.execute();
-			if (hasResults) { 
-				resultSet = callableStatement.getResultSet();
-				if (resultSet.next()) {
-					inventory.setId(resultSet.getString(1));
+			for (Inventory inventory: inventoryItems) {
+				id = inventory.getId();			
+				if (id == null) {
+					callableStatement.setNull(1, Types.INTEGER);
+				} else {
+					callableStatement.setInt(1, Integer.parseInt(id));
+				}						
+				if (productId == null) {
+					callableStatement.setNull(2, Types.INTEGER);
+				} else {
+					callableStatement.setInt(2, Integer.parseInt(productId));
+				}							
+				callableStatement.setInt(3, inventory.getQuantity());			
+				callableStatement.setDouble(4, inventory.getActualTotalWeight());
+				callableStatement.setDouble(5, inventory.getCost());
+				callableStatement.setDouble(6, inventory.getSpecialQuantity());
+				callableStatement.setDouble(7, inventory.getSpecialCost());
+				callableStatement.setString(8, inventory.getNotes());
+				if (vendorId == null) {
+					callableStatement.setNull(2, Types.VARCHAR);
+				} else {
+					callableStatement.setString(2, vendorId);
+				}			
+				hasResults = callableStatement.execute();
+				if (hasResults) { 
+					resultSet = callableStatement.getResultSet();
+					if (resultSet.next()) {
+						inventory.setId(resultSet.getString(1));
+					} else {
+						throw new SQLException("Update of Inventory failed.");				
+					}				
 				} else {
 					throw new SQLException("Update of Inventory failed.");				
-				}				
-			} else {
-				throw new SQLException("Update of Inventory failed.");				
+				}
 			}
 		} catch (SQLException se) {
 			log.error ("SQL error: " + se);
@@ -274,7 +277,158 @@ public class ProductUtilityImpl implements ProductUtility {
 			} catch (Exception se) {
 				log.error("Unable to close callableStatement: " + se);
 				se.printStackTrace();
-			}						
+			}	
+			if (closeConnection) { //if this connection was created in this method instead of passed to it, close the connection
+				try {				
+					connection.close();
+				} catch (Exception se) {
+					log.error("Unable to close connection: " + se);
+					se.printStackTrace();
+				}
+			}
+		}
+		return inventoryItems;
+	}		
+
+	public List<VendorInventory> updateVendorInventoryItems (List<VendorInventory> vendorInventoryItems, int vendorOrderId, Connection previousConnection) {
+		boolean closeConnection = false;
+		Connection connection = previousConnection; //set connection equal to previous connection so that we can commit in one transaction
+		CallableStatement callableStatement = null;
+		ResultSet resultSet = null;
+		String id = null;
+		Product product = null;
+		boolean hasResults;
+		try {
+			if (connection == null) { //if we didn't pass a connection as a parameter
+				closeConnection = true;
+				connection = dataSource.getConnection(); //get connection from dataSource
+			}
+			callableStatement = connection.prepareCall(updateVendorInventorySql); //prepare call
+			for (VendorInventory vendorInventory: vendorInventoryItems) {
+				id = vendorInventory.getId();	
+				product = vendorInventory.getProduct();
+				if (id == null) {
+					callableStatement.setNull(1, Types.INTEGER);
+				} else {
+					callableStatement.setInt(1, Integer.parseInt(id));
+				}						
+				if (vendorInventory.isRemoved()) { //remove item	
+					callableStatement.setNull(2, Types.INTEGER);
+					callableStatement.setNull(3, Types.INTEGER);
+					callableStatement.setNull(4, Types.VARCHAR);
+					callableStatement.setNull(5, Types.INTEGER);
+					callableStatement.setNull(6, Types.FLOAT);
+					callableStatement.setNull(7, Types.FLOAT);
+					callableStatement.setNull(8, Types.VARCHAR);
+					callableStatement.setByte(9, (byte)1);				
+				} else {	
+					callableStatement.setInt(2, vendorOrderId);
+					if (product.getId() == null) {
+						callableStatement.setNull(3, Types.INTEGER);
+					} else {
+						callableStatement.setInt(3, Integer.parseInt(product.getId()));
+					}
+					callableStatement.setString(4, product.getVendorId());
+					callableStatement.setInt(5, vendorInventory.getQuantity());
+					callableStatement.setDouble(6, vendorInventory.getTotalWeight());
+					callableStatement.setDouble(7, vendorInventory.getCost());
+					callableStatement.setString(8, vendorInventory.getNotes());
+					callableStatement.setByte(9, (byte)0);
+				}
+				hasResults = callableStatement.execute();
+				if (hasResults) { 
+					resultSet = callableStatement.getResultSet();
+					if (resultSet.next()) {
+						vendorInventory.setId(resultSet.getString(1));
+					} else {
+						throw new SQLException("Update of vendor inventory failed.");				
+					}				
+				} else {
+					throw new SQLException("Update of vendor inventory failed.");				
+				}
+			}
+		} catch (SQLException se) {
+			log.error ("SQL error: " + se);
+			return null;
+		} finally {
+			try {
+				resultSet.close();
+			} catch (Exception se) {
+				log.error("Unable to close resultSet: " + se);
+				se.printStackTrace();
+			}			
+			try {
+				callableStatement.close();
+			} catch (Exception se) {
+				log.error("Unable to close callableStatement: " + se);
+				se.printStackTrace();
+			}			
+			if (closeConnection) { //we weren't passed a connection so this is a connection created within this method and must be closed
+				try {
+					connection.close();
+				} catch (Exception se) {
+					log.error("Unable to close connection: " + se);
+					se.printStackTrace();
+				}
+			}
+		}
+		return vendorInventoryItems;
+	}		
+	
+	public List<VendorInventory> findVendorInventoryByOrderId (int vendorOrderId) {
+		Connection connection = null;
+		CallableStatement callableStatement = null;
+		ResultSet resultSet = null;
+		List<VendorInventory> vendorInventoryItems = new ArrayList<VendorInventory>();
+		boolean hasResults;
+		VendorInventory vendorInventory; 
+		Product product;
+		try {			
+			connection = dataSource.getConnection(); //get connection from dataSource			
+			connection.setTransactionIsolation(Connection.TRANSACTION_REPEATABLE_READ); //prevent dirty reads, phantom reads, and nonrepeatable reads			
+			callableStatement = connection.prepareCall(findVendorInventorySql); //prepare callable statement
+			callableStatement.setInt(1, vendorOrderId);
+			hasResults = callableStatement.execute();
+			if (hasResults) {
+				resultSet = callableStatement.getResultSet();
+				if (!resultSet.isBeforeFirst()) { //returns false if ResultSet is empty 
+					log.debug("No order items returned.");					
+				} else {
+					while (resultSet.next()) {
+						vendorInventory = new VendorInventory(resultSet.getString("vendor_inventory_id"),
+												 			resultSet.getInt("quantity"),
+												 			resultSet.getDouble("total_weight"),
+												 			resultSet.getDouble("cost"),
+												 			resultSet.getString("notes"));										 
+						product = new Product (resultSet.getString("product_id"),
+													   resultSet.getString("product_name"),
+													   resultSet.getString("description"),
+													   resultSet.getDouble("price"),
+													   resultSet.getString("vendor_id"));	
+						vendorInventory.setProduct(product);
+						vendorInventoryItems.add(vendorInventory);
+					}
+					
+				}	
+			} else {
+				log.debug("No vendor inventory items returned");
+			}
+		} catch (SQLException se) {
+			log.error ("SQL error: " + se);
+			return null;
+		} finally {
+			try {
+				resultSet.close();
+			} catch (Exception se) {
+				log.error("Unable to close resultSet: " + se);
+				se.printStackTrace();
+			}
+			try {
+				callableStatement.close();
+			} catch (Exception se) {
+				log.error("Unable to close callableStatement: " + se);
+				se.printStackTrace();
+			}							
 			try {
 				connection.close();
 			} catch (Exception se) {
@@ -282,8 +436,9 @@ public class ProductUtilityImpl implements ProductUtility {
 				se.printStackTrace();
 			}			
 		}
-		return inventory;
-	}		
+		return vendorInventoryItems;
+	}	
+
 	
 	public ProductGroup updateProductGroup (ProductGroup productGroup) {
 		Connection connection = null;

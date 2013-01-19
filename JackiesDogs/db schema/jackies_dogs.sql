@@ -148,12 +148,75 @@ SET FOREIGN_KEY_CHECKS=1;
 
 SET FOREIGN_KEY_CHECKS=0;
 
+DROP TABLE IF EXISTS vendor_status;
+
+CREATE TABLE vendor_status /* table to store vendor statuses*/
+( 
+	id INT NOT NULL PRIMARY KEY AUTO_INCREMENT
+  , vendor_status_name VARCHAR(32) NOT NULL
+);
+
+SET FOREIGN_KEY_CHECKS=1;
+
+SET FOREIGN_KEY_CHECKS=0;
+
 DROP TABLE IF EXISTS category;
 
 CREATE TABLE category /* table to store categories*/
 (
 	id INT NOT NULL PRIMARY KEY AUTO_INCREMENT
   , category_name varchar (32) NOT NULL
+);
+
+SET FOREIGN_KEY_CHECKS=1;
+
+SET FOREIGN_KEY_CHECKS=0;
+
+DROP TABLE IF EXISTS vendor_order_info;
+
+CREATE TABLE vendor_order_info /* table to store info for each vendor order sent and received*/
+(
+	id INT NOT NULL PRIMARY KEY AUTO_INCREMENT
+  , order_date DATETIME NOT NULL
+  , delivery_date_time DATETIME
+  , discount INT
+  , credit FLOAT
+  , delivery_fee FLOAT
+  , toll_expense FLOAT
+  , mileage INT
+  , total_cost FLOAT
+  , vendor_status_id INT
+  , vendor_id INT
+  , change_due FLOAT
+  , notes VARCHAR (2048)
+  , last_modified_date DATETIME
+	
+  , FOREIGN KEY (vendor_status_id) REFERENCES vendor_status(id) 
+		ON DELETE SET NULL
+);
+
+SET FOREIGN_KEY_CHECKS=1;
+
+SET FOREIGN_KEY_CHECKS=0;
+
+DROP TABLE IF EXISTS vendor_inventory;
+
+CREATE TABLE vendor_inventory /*table to store inventory requested/received from vendor orders*/
+(
+	id INT NOT NULL PRIMARY KEY AUTO_INCREMENT
+  , vendor_order_id INT
+  , product_id INT
+  , quantity INT NOT NULL
+  , total_weight INT NOT NULL
+  , cost FLOAT NOT NULL
+  , notes VARCHAR(2048)
+  , deleted BOOLEAN
+  , last_modified_date DATETIME
+	
+  , FOREIGN KEY (product_id) REFERENCES product(id) 
+		ON DELETE SET NULL
+  , FOREIGN KEY (vendor_order_id) REFERENCES vendor_order_info(id) 
+		ON DELETE SET NULL
 );
 
 SET FOREIGN_KEY_CHECKS=1;
@@ -391,6 +454,19 @@ SELECT 	0
 INSERT 	unit 
 SELECT 	0
 	  , "Tub";
+
+/* insert vendor statuses*/
+INSERT 	vendor_status 
+SELECT 	0
+	  , "Requested";
+
+INSERT 	vendor_status 
+SELECT 	0
+	  , "Received";
+
+INSERT 	vendor_status 
+SELECT 	0
+	  , "Cancelled";
 
 /* insert statuses*/
 INSERT 	status 
@@ -1049,7 +1125,8 @@ BEGIN
 	SELECT 		oi.id AS order_item_id
 			  , oi.quantity
 			  , oi.weight
-			  , oi.notes, p.id AS product_id
+			  , oi.notes
+			  , p.id AS product_id
 			  , p.product_name
 			  , pc.description
 			  , p.price
@@ -1250,7 +1327,7 @@ BEGIN
 	/* doesn't exist, insert into database*/
 	ELSE 
 
-		INSERT 	order_item
+		INSERT 	customer
 		SELECT 	0
 			  , in_first_name
 			  , in_last_name
@@ -1382,3 +1459,238 @@ BEGIN
 END
 //
 DELIMITER ;
+
+DROP PROCEDURE IF EXISTS vendor_order_info_retrieve;
+
+DELIMITER //
+CREATE PROCEDURE vendor_order_info_retrieve
+/*retrieve order record(s)*/
+(	
+	IN in_id INT
+  , IN in_start_order_date DATETIME
+  , IN in_end_order_date DATETIME
+  , IN in_status_ids VARCHAR(256)
+)
+BEGIN
+
+	SELECT 		oi.id
+			  , oi.order_date
+			  , oi.delivery_date_time
+			  , oi.discount
+			  , oi.credit
+			  , oi.mileage
+			  , oi.delivery_fee
+			  , oi.toll_expense
+			  , oi.total_cost
+			  , s.vendor_status_name
+			  , v.vendor_name
+			  , oi.notes
+
+	FROM 		vendor_order_info oi
+			  , vendor v	
+	WHERE 		oi.vendor_id = v.id 
+			AND	(in_id IS NULL OR id = in_id)
+			AND (in_start_order_date IS NULL OR order_date > in_start_order_date)
+			AND (in_end_order_date IS NULL OR order_date < in_end_order_date)
+			AND (in_status IS NULL OR status_id IN (in_status))
+	ORDER BY 	order_date;
+
+END
+//
+DELIMITER ;
+
+DROP PROCEDURE IF EXISTS vendor_order_info_update;
+
+DELIMITER //
+CREATE PROCEDURE vendor_order_info_update 
+/*check to see if info exists for vendor order, if not insert record, if so, update record*/
+(
+	IN in_id INT
+  , IN in_order_date DATETIME
+  , IN in_delivery_date_time DATETIME
+  , IN in_discount INT
+  , IN in_credit FLOAT
+  , IN in_delivery_fee FLOAT
+  , IN in_toll_expense FLOAT
+  , IN in_mileage INT
+  , IN in_total_cost FLOAT
+  , IN in_vendor_status_id INT
+  , IN in_vendor_id INT
+  , IN in_notes VARCHAR (2048)
+  , IN in_delete_flag BOOLEAN
+)
+BEGIN
+
+	/* if we passed an id, this is an update or delete*/
+	IF in_id IS NOT NULL THEN
+
+		/* we want to "delete" this vendor order by setting the status to "Cancelled"*/
+		IF in_delete_flag = TRUE THEN
+
+			UPDATE 	vendor_order_info oi, status s 
+			SET 	oi.payment_method_id = s.id
+			WHERE 	id = in_id
+				AND s.status_name = 'Cancelled';			
+		
+		/*this is an update*/
+		ELSE
+			
+			UPDATE 	vendor_order_info 
+			SET 	order_date = in_order_date
+				  , delivery_date_time = in_delivery_date_time
+				  , discount = in_discount
+				  , credit = in_credit
+				  , delivery_fee = in_delivery_fee
+				  , toll_expense = in_toll_expense
+				  , mileage = in_mileage
+				  , total_cost = in_total_cost
+				  , vendor_status_id = in_vendor_status_id
+				  , vendor_id = in_vendor_id
+				  , notes = in_notes
+				  , last_modified_date = NOW()
+			WHERE 	id = in_id;
+
+		END IF;
+
+		/* return id*/
+		SELECT 	in_id; 
+
+	/* doesn't exist, insert into database*/
+	ELSE 
+
+		INSERT 	vendor_order_info
+		SELECT 	0
+			  , in_order_date
+			  , in_delivery_date_time
+			  , in_discount
+			  , in_credit
+			  , in_delivery_fee
+			  , in_toll_expense
+			  , in_mileage
+			  , in_total_cost
+			  , in_vendor_status_id
+			  , in_vendor_id
+			  , in_notes
+			  , NOW();
+
+		/* capture auto_increment value*/
+		SELECT 	LAST_INSERT_ID(); 
+
+END IF;
+
+END
+//
+DELIMITER ;
+
+DROP PROCEDURE IF EXISTS vendor_inventory_retrieve;
+
+DELIMITER //
+CREATE PROCEDURE vendor_inventory_retrieve
+/*retrieve vendor inventory item record(s)*/
+(	
+	IN in_id INT
+)
+BEGIN
+
+	SELECT 		vi.id AS vendor_inventory_id
+			  , vi.quantity
+			  , vi.total_weight
+			  , vi.notes
+		      , vi.cost
+			  , p.id AS product_id
+			  , p.product_name
+			  , pc.description
+			  , p.price
+			  , p.vendor_id
+			  , pc.vendor_name
+	FROM 		vendor_inventory vi
+			  , product p
+	WHERE 		vi.product_id = p.id 
+			AND vendor_order_id = in_id 
+			AND deleted = FALSE
+	ORDER BY 	p.product_name;
+
+END
+//
+DELIMITER ;
+
+DROP PROCEDURE IF EXISTS vendor_inventory_update;
+
+DELIMITER //
+CREATE PROCEDURE vendor_inventory_update 
+/*check to see if inventory item exists for vendor order, if not insert record, if so, update record*/
+(
+	IN in_id INT
+  , IN in_vendor_order_id INT
+  , IN in_product_id INT
+  , IN in_vendor_id VARCHAR(8)
+  , IN in_quantity INT
+  , IN in_total_weight FLOAT
+  , IN cost FLOAT
+  , IN in_notes VARCHAR (2048)
+  , IN in_deleted BOOLEAN
+
+)
+BEGIN
+
+	/* if we passed an id, this is an update or delete*/
+	IF in_id IS NOT NULL THEN
+
+		/* we want to "delete" this vendor inventory item by setting the deleted column to "true"*/
+		IF in_delete = TRUE THEN
+
+			UPDATE 	vendor_inventory
+			SET 	deleted = TRUE
+			WHERE 	id = in_id;
+		
+		/*this is an update*/
+		ELSE
+			
+			UPDATE 	vendor_inventory 
+			SET 	vendor_order_id = in_order_id
+				  , product_id = in_product_id
+				  , quantity = in_quantity
+				  , total_weight = in_total_weight
+				  , cost = in_cost
+				  , notes = in_notes 
+				  , deleted = FALSE
+				  , last_modified_date = NOW()
+			WHERE 	id = in_id;
+
+		END IF;
+
+		/* return id*/
+		SELECT 	in_id; 
+
+	/* doesn't exist, insert into database*/
+	ELSE 
+		
+		IF in_product_id IS NULL THEN
+			
+			SELECT 	id
+			INTO 	in_product_id
+			FROM	product
+			WHERE 	vendor_id = in_vendor_id
+	
+		END IF;
+
+		INSERT 	vendor_inventory
+		SELECT 	0
+			  , in_vendor_order_id
+			  , in_product_id
+			  , in_quantity
+			  , in_total_weight
+			  , in_cost
+			  , in_notes
+			  , FALSE
+			  , NOW();
+
+		/* capture auto_increment value*/
+		SELECT 	LAST_INSERT_ID(); 
+
+END IF;
+
+END
+//
+DELIMITER ;
+

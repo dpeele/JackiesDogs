@@ -1,45 +1,135 @@
 package jackiesdogs.file;
 
 import jackiesdogs.bean.*;
-import jackiesdogs.dataAccess.ProductUtility;
+import jackiesdogs.dataAccess.*;
 import jackiesdogs.utility.*;
 
 import java.util.*;
 
 import org.apache.log4j.Logger;
 
-public class OmaUploader { //implements UploadUtility {
+public class OmaUploader implements UploadUtility {
 
 	private final ProductUtility productUtility;
+	private final OrderUtility orderUtility;	
 	private final ExcelExtractorUtility excelExtractorUtility;
 	private final PdfExtractorUtility pdfExtractorUtility;
 	private final Logger log = Logger.getLogger(OmaProductExtractor.class);
 	
-	public OmaUploader (ProductUtility productUtility, ExcelExtractorUtility excelExtractorUtility, PdfExtractorUtility pdfExtractorUtility) { //set dependencies
+	public OmaUploader (ProductUtility productUtility, OrderUtility orderUtility, ExcelExtractorUtility excelExtractorUtility, PdfExtractorUtility pdfExtractorUtility) { //set dependencies
 		this.productUtility = productUtility;
+		this.orderUtility = orderUtility;
 		this.pdfExtractorUtility = pdfExtractorUtility;
 		this.excelExtractorUtility = excelExtractorUtility;
-	}
-	
-	public static void main (String[] args) {
-		uploadInvoice(AdminUtilities.fileToString("c:\\users\\dana new\\my documents\\Peele132379.pdf"));
-		uploadInvoice(AdminUtilities.fileToString("c:\\users\\dana new\\my documents\\Peele132456.pdf"));
 	}
 
 	/** upload inventory data from order to database from String containing file and return report
 	 * 
 	 */
-	public static List<UploadLog> uploadInvoice(String fileName) { //upload products to database
+	public List<UploadLog> uploadInvoice(String fileName) { //upload products to database
 		
 		String line;
 		PdfExtractorUtility testPdfExtractorUtility = new OmaOrderExtractor();
 		List<String> dataHolder = testPdfExtractorUtility.extractOrder(fileName); //extract data from given fileName
-		List<Inventory> insertionErrors = new ArrayList<Inventory>();
+		int lineNum = 1;
+		List<VendorInventory> inventory = new ArrayList<VendorInventory>();
+		List<VendorInventory> insertionErrors = new ArrayList<VendorInventory>();
+		List<UploadLog> errorLogs = new ArrayList<UploadLog>();
+		VendorOrder vendorOrder;
+		Product product;
+		String[] splitLine;
+		String vendorId;
+		int quantity;
+		double weight = 0;
+		double price;
+		double credit = 0;
+		double deliveryFee = 0;
+		double totalPrice = 0;
+		String weightString;
 		for (int i=0; i<dataHolder.size();i++) { //for each row in sheet
-        	line = dataHolder.get(i); //get current row
-        	System.out.println(line);
-    	}	    	
-		return new ArrayList<UploadLog>(); //this should be report of orphaned products/inventory
+        	line = dataHolder.get(i).trim(); //get current row
+        	splitLine = line.split("^"+lineNum+"\\s{4}");
+			if (splitLine.length > 1) { //this is an item line
+				lineNum++;
+				if (line.contains(" 8338 ")) { //ignore line for Oma's info packet
+					continue; 
+				}
+				
+				if (line.contains(" SRVCRG ")) { //add this charge to order charges table
+					splitLine = line.split("^.+?(?=\\d+\\.\\d{2}$)");
+					deliveryFee = Double.parseDouble(splitLine[1]);
+					continue;
+				}
+				line = splitLine[1]; //set line equal to everything after line number
+				splitLine = line.split("(?<=\\d{2,4}\\w{0,2})\\s+",2);
+				vendorId = splitLine[0]; //set vendor id to first piece of split
+				line = splitLine[1]; //set line equal to rest of split
+				splitLine = line.split("\\d+\\.\\d{2}\\s+",2);
+				line = splitLine[1]; //remove quantity ordered
+				splitLine = line.split("(?<=\\d+\\.\\d{2})\\s",2);
+				quantity = (int)Double.parseDouble(splitLine[0]); //set quantity received to first piece of split
+				line = splitLine[1]; //set line equal to rest of split
+				splitLine = line.split("^.+?(?=\\d+\\.?\\d*\\s+-?\\d+\\.\\d{2})",2);
+				line = splitLine[1]; //remove bill by label and product name along with trailing spaces
+				splitLine = line.split("\\s+(?=-?\\d+\\.\\d{2}\\s+-?\\d+\\.\\d{2}$)",2);
+				weightString = splitLine[0]; //number representing either quantity or exact weight
+				if (weightString.contains(".")) { //this is an exact weight
+					weight = Double.parseDouble(weightString);
+				} else {
+					weight = 0;
+				}
+				line = splitLine[1];
+				splitLine = line.split("(?<=\\d+\\.\\d{2})\\s+",2);
+				price = Double.parseDouble(splitLine[0]); //set price each
+				if (price < 0) { //this is a credit, add to credits
+					if (weight != 0) {
+						credit = credit + (price*weight);
+					} else {					
+						credit = credit + (price*quantity);
+					}
+					continue;
+				} else { //this is a billed item, add to total bill
+					if (weight != 0) {
+						totalPrice = totalPrice + (price*weight);
+					} else {					
+						totalPrice = totalPrice + (price*quantity);
+					}					
+				}
+				product = new Product();
+				product.setVendorId(vendorId);
+				inventory.add(new VendorInventory(product, quantity, weight, price));
+			}
+    	}	
+		String logDescription;
+		List<String> headers;
+		List<List<String>> logData;
+		String orderId;
+		vendorOrder = new VendorOrder (credit, deliveryFee, totalPrice+deliveryFee-credit, ProductGroup.OMAS);
+		vendorOrder.setStatus("Received");
+		if ((vendorOrder = orderUtility.updateVendorOrder(vendorOrder)) == null) {
+			logDescription = "Unable to upload vendor order information.";
+			headers = Arrays.asList("Credit", "Delivery Fee", "Total Cost", "Status");
+			logData = new ArrayList<List<String>>();
+			logData.add(Arrays.asList(String.format("$%.2f",credit), String.format("$%.2f",deliveryFee), String.format("$%.2f",totalPrice), "Received"));
+			errorLogs.add(new UploadLog(logDescription, headers, logData));
+		}
+		orderId = vendorOrder.getId();
+		for (VendorInventory vendorInventory: inventory) {
+			if (productUtility.updateVendorInventoryItems(Arrays.asList(vendorInventory), Integer.parseInt(orderId), null) == null) {
+				insertionErrors.add(vendorInventory);
+			}
+		}
+		if (insertionErrors.size() > 0) {
+			logDescription = "Vendor order items that were not uploaded properly.";
+			headers = Arrays.asList("Vendor Id", "Quantity", "Weight", "Cost");
+			logData = new ArrayList<List<String>>();
+			for (VendorInventory vendorInventory : insertionErrors) {
+				logData.add(Arrays.asList(vendorInventory.getProduct().getVendorId(),Double.toString(vendorInventory.getQuantity()), vendorInventory.getCostFormatted()));
+			}
+			errorLogs.add(new UploadLog(logDescription, headers, logData));
+		}
+		System.out.println (credit+", "+ deliveryFee);
+		return errorLogs; //this should be report of orphaned products/inventory
     }
 	
 	/** upload product data to database from String containing file and return report
@@ -120,7 +210,7 @@ public class OmaUploader { //implements UploadUtility {
 			List<List<String>> logRows = new ArrayList<List<String>>();
 			for (Product errorProduct : errorProducts) {
 
-				logRows.add(Arrays.asList(errorProduct.getVendorId(),errorProduct.getProductName(),Double.toString(errorProduct.getPrice()),errorProduct.getOrderBy(), errorProduct.getBillBy(),Integer.toString(errorProduct.getEstimatedWeight()),"Omas")); //add information about each product with error to log
+				logRows.add(Arrays.asList(errorProduct.getVendorId(),errorProduct.getProductName(),Double.toString(errorProduct.getPrice()),errorProduct.getOrderBy(), errorProduct.getBillBy(),Integer.toString(errorProduct.getEstimatedWeight()),ProductGroup.OMAS)); //add information about each product with error to log
 			}
 			uploadLogs.add(new UploadLog(logDescription,headings,logRows));
 		}
