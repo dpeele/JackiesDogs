@@ -19,97 +19,97 @@ order.onload = function () { //called onload of this panel
 	order.defaultLabels(); //reset fieldset and panel labels
 	
     $(window).resize(function() { //resize main body of form on window resize
-        $("div#orderPanel #details").height($(window).height() - ($("div#orderPanel #details").offset().top + 75));
-        $("div#orderPanel #leftOrder").height($(window).height() - ($("div#orderPanel #details").offset().top + 65));
-        $("div#orderPanel #rightOrder").height($(window).height() - ($("div#orderPanel #details").offset().top + 65));
+        $("div#vendorOrderPanel #details").height($(window).height() - ($("div#vendorOrderPanel #details").offset().top + 75));
+        $("div#vendorOrderPanel #leftOrder").height($(window).height() - ($("div#vendorOrderPanel #details").offset().top + 65));
+        $("div#vendorOrderPanel #rightOrder").height($(window).height() - ($("div#vendorOrderPanel #details").offset().top + 65));
     });
     $(window).resize();
     
     //customer information display div
-    $("div#orderPanel #selectedCustomerDiv").addClass("ui-widget");
+    $("div#vendorOrderPanel #selectedCustomerDiv").addClass("ui-widget");
     
     //add class ui-widget to all text elements and set their name attribute = to their id attribute
-    $("div#orderPanel :input").addClass("ui-widget").attr("name",$(this).attr("id"));
+    $("div#vendorOrderPanel :input").addClass("ui-widget").attr("name",$(this).attr("id"));
     
-	$("div#orderPanel #customerLookup").simpletip({  
+	$("div#vendorOrderPanel #customerLookup").simpletip({  
 		content: "Please enter the first few letters or numbers of the first name, last name, " +
 			"email, or phone number of an existing customer or select 'New Customer'",
 		fixed: true
 	});
 
 	//hide hidden fields
-	$("div#orderPanel .hidden").hide();
+	$("div#vendorOrderPanel .hidden").hide();
 	
 	//hide order item table since it's empty
-	$("div#orderPanel #orderItems").hide();
+	$("div#vendorOrderPanel #orderItems").hide();
 
 	//set default value of order id to 0
-	$("div#orderPanel #orderId").val("0");	
+	$("div#vendorOrderPanel #orderId").val("0");	
 
 	//quantity field requires fixed width and handler for keyup
-	$("div#orderPanel #quantity").css("width","75px").keyup(order.checkForShowAddButton); //when quantity value changes see whether we should show add button
+	$("div#vendorOrderPanel #quantity").css("width","75px").keyup(order.checkForShowAddButton); //when quantity value changes see whether we should show add button
 	
 	//fields that require fixed width
-	$("div#orderPanel #quantityAvailable").css("width","75px");
-	$("div#orderPanel #item").css("width","300px");        
-    $("div#orderPanel #city").css("width","100px");
-	$("div#orderPanel #email").css("width","200px");	    
+	$("div#vendorOrderPanel #quantityAvailable").css("width","75px");
+	$("div#vendorOrderPanel #item").css("width","300px");        
+    $("div#vendorOrderPanel #city").css("width","100px");
+	$("div#vendorOrderPanel #email").css("width","200px");	    
 
 	//fields with set max/min lengths
-	$("div#orderPanel #phone").css("width","125px").attr("maxlength","14").attr("minlength","10");
-    $("div#orderPanel #state").css("width","25px").attr("maxlength","2").attr("minlength","2");
-    $("div#orderPanel #zip").css("width","50px").attr("maxlength","5").attr("minlength","5");
-    $("div#orderPanel #deliveryZip").css("width","50px").attr("maxlength","5").attr("minlength","5");
+	$("div#vendorOrderPanel #phone").css("width","125px").attr("maxlength","14").attr("minlength","10");
+    $("div#vendorOrderPanel #state").css("width","25px").attr("maxlength","2").attr("minlength","2");
+    $("div#vendorOrderPanel #zip").css("width","50px").attr("maxlength","5").attr("minlength","5");
+    $("div#vendorOrderPanel #deliveryZip").css("width","50px").attr("maxlength","5").attr("minlength","5");
     
     //recalculate final cost if any of the inputs are changed
-    $("div#orderPanel .cost").change(order.setFinalCost);
+    $("div#vendorOrderPanel .cost").change(order.setFinalCost);
     
     //dialogs
-	$("div#orderPanel div.dialog").hide(); //set all dialog divs to not be visible
+	$("div#vendorOrderPanel div.dialog").hide(); //set all dialog divs to not be visible
 	
 	//set value of delivered and personal checkboxes
-	$("div#orderPanel :checkbox").attr("value","true");
+	$("div#vendorOrderPanel :checkbox").attr("value","true");
     
 	//buttons- all hidden initially
-    $("div#orderPanel #addButton").button().attr("value","Add Item").click(order.addItem).hide(); //add item to order
-    $("div#orderPanel #editCustomerButton").button().attr("value","Edit Customer").click(function () {order.popEditCustomer("Edit Customer");}).hide();//pop customer div
-    $("div#orderPanel #submitButton").button().attr("value","Submit Order").click(order.validateAndSubmit).hide();//submit order
-    $("div#orderPanel #cancelButton").button().attr("value","Cancel Order").click(order.confirmCancel).hide();//cancel order    
-    $("div#orderPanel #enterDeliveryZipButton").button().attr("value","Calculate Delivery").click(order.popDelivery).hide();//pop delivery div
+    $("div#vendorOrderPanel #addButton").button().attr("value","Add Item").click(order.addItem).hide(); //add item to order
+    $("div#vendorOrderPanel #editCustomerButton").button().attr("value","Edit Customer").click(function () {order.popEditCustomer("Edit Customer");}).hide();//pop customer div
+    $("div#vendorOrderPanel #submitButton").button().attr("value","Submit Order").click(order.validateAndSubmit).hide();//submit order
+    $("div#vendorOrderPanel #cancelButton").button().attr("value","Cancel Order").click(order.confirmCancel).hide();//cancel order    
+    $("div#vendorOrderPanel #enterDeliveryZipButton").button().attr("value","Calculate Delivery").click(order.popDelivery).hide();//pop delivery div
     
     //number only fields
-    $("div#orderPanel .onlyNumbers").keydown(order.onlyNumbers).css("width","75px"); //only allow numbers
+    $("div#vendorOrderPanel .onlyNumbers").keydown(order.onlyNumbers).css("width","75px"); //only allow numbers
     
     //set discount field widths
-    $("div#orderPanel #discount").css("width","25px");
-    $("div#orderPanel #changeDue").css("width","50px");
-    $("div#orderPanel #discount").css("width","25px");
+    $("div#vendorOrderPanel #discount").css("width","25px");
+    $("div#vendorOrderPanel #changeDue").css("width","50px");
+    $("div#vendorOrderPanel #discount").css("width","25px");
     
     //decimal number only fields
-    $("div#orderPanel .onlyDecimalNumbers").keydown(order.onlyNumbersAndDecimalPoint).css("width","75px"); //only allow numbers and a decimal point
+    $("div#vendorOrderPanel .onlyDecimalNumbers").keydown(order.onlyNumbersAndDecimalPoint).css("width","75px"); //only allow numbers and a decimal point
             
     //set field widths
-    $("div#orderPanel #quantity").css("width","35px");
-    $("div#orderPanel #quantityAvailable").css("width","35px");
-    $("div#orderPanel #discount").css("width","25px");
-    $("div#orderPanel #changeDue").css("width","50px");
-    $("div#orderPanel #credit").css("width","50px");
-    $("div#orderPanel #deliveryFee").css("width","50px").attr("disabled","true");    
-    $("div#orderPanel #tollExpense").css("width","50px").attr("disabled","true");        
+    $("div#vendorOrderPanel #quantity").css("width","35px");
+    $("div#vendorOrderPanel #quantityAvailable").css("width","35px");
+    $("div#vendorOrderPanel #discount").css("width","25px");
+    $("div#vendorOrderPanel #changeDue").css("width","50px");
+    $("div#vendorOrderPanel #credit").css("width","50px");
+    $("div#vendorOrderPanel #deliveryFee").css("width","50px").attr("disabled","true");    
+    $("div#vendorOrderPanel #tollExpense").css("width","50px").attr("disabled","true");        
     
     //date and time fields
-    $("div#orderPanel #deliveryDate").datepicker().css("width","100px").keyup(order.checkForDeliveryButton); //create date picker for optional delivery date
-    $("div#orderPanel #deliveryTime").timePicker({startTime: "07:00",endTime: "21:00",show24Hours: false,step: 15}).css("width","75px").keyup(order.checkForDeliveryButton); //create time picker for optional delivery time
+    $("div#vendorOrderPanel #deliveryDate").datepicker().css("width","100px").keyup(order.checkForDeliveryButton); //create date picker for optional delivery date
+    $("div#vendorOrderPanel #deliveryTime").timePicker({startTime: "07:00",endTime: "21:00",show24Hours: false,step: 15}).css("width","75px").keyup(order.checkForDeliveryButton); //create time picker for optional delivery time
    
     
     //display only fields
-    $("div#orderPanel .readOnly").attr("readonly",true);//don't allow editing of total price or quantity available
+    $("div#vendorOrderPanel .readOnly").attr("readonly",true);//don't allow editing of total price or quantity available
 
     //set default value for display only total fields
-    $("div#orderPanel .total").val("$0.00").css("width","75px");    
+    $("div#vendorOrderPanel .total").val("$0.00").css("width","75px");    
     
     //customer autocomplete
-    $("div#orderPanel #customerLookup").autocomplete({ //look up client based on last name
+    $("div#vendorOrderPanel #customerLookup").autocomplete({ //look up client based on last name
         source: function( request, response ) {
         	if (request.term.length < 2) {
             	response([order.blankCustomer]);                             	
@@ -162,7 +162,7 @@ order.onload = function () { //called onload of this panel
         		order.popEditCustomer("Enter Customer");
 			} else {
 				order.populateCustomerDiv(); 
-				$("div#orderPanel #editCustomerButton").show();//show edit customer button
+				$("div#vendorOrderPanel #editCustomerButton").show();//show edit customer button
 				order.checkForShowSubmitButton();//see whether we should show submit button
 				order.checkForShowCancelButton(); //see whether we should show cancel button
 			}
@@ -215,13 +215,13 @@ order.onload = function () { //called onload of this panel
         	}
         },
         select: function (event, ui) {
-        	$("div#orderPanel #itemId").val(ui.item.id);
-        	$("div#orderPanel #price").val(ui.item.price);
-        	$("div#orderPanel #quantityAvailable").val(ui.item.quantity);
-        	$("div#orderPanel #item").val(ui.item.productName);
-    		$("div#orderPanel #billBy").val(ui.item.billBy); 
-    		$("div#orderPanel #estimatedWeight").val(ui.item.estimatedWeight);             
-    		$("div#orderPanel #description").val(ui.item.description);
+        	$("div#vendorOrderPanel #itemId").val(ui.item.id);
+        	$("div#vendorOrderPanel #price").val(ui.item.price);
+        	$("div#vendorOrderPanel #quantityAvailable").val(ui.item.quantity);
+        	$("div#vendorOrderPanel #item").val(ui.item.productName);
+    		$("div#vendorOrderPanel #billBy").val(ui.item.billBy); 
+    		$("div#vendorOrderPanel #estimatedWeight").val(ui.item.estimatedWeight);             
+    		$("div#vendorOrderPanel #description").val(ui.item.description);
     		order.checkForShowAddButton();//see whether we should show add button
         },        
         minLength: 2,
@@ -230,85 +230,85 @@ order.onload = function () { //called onload of this panel
 };
 
 order.defaultLabels = function () {
-	$("#orderAnchor").html("New Customer Order"); //default order panel label is New Order
-	$("div#orderPanel #orderLegend").html("Enter Information:"); //default legend is Enter Information:
-	 $("#orderAnchor").attr("href","loadOrder"); //dafault url for panel is loadOrder
+	$("#vendorOrderAnchor").html("New Customer Order"); //default vendor order panel label is New Vendor Order
+	$("div#vendorOrderPanel #orderLegend").html("Enter Information:"); //default legend is Enter Information:
+	 $("#vendorOrderAnchor").attr("href","loadVendorOrder"); //dafault url for panel is loadOrder
 };
 
 order.checkForShowSubmitButton = function () {
-	if (($("div#orderPanel #selectedCustomerDiv").html().length > 0) && ($('#orderItems tr').length > 1)) {
-		$("div#orderPanel #submitButton").show();
+	if (($("div#vendorOrderPanel #selectedCustomerDiv").html().length > 0) && ($('#orderItems tr').length > 1)) {
+		$("div#vendorOrderPanel #submitButton").show();
 	}
 };
 
 order.checkForShowCancelButton = function () {
-	if (($("div#orderPanel #selectedCustomerDiv").html().length > 0) || ($('#orderItems tr').length > 1)) {
-		$("div#orderPanel #cancelButton").show();
+	if (($("div#vendorOrderPanel #selectedCustomerDiv").html().length > 0) || ($('#orderItems tr').length > 1)) {
+		$("div#vendorOrderPanel #cancelButton").show();
 	}
 };
 
 order.checkForShowAddButton = function () {
-	if (($("div#orderPanel #itemId").val().length > 0) && ($("div#orderPanel #quantity").val().length > 0)) {
-		$("div#orderPanel #addButton").show();
+	if (($("div#vendorOrderPanel #itemId").val().length > 0) && ($("div#vendorOrderPanel #quantity").val().length > 0)) {
+		$("div#vendorOrderPanel #addButton").show();
 	}
 };
 
 order.setFinalCost = function () {
-	var totalCost = $("div#orderPanel #totalCost").val();
-	var finalCost = totalCost - ((totalCost / 100) * $("div#orderPanel #discount").val());  //subtract food discount from order total
-	finalCost = finalCost - $("div#orderPanel #credit").val() + $("div#orderPanel #deliveryFee").val() + $("div#orderPanel #tollExpense").val(); //add other costs and subtract credit from order total	
-	$("div#orderPanel #finalCost").val(finalCost);
+	var totalCost = $("div#vendorOrderPanel #totalCost").val();
+	var finalCost = totalCost - ((totalCost / 100) * $("div#vendorOrderPanel #discount").val());  //subtract food discount from order total
+	finalCost = finalCost - $("div#vendorOrderPanel #credit").val() + $("div#vendorOrderPanel #deliveryFee").val() + $("div#vendorOrderPanel #tollExpense").val(); //add other costs and subtract credit from order total	
+	$("div#vendorOrderPanel #finalCost").val(finalCost);
 }
 
 order.setFloatValue = function (value, name) { //if the float value isn't zero, set field name to formatted value
 	if (parseFloat(value != 0)) {
-		$("div#orderPanel #"+name).val(formatPrice(value).substring(1));
+		$("div#vendorOrderPanel #"+name).val(formatPrice(value).substring(1));
 	}
 }
 
 order.setValues = function (id,deliveryDate,deliveryTime,discount,credit,deliveryFee,tollExpense,totalCost,status,changeDue,delivered,personal) {
 	var totalFoodCost = totalCost + ((totalCost / 100) * discount);  //add food discount to order total
 	totalFoodCost = totalCost + credit - deliveryFee - tollExpense; //subtract other costs and add credit to order total to give us the total of just the food
-	$("div#orderPanel #totalCost").val(totalFoodCost); //set total food cost	
+	$("div#vendorOrderPanel #totalCost").val(totalFoodCost); //set total food cost	
 	if (parseInt(credit) != 0) { //if there is a credit
-		$("div#orderPanel #credit").val(credit);
+		$("div#vendorOrderPanel #credit").val(credit);
 	}
 	order.setFloatValue(discount,"discount"); //set the double values
 	order.setFloatValue(deliveryFee,"deliveryFee");
 	order.setFloatValue(tollExpense,"tollExpense");
 	order.setFloatValue(changeDue,"changeDue");
-	$("div#orderPanel select option[value='"+status+"']").attr("selected","selected"); //select the correct status option
-	$("div#orderPanel #orderId").val(id); //set order id
-	$("div#orderPanel #deliveryDate").val(deliveryDate); //set delivery date and time
-	$("div#orderPanel #deliveryTime").val(deliveryTime);
+	$("div#vendorOrderPanel select option[value='"+status+"']").attr("selected","selected"); //select the correct status option
+	$("div#vendorOrderPanel #orderId").val(id); //set order id
+	$("div#vendorOrderPanel #deliveryDate").val(deliveryDate); //set delivery date and time
+	$("div#vendorOrderPanel #deliveryTime").val(deliveryTime);
 	if (delivered == "true") { //if delivered is true check delivered checkbox
-		$("div#orderPanel #delivered").attr("value","true");
+		$("div#vendorOrderPanel #delivered").attr("value","true");
 	}
 	if (personal == "true") { //if personal is true check personal checkbox
-		$("div#orderPanel #personal").attr("value","true");
+		$("div#vendorOrderPanel #personal").attr("value","true");
 	}	
 	
 	//show buttons where appropriate
 	order.checkForShowSubmitButton();
 	order.checkForShowCancelButton();		
 	order.checkForDeliveryButton();
-	$("div#orderPanel #editCustomerButton").show();
-	$("div#orderPanel #orderAnchor").html("Edit Customer Order"); //change order panel label to Edit Order 
-	$("div#orderPanel #orderLegend").html("Edit Information:"); //change legend to Edit Information:	
+	$("div#vendorOrderPanel #editCustomerButton").show();
+	$("div#vendorOrderPanel #orderAnchor").html("Edit Customer Order"); //change order panel label to Edit Order 
+	$("div#vendorOrderPanel #orderLegend").html("Edit Information:"); //change legend to Edit Information:	
 };
 
 order.checkForDeliveryButton = function () {
-	if (($("div#orderPanel #deliveryDate").val().length > 0) && ($("div#orderPanel deliveryTime").val().length > 0)) {
-		$("div#orderPanel #enterDeliveryZipButton").show();
-        $("div#orderPanel #deliveryFee").attr("disabled","false");    
-        $("div#orderPanel #tollExpense").attr("disabled","false");  
+	if (($("div#vendorOrderPanel #deliveryDate").val().length > 0) && ($("div#vendorOrderPanel deliveryTime").val().length > 0)) {
+		$("div#vendorOrderPanel #enterDeliveryZipButton").show();
+        $("div#vendorOrderPanel #deliveryFee").attr("disabled","false");    
+        $("div#vendorOrderPanel #tollExpense").attr("disabled","false");  
 	}	
 };
 
 order.checkQuantity = function () { //check quantity ordered vs quantity in stock and confirm if quantity ordered is greater
-	var quantityCheck =$("div#orderPanel #quantityAvailable").val() -$("div#orderPanel #quantity").val(); //make sure you aren't adding more than we have
+	var quantityCheck =$("div#vendorOrderPanel #quantityAvailable").val() -$("div#vendorOrderPanel #quantity").val(); //make sure you aren't adding more than we have
 	if (quantityCheck < 0) {
-		$("div#orderPanel #quantityOverrideDialog").dialog({ 
+		$("div#vendorOrderPanel #quantityOverrideDialog").dialog({ 
 			modal: true, 
 			buttons: [ 
 				{ text: "Continue", click:function() { 
@@ -324,21 +324,21 @@ order.checkQuantity = function () { //check quantity ordered vs quantity in stoc
 };
 
 order.addItem = function (id, quantity, weight, itemId, name, price, billBy, estimatedWeight, description) { //add item to order
-	if ($("div#orderPanel #orderItems tr").length == 1) {
-		$("div#orderPanel #orderItems").show();
+	if ($("div#vendorOrderPanel #orderItems tr").length == 1) {
+		$("div#vendorOrderPanel #orderItems").show();
 	}
 	var totalItemPrice;
 	var estimate;
 	var byThePound;
 	if (arguments.length == 0) {//not an existing item
 		id=0;
-		billBy=$("div#orderPanel #billBy").val();
-		quantity=$("div#orderPanel #quantity").val();
-		price=$("div#orderPanel #price").val();
-		estimatedWeight=$("div#orderPanel #estimatedWeight").val();
-		itemId=$("div#orderPanel #itemId").val();
-		name=$("div#orderPanel #item").val();
-		description=$("div#orderPanel #description").val();
+		billBy=$("div#vendorOrderPanel #billBy").val();
+		quantity=$("div#vendorOrderPanel #quantity").val();
+		price=$("div#vendorOrderPanel #price").val();
+		estimatedWeight=$("div#vendorOrderPanel #estimatedWeight").val();
+		itemId=$("div#vendorOrderPanel #itemId").val();
+		name=$("div#vendorOrderPanel #item").val();
+		description=$("div#vendorOrderPanel #description").val();
 	}
 	
 	if (billBy == "Pound") {//if price is per pound, estimate weight and use this to determine estimated total price  
@@ -360,7 +360,7 @@ order.addItem = function (id, quantity, weight, itemId, name, price, billBy, est
 	if (estimate) { //add indicator that this is an estimated price if applicable
 		formattedtotalCost = formattedtotalCost + " (est)";
 	}
-	$("div#orderPanel #orderItems tr:last").after("<tr>\n" + //add row
+	$("div#vendorOrderPanel #orderItems tr:last").after("<tr>\n" + //add row
 										"<td>"+itemId+"</td>\n" +
 										"<td id='dbIdTd"+rowValue+"'><input type='text'/></td>\n" +
 										"<td>"+name+"</td>\n" +
@@ -371,13 +371,13 @@ order.addItem = function (id, quantity, weight, itemId, name, price, billBy, est
 										"<td id='removedTd"+rowValue+"'><input type='text' id='removed"+rowValue+"'/></td>\n" +
 									"</tr>\n");
 		
-	$("div#orderPanel #removedTd"+rowValue).hide(); //hide td holding field to indicate whether or not row has been hidden
-	$("div#orderPanel #")
-	$("div#orderPanel #dbIdTd"+rowValue).hide().find(":text").val(id); //hide td holding field and set dbId inside
-	$("div#orderPanel #totalItemPriceUnformatted"+rowValue).css("display","none"); //hide field to store unformatted total price
+	$("div#vendorOrderPanel #removedTd"+rowValue).hide(); //hide td holding field to indicate whether or not row has been hidden
+	$("div#vendorOrderPanel #")
+	$("div#vendorOrderPanel #dbIdTd"+rowValue).hide().find(":text").val(id); //hide td holding field and set dbId inside
+	$("div#vendorOrderPanel #totalItemPriceUnformatted"+rowValue).css("display","none"); //hide field to store unformatted total price
 		
 	if (description.length > 0) { //add tooltip to table row if description exists
-		$("div#orderPanel #orderItems tr:last").simpletip({  
+		$("div#vendorOrderPanel #orderItems tr:last").simpletip({  
 			content: description,
 			fixed: true
 		});
@@ -385,43 +385,43 @@ order.addItem = function (id, quantity, weight, itemId, name, price, billBy, est
 		
 	if (byThePound ) { //priced by the pound, add focus event handler to pop up estimated dialog and handle that
 		if (estimate) {
-			$("div#orderPanel #quantity"+rowValue).val(quantity+" (" + quantity*estimatedWeight + "lbs)");//estimate weight from quantity
+			$("div#vendorOrderPanel #quantity"+rowValue).val(quantity+" (" + quantity*estimatedWeight + "lbs)");//estimate weight from quantity
 		} else {
-			$("div#orderPanel #quantity"+rowValue).val(quantity+" (" + weight + "lbs)");//use exact weight
+			$("div#vendorOrderPanel #quantity"+rowValue).val(quantity+" (" + weight + "lbs)");//use exact weight
 		}
-		$("div#orderPanel #quantity"+rowValue).focus(function() {
-			var exactQuantity = $("div#orderPanel #quantity"+rowValue).val();
+		$("div#vendorOrderPanel #quantity"+rowValue).focus(function() {
+			var exactQuantity = $("div#vendorOrderPanel #quantity"+rowValue).val();
 			var exactWeight = "";
 			var start = quantity.indexOf(" ("); //location of front parenthesis if it exists
 			if (start != -1) { //front parenthesis exists and we have an exact weight for this item
 				exactWeight = exactQuantity.substring(start+2, exactQuantity.indexOf("lbs)")); //strip out weight
 				exactQuantity = exactQuantity.substring(0,start); //strip out quantity	
 			}
-			$("div#orderPanel #exactQuantity").val(exactQuantity);//set initial quantity value in dialog to value from table row
-			$("div#orderPanel #exactWeight").val(exactWeight);//set initial weight value in dialog to value from table row
-			$("div#orderPanel #editPoundQuantityDialog").dialog({ 
+			$("div#vendorOrderPanel #exactQuantity").val(exactQuantity);//set initial quantity value in dialog to value from table row
+			$("div#vendorOrderPanel #exactWeight").val(exactWeight);//set initial weight value in dialog to value from table row
+			$("div#vendorOrderPanel #editPoundQuantityDialog").dialog({ 
 				modal: true, 
 				title: "Enter Exact Weight",
 				width: 400,
 				buttons: [ 
 					{ text: "Submit", click:function() { 
-						if (!($("div#orderPanel #exactQuantityForm").validate().form()) || $("div#orderPanel #exactWeight").val()==".") {//validate form
-							$("div#orderPanel #incompletePoundQuantityDialog").dialog({ modal: true });
+						if (!($("div#vendorOrderPanel #exactQuantityForm").validate().form()) || $("div#vendorOrderPanel #exactWeight").val()==".") {//validate form
+							$("div#vendorOrderPanel #incompletePoundQuantityDialog").dialog({ modal: true });
 							return;	
 						}																			
-						$("div#orderPanel #quantity"+rowValue).val($("div#orderPanel #exactQuantity").val()+" (" + $("div#orderPanel #exactWeight").val() + "lbs)");
-						var exacttotalCost= formatPrice(parseFloat($("div#orderPanel #exactWeight").val()) * $("div#orderPanel #price").val());
+						$("div#vendorOrderPanel #quantity"+rowValue).val($("div#vendorOrderPanel #exactQuantity").val()+" (" + $("div#vendorOrderPanel #exactWeight").val() + "lbs)");
+						var exacttotalCost= formatPrice(parseFloat($("div#vendorOrderPanel #exactWeight").val()) * $("div#vendorOrderPanel #price").val());
 						var exacttotalCostNumeric = exacttotalCost.substring(1);
 						var totalItemPriceNumeric;
-						var index = $("div#orderPanel #totalItemPrice"+rowValue).html().indexOf(" (est)");
+						var index = $("div#vendorOrderPanel #totalItemPrice"+rowValue).html().indexOf(" (est)");
 						if (index == -1) {
-							totalItemPriceNumeric = $("div#orderPanel #totalItemPrice"+rowValue).html().substring(1);
+							totalItemPriceNumeric = $("div#vendorOrderPanel #totalItemPrice"+rowValue).html().substring(1);
 						} else {
-							totalItemPriceNumeric = $("div#orderPanel #totalItemPrice"+rowValue).html().substring(1,index);
+							totalItemPriceNumeric = $("div#vendorOrderPanel #totalItemPrice"+rowValue).html().substring(1,index);
 						}
-						$("div#orderPanel #totalCost").val(formatPrice(parseFloat($("div#orderPanel #totalCost").val().substring(1))-totalItemPriceNumeric+exacttotalCostNumeric));//update total
-						$("div#orderPanel #totalItemPrice"+rowValue).html(exacttotalCost);
-						$("div#orderPanel #totalItemPriceUnformatted"+rowValue).val(exacttotalCostNumeric);
+						$("div#vendorOrderPanel #totalCost").val(formatPrice(parseFloat($("div#vendorOrderPanel #totalCost").val().substring(1))-totalItemPriceNumeric+exacttotalCostNumeric));//update total
+						$("div#vendorOrderPanel #totalItemPrice"+rowValue).html(exacttotalCost);
+						$("div#vendorOrderPanel #totalItemPriceUnformatted"+rowValue).val(exacttotalCostNumeric);
 						$(this).dialog("close");
 					}}, 	
 						{ 
@@ -431,63 +431,63 @@ order.addItem = function (id, quantity, weight, itemId, name, price, billBy, est
 			}}]});
 		});	
 	} else { //not estimate, add keydown handler and adjust price as they type
-		$("div#orderPanel #quantity"+rowValue).val(quantity).css("width","100px"); //set quantity
-		$("div#orderPanel #quantity"+rowValue).keydown(function(event){ //add keydown event handler to quantity text box to allow 
+		$("div#vendorOrderPanel #quantity"+rowValue).val(quantity).css("width","100px"); //set quantity
+		$("div#vendorOrderPanel #quantity"+rowValue).keydown(function(event){ //add keydown event handler to quantity text box to allow 
 														 //only numbers and a decimal point and update price on quantity change			
 			if(order.onlyNumbers(event)) {//value may have changed, update total price
-				var totalItemPriceNumeric = $("div#orderPanel #totalItemPrice"+rowValue).html().substring(1);			
-				if ($("div#orderPanel #quantity"+rowValue).val().length == 0) { //no quantity
-					$("div#orderPanel #totalCost").val(formatPrice(parseFloat($("div#orderPanel #totalCost").val().substring(1))-totalItemPriceNumeric));//update total
-					$("div#orderPanel #totalItemPrice"+rowValue).html("$0.00");
+				var totalItemPriceNumeric = $("div#vendorOrderPanel #totalItemPrice"+rowValue).html().substring(1);			
+				if ($("div#vendorOrderPanel #quantity"+rowValue).val().length == 0) { //no quantity
+					$("div#vendorOrderPanel #totalCost").val(formatPrice(parseFloat($("div#vendorOrderPanel #totalCost").val().substring(1))-totalItemPriceNumeric));//update total
+					$("div#vendorOrderPanel #totalItemPrice"+rowValue).html("$0.00");
 				} else {//handle new >0 quantity
-					var exacttotalCost= formatPrice(parseFloat($("div#orderPanel #quantity"+rowValue).val()) * $("div#orderPanel #price").val());
+					var exacttotalCost= formatPrice(parseFloat($("div#vendorOrderPanel #quantity"+rowValue).val()) * $("div#vendorOrderPanel #price").val());
 					var exacttotalCostNumeric = exacttotalCost.substring(1);						
-					$("div#orderPanel #totalCost").val(formatPrice(parseFloat($("div#orderPanel #totalCost").val().substring(1))-totalItemPriceNumeric+exacttotalCostNumeric));//update total
-					$("div#orderPanel #totalItemPrice"+rowValue).html(exacttotalCost);					
+					$("div#vendorOrderPanel #totalCost").val(formatPrice(parseFloat($("div#vendorOrderPanel #totalCost").val().substring(1))-totalItemPriceNumeric+exacttotalCostNumeric));//update total
+					$("div#vendorOrderPanel #totalItemPrice"+rowValue).html(exacttotalCost);					
 				}
 			}
 		});	
 	}
 				            			
-	$("div#orderPanel #button"+rowValue).button().attr("value","Remove").click(function(){ //add click event handler to remove button for this row
+	$("div#vendorOrderPanel #button"+rowValue).button().attr("value","Remove").click(function(){ //add click event handler to remove button for this row
 		var totalItemPriceNumeric;
-		var index = $("div#orderPanel #totalItemPrice"+rowValue).html().indexOf(" (est)");
+		var index = $("div#vendorOrderPanel #totalItemPrice"+rowValue).html().indexOf(" (est)");
 		if (index == -1) {
-			totalItemPriceNumeric = $("div#orderPanel #totalItemPrice"+rowValue).html().substring(1);
+			totalItemPriceNumeric = $("div#vendorOrderPanel #totalItemPrice"+rowValue).html().substring(1);
 		} else {
-			totalItemPriceNumeric = $("div#orderPanel #totalItemPrice"+rowValue).html().substring(1,index);
+			totalItemPriceNumeric = $("div#vendorOrderPanel #totalItemPrice"+rowValue).html().substring(1,index);
 		}
-		$("div#orderPanel #totalCost").val(formatPrice(parseFloat($("div#orderPanel #totalCost").val().substring(1))-totalItemPriceNumeric));//update total
+		$("div#vendorOrderPanel #totalCost").val(formatPrice(parseFloat($("div#vendorOrderPanel #totalCost").val().substring(1))-totalItemPriceNumeric));//update total
 		$(this).closest('tr').hide();  //remove row
-		$("div#orderPanel #removed"+rowValue).val("true");
-		if ($("div#orderPanel #orderItems tr").length == 1) {
-			$("div#orderPanel #orderItems").hide();
+		$("div#vendorOrderPanel #removed"+rowValue).val("true");
+		if ($("div#vendorOrderPanel #orderItems tr").length == 1) {
+			$("div#vendorOrderPanel #orderItems").hide();
 		}		
 	});//remove item from order
 
-	$("div#orderPanel .item").val(""); //reset item fields
-	$("div#orderPanel #addButton").hide();
+	$("div#vendorOrderPanel .item").val(""); //reset item fields
+	$("div#vendorOrderPanel #addButton").hide();
 	order.checkForShowSubmitButton(); //see whether we should show submit button
 	order.checkForShowCancelButton(); //see whether we should show cancel button
-	if ($("div#orderPanel #totalCost").val() != "") { // update total price
-		$("div#orderPanel #totalCost").val(formatPrice(parseFloat($("div#orderPanel #totalCost").val().substring(1))+totalItemPrice));
+	if ($("div#vendorOrderPanel #totalCost").val() != "") { // update total price
+		$("div#vendorOrderPanel #totalCost").val(formatPrice(parseFloat($("div#vendorOrderPanel #totalCost").val().substring(1))+totalItemPrice));
 	} else {
-		$("div#orderPanel #totalCost").val(formatPrice(totalItemPrice));
+		$("div#vendorOrderPanel #totalCost").val(formatPrice(totalItemPrice));
 	}
 };
 
 order.populateCustomer = function(item) { //populate customer dialog fields from json object
-	$("div#orderPanel #firstName").val(item.firstName);
-	$("div#orderPanel #lastName").val(item.lastName);
-    $("div#orderPanel #streetAddress").val(item.streetAddress);
- 	$("div#orderPanel #aptAddress").val(item.aptAddress);    
-    $("div#orderPanel #phone").val(item.phone);
-    $("div#orderPanel #state").val(item.state);
-    $("div#orderPanel #city").val(item.city);
-    $("div#orderPanel #zip").val(item.zip);
-    $("div#orderPanel #email").val(item.email);
-    $("div#orderPanel #custId").val(item.custId);  
-    $("div#orderPanel #editCustId").val(item.custId);        		   
+	$("div#vendorOrderPanel #firstName").val(item.firstName);
+	$("div#vendorOrderPanel #lastName").val(item.lastName);
+    $("div#vendorOrderPanel #streetAddress").val(item.streetAddress);
+ 	$("div#vendorOrderPanel #aptAddress").val(item.aptAddress);    
+    $("div#vendorOrderPanel #phone").val(item.phone);
+    $("div#vendorOrderPanel #state").val(item.state);
+    $("div#vendorOrderPanel #city").val(item.city);
+    $("div#vendorOrderPanel #zip").val(item.zip);
+    $("div#vendorOrderPanel #email").val(item.email);
+    $("div#vendorOrderPanel #custId").val(item.custId);  
+    $("div#vendorOrderPanel #editCustId").val(item.custId);        		   
 };
 
 order.addInfo = function (customerInfo, i) {
@@ -506,34 +506,34 @@ order.addInfo = function (customerInfo, i) {
 };
 
 order.populateCustomerDiv = function() { //populate customer div from customer dialog fields
-	var customerInfo = $("div#orderPanel #firstName").val() + " " + $("div#orderPanel #lastName").val() + "<br/>";
+	var customerInfo = $("div#vendorOrderPanel #firstName").val() + " " + $("div#vendorOrderPanel #lastName").val() + "<br/>";
 	var additionalInfo = "";
-	if ($("div#orderPanel #phone").val().length != 0) {
-   		additionalInfo = additionalInfo + "phone: " + $("div#orderPanel #phone").val() + ", ";
+	if ($("div#vendorOrderPanel #phone").val().length != 0) {
+   		additionalInfo = additionalInfo + "phone: " + $("div#vendorOrderPanel #phone").val() + ", ";
 	}
-	if ($("div#orderPanel #email").val().length != 0) {
-   		additionalInfo = additionalInfo + "email: " + $("div#orderPanel #email").val() + "<br/>";
+	if ($("div#vendorOrderPanel #email").val().length != 0) {
+   		additionalInfo = additionalInfo + "email: " + $("div#vendorOrderPanel #email").val() + "<br/>";
 	} else {
 		additionalInfo = additionalInfo.substring(0,additionalInfo.length-2) + "<br/>"//remove ", " and add line break if there isn't an email address 
 	}
-	customerInfo = $("div#orderPanel .customerAddress").reduce(customerInfo,addInfo); //reduce address fields to single piece of HTML
-	$("div#orderPanel #selectedCustomerDiv").html(customerInfo+additionalInfo); //populate customer div with customer information
+	customerInfo = $("div#vendorOrderPanel .customerAddress").reduce(customerInfo,addInfo); //reduce address fields to single piece of HTML
+	$("div#vendorOrderPanel #selectedCustomerDiv").html(customerInfo+additionalInfo); //populate customer div with customer information
 };
 
 order.popDelivery = function () { //pop delivery calculator div
-	$("div#orderPanel #deliveryZip").val($("div#orderPanel #zip").val()); //prepopulate with customer's zip
-	$("div#orderPanel #peak").attr("checked",false);
-	$("div#orderPanel #enterDeliveryZipDialog").dialog({ 
+	$("div#vendorOrderPanel #deliveryZip").val($("div#vendorOrderPanel #zip").val()); //prepopulate with customer's zip
+	$("div#vendorOrderPanel #peak").attr("checked",false);
+	$("div#vendorOrderPanel #enterDeliveryZipDialog").dialog({ 
 		modal: true, 
 		title: "Enter Delivery Zip to Calculate Fee and Tolls",
 		width: 400,
 		buttons: [ 
 			{ text: "Submit", click:function() { 
-				if (!($("div#orderPanel #enterDeliveryZipForm").validate().form())) {//validate form
-					$("div#orderPanel #incompleteDeliveryDialog").dialog({ modal: true });
+				if (!($("div#vendorOrderPanel #enterDeliveryZipForm").validate().form())) {//validate form
+					$("div#vendorOrderPanel #incompleteDeliveryDialog").dialog({ modal: true });
 					return;	
 				}			
-				order.requestDestinationData($("div#orderPanel #deliveryZip").val());
+				order.requestDestinationData($("div#vendorOrderPanel #deliveryZip").val());
 				$(this).dialog("close"); 
 			}}, 	
 				{ 
@@ -544,14 +544,14 @@ order.popDelivery = function () { //pop delivery calculator div
 };
 
 order.popEditCustomer = function (dialogTitle) { //pop up customer edit dialog box
-	$("div#orderPanel #customerDialog").dialog({ 
+	$("div#vendorOrderPanel #customerDialog").dialog({ 
 		modal: true,
 		title: dialogTitle,
 		width: 500,
 		buttons: [ { 
 			text: "Save", 
 			click: function() { 
-				$("div#orderPanel #confirmSaveDialog").dialog({ 
+				$("div#vendorOrderPanel #confirmSaveDialog").dialog({ 
 					modal: true, 
 					buttons: [ 
 						{ text: "Yes", click:function() { 
@@ -565,14 +565,14 @@ order.popEditCustomer = function (dialogTitle) { //pop up customer edit dialog b
 		{
 			text: "Cancel", 
 			click: function() {
-    			$("div#orderPanel #confirmCancelDialog").dialog({ 
+    			$("div#vendorOrderPanel #confirmCancelDialog").dialog({ 
         			modal: true, 
         			buttons: [ 
         				{ 
         					text: "Yes", 
         					click: function() { 
         						$(this).dialog("close");
-								$("div#orderPanel #customerDialog").dialog("close");
+								$("div#vendorOrderPanel #customerDialog").dialog("close");
 	        			}}, 	
     	    			{ 
         					text: "No", 
@@ -583,7 +583,7 @@ order.popEditCustomer = function (dialogTitle) { //pop up customer edit dialog b
 		{
 			text: "Clear", 
 			click: function() {
-	    		$("div#orderPanel #confirmClearDialog").dialog(
+	    		$("div#vendorOrderPanel #confirmClearDialog").dialog(
 	    			{ 
     	    			modal: true, 
         				buttons: [ 
@@ -603,12 +603,12 @@ order.popEditCustomer = function (dialogTitle) { //pop up customer edit dialog b
 };
 
 order.clearCustomer = function () { //clear customer data
-	$("div#orderPanel #customerForm input[type=text]").val("");
+	$("div#vendorOrderPanel #customerForm input[type=text]").val("");
 };
 
 order.validateAndSubmitCustomer = function () { //validate and submit customer dialog via ajax
-	if ((!($("div#orderPanel #customerForm").validate().form())) || (($("div#orderPanel #email").val().length == 0) && ($("div#orderPanel #phone").val().length == 0))) {//validate form
-		$("div#orderPanel #incompleteCustomerDialog").dialog({ modal: true });
+	if ((!($("div#vendorOrderPanel #customerForm").validate().form())) || (($("div#vendorOrderPanel #email").val().length == 0) && ($("div#vendorOrderPanel #phone").val().length == 0))) {//validate form
+		$("div#vendorOrderPanel #incompleteCustomerDialog").dialog({ modal: true });
 		return;	
 	}
     $.ajax({ //make ajax call to submit order
@@ -616,60 +616,60 @@ order.validateAndSubmitCustomer = function () { //validate and submit customer d
         cache: false,
         type: "post",  
         dataType: "json",      
-        data: $("div#orderPanel #customerForm").serialize(),
+        data: $("div#vendorOrderPanel #customerForm").serialize(),
         success: function( data ) { //order submission succeeded
         	order.populateCustomerDiv();
-        	$("div#orderPanel #custId").val(data.custId); //populate customer id on order form with correct customer id
-        	$("div#orderPanel #editCustomerButton").show();//show edit customer button
+        	$("div#vendorOrderPanel #custId").val(data.custId); //populate customer id on order form with correct customer id
+        	$("div#vendorOrderPanel #editCustomerButton").show();//show edit customer button
         	order.checkForShowSubmitButton();//see whether we should show submit button
         	order.checkForShowCancelButton(); //see whether we should show cancel button
         },
         error: function () { //order submission failed
-        	$("div#orderPanel #customerSubmissionFailedDialog").dialog({ modal: true }); //pop failure dialog
+        	$("div#vendorOrderPanel #customerSubmissionFailedDialog").dialog({ modal: true }); //pop failure dialog
         }
     });	
-	$("div#orderPanel #customerDialog").dialog("close");
+	$("div#vendorOrderPanel #customerDialog").dialog("close");
 };
 
 order.validateAndSubmit = function () { //validate form data and ajax submit to server
-	$("div#orderPanel #orderInfo").val($("div#orderPanel #orderItems tr:gt(0)").reduce("",order.extractItemData));//put table data into hidden field to be sent to server using reduce and function to pull each row's data
+	$("div#vendorOrderPanel #orderInfo").val($("div#vendorOrderPanel #orderItems tr:gt(0)").reduce("",order.extractItemData));//put table data into hidden field to be sent to server using reduce and function to pull each row's data
 	
     $.ajax({ //make ajax call to submit order
         url: "submitOrder",
         cache: false,
         type: "post",        
-        data: $("div#orderPanel #orderForm").serialize(),
+        data: $("div#vendorOrderPanel #orderForm").serialize(),
         success: function( data ) { //order submission succeeded
-        	$("div#orderPanel #orderSubmittedDialog").html("Order # " + data.orderId + " has been submitted. Estimated cost (minus any estimated/unavailable weights) is " + formatPrice(totalCost)+".").dialog({ modal: true }); //pop success dialog
-        	$("div#orderPanel #orderId").val(data.orderId); //set order id
+        	$("div#vendorOrderPanel #orderSubmittedDialog").html("Order # " + data.orderId + " has been submitted. Estimated cost (minus any estimated/unavailable weights) is " + formatPrice(totalCost)+".").dialog({ modal: true }); //pop success dialog
+        	$("div#vendorOrderPanel #orderId").val(data.orderId); //set order id
         },
         error: function () { //order submission failed
-        	$("div#orderPanel #orderSubmissionFailedDialog").dialog({ modal: true }); //pop failure dialog
+        	$("div#vendorOrderPanel #orderSubmissionFailedDialog").dialog({ modal: true }); //pop failure dialog
         }
     });
 };
 
 order.resetForm = function () {
-	$("div#orderPanel #orderItems tr:gt(0)").remove(); //empty order table except for header
-	$("div#orderPanel input[type=text]").val(""); //empty all fields
-	$("div#orderPanel #submitButton").hide();
-	$("div#orderPanel #editCustomerButton").hide();        	
-	$("div#orderPanel #selectedCustomerDiv").html("");
+	$("div#vendorOrderPanel #orderItems tr:gt(0)").remove(); //empty order table except for header
+	$("div#vendorOrderPanel input[type=text]").val(""); //empty all fields
+	$("div#vendorOrderPanel #submitButton").hide();
+	$("div#vendorOrderPanel #editCustomerButton").hide();        	
+	$("div#vendorOrderPanel #selectedCustomerDiv").html("");
 	//hide buttons
-    $("div#orderPanel #addButton").hide();
-    $("div#orderPanel #editCustomerButton").hide();
-    $("div#orderPanel #submitButton").button().hide();
-    $("div#orderPanel #enterDeliveryZipButton").hide();
+    $("div#vendorOrderPanel #addButton").hide();
+    $("div#vendorOrderPanel #editCustomerButton").hide();
+    $("div#vendorOrderPanel #submitButton").button().hide();
+    $("div#vendorOrderPanel #enterDeliveryZipButton").hide();
     //disable delivery fields
-    $("div#orderPanel #deliveryFee").attr("disabled","true");    
-    $("div#orderPanel #tollExpense").attr("disabled","true");    
-    $("div#orderPanel #orderId").val("0")   //set orderId to blank order
+    $("div#vendorOrderPanel #deliveryFee").attr("disabled","true");    
+    $("div#vendorOrderPanel #tollExpense").attr("disabled","true");    
+    $("div#vendorOrderPanel #orderId").val("0")   //set orderId to blank order
     order.defaultLabels(); //reset fieldset and panel labels
-    $("div#orderPanel #orderItems").hide(); //hide order item table since it's now empty
+    $("div#vendorOrderPanel #orderItems").hide(); //hide order item table since it's now empty
 };
 
 order.confirmCancel = function () { //confirm order cancelation
-		$("div#orderPanel #confirmCancelDialog").dialog({ 
+		$("div#vendorOrderPanel #confirmCancelDialog").dialog({ 
 			modal: true, 
 			buttons: [ 
 				{ text: "Yes", click:function() { 
@@ -682,20 +682,20 @@ order.confirmCancel = function () { //confirm order cancelation
 };
 
 order.cancelOrder = function () { //cancel order- submit to server if it is an existing order that must be updated in the database
-	if ($("div#orderPanel #orderId").val() == "0") {
+	if ($("div#vendorOrderPanel #orderId").val() == "0") {
 		order.resetForm();
 	}
     $.ajax({ //make ajax call to submit order
         url: "submitOrder",
         cache: false,
         type: "post",        
-        data: $("div#orderPanel #orderForm").serialize()+"&cancelled=" + encodeURIComponent("Cancelled"),//append cancelled parameter to form data
+        data: $("div#vendorOrderPanel #orderForm").serialize()+"&cancelled=" + encodeURIComponent("Cancelled"),//append cancelled parameter to form data
         success: function( data ) { //order submission succeeded
-        	$("div#orderPanel #orderSubmittedDialog").html("Order # " + data.orderId + " has been cancelled.").dialog({ modal: true }); //pop successful cancellation dialog
+        	$("div#vendorOrderPanel #orderSubmittedDialog").html("Order # " + data.orderId + " has been cancelled.").dialog({ modal: true }); //pop successful cancellation dialog
     		order.resetForm();        	
         },
         error: function () { //order submission failed
-        	$("div#orderPanel #orderCancellationFailedDialog").dialog({ modal: true }); //pop failure dialog
+        	$("div#vendorOrderPanel #orderCancellationFailedDialog").dialog({ modal: true }); //pop failure dialog
         }
     });
 };
@@ -711,7 +711,7 @@ order.extractItemData = function (string) {//retrieve data from row of order tab
 
 order.onlyNumbersAndDecimalPoint = function (event) { //only allow numbers to be entered in this text input
     if ( event.keyCode == 190 ) { //if the user pressed a decimal point
-    	if ($("div#orderPanel #"+event.target.id).val().indexOf(".") == -1) { //if we don't already have a decimal point in the number then allow it
+    	if ($("div#vendorOrderPanel #"+event.target.id).val().indexOf(".") == -1) { //if we don't already have a decimal point in the number then allow it
 			return true; //this may have affected value- changed 1 to .1, etc     	
     	} else { //we already have a decimal point, cancel keypress and return
     		event.preventDefault();
@@ -791,9 +791,9 @@ order.compareTime = function (time1, time2) { //get difference in seconds betwee
 order.populateDeliveryInfo = function (destinationInfo) {
 	if (destinationInfo.state == "NJ") { //determine delivery fee and toll based on distance, county, and state
 		//determine if this a peak time as tolls are different for peak and off-peak
-		var dateArray = $("div#orderPanel #deliveryDate").val().split("/"); //split date from deliveryDate field
+		var dateArray = $("div#vendorOrderPanel #deliveryDate").val().split("/"); //split date from deliveryDate field
 		var dayOfWeek = new Date(dateArray[2], dateArray[0]-1, dateArray[1]).getDay();
-		var deliveryTime = parseInt($("div#orderPanel #deliveryTime").val()); //get time from deliveryTime field
+		var deliveryTime = parseInt($("div#vendorOrderPanel #deliveryTime").val()); //get time from deliveryTime field
 		var peak = false;
 		if (dayOfWeek == 0 || dayOfWeek == 6) { //this is a weekend date 
 			if ((order.compareTime(deliveryTime,"10:00 AM")>0) && (order.compareTime("9:00 PM",deliveryTime)>0)) { // if delivery time is after 10AM in the morning and before 9PM in the evening
@@ -803,18 +803,18 @@ order.populateDeliveryInfo = function (destinationInfo) {
 					(order.compareTime(deliveryTime,"3:00 PM")>0) && (order.compareTime("8:00 PM",deliveryTime)>0)) { // or if delivery time is between 3PM and 8PM in the evening
 			peak = true;
 		}
-		$("div#orderPanel #deliveryFee").val(formatPrice(destinationInfo.distance * 2.5).substring(1)); 
+		$("div#vendorOrderPanel #deliveryFee").val(formatPrice(destinationInfo.distance * 2.5).substring(1)); 
 		if (peak == true) {
-			$("div#orderPanel #tollExpense").val(10.25);
+			$("div#vendorOrderPanel #tollExpense").val(10.25);
 		} else {
-			$("div#orderPanel #tollExpense").val(8.25);
+			$("div#vendorOrderPanel #tollExpense").val(8.25);
 		}
 	} else if (destinationInfo.County == "Queens County" || destinationInfo.County == "Nassau County" || destinationInfo.County == "Suffolk County" || destinationInfo.County == "Kings County") {
-		$("div#orderPanel #deliveryFee").val(formatPrice(destinationInfo.distance * 1.5).substring(1));
+		$("div#vendorOrderPanel #deliveryFee").val(formatPrice(destinationInfo.distance * 1.5).substring(1));
 	} else if (destinationInfo.County == "New York County") {
-		$("div#orderPanel #deliveryFee").val(formatPrice(destinationInfo.distance * 2.5).substring(1));		
+		$("div#vendorOrderPanel #deliveryFee").val(formatPrice(destinationInfo.distance * 2.5).substring(1));		
 	} else if (destinationInfo.County == "Bronx County" || destinationInfo.County == "Westchester County" || destinationInfo.County == "Richmond County") {
-		$("div#orderPanel #deliveryFee").val(formatPrice(destinationInfo.distance * 1.5).substring(1));
-		$("div#orderPanel #tollExpense").val(9.60);		
+		$("div#vendorOrderPanel #deliveryFee").val(formatPrice(destinationInfo.distance * 1.5).substring(1));
+		$("div#vendorOrderPanel #tollExpense").val(9.60);		
 	}
 };

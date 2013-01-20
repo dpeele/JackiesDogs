@@ -7,20 +7,21 @@ import javax.servlet.annotation.WebServlet;
 import org.apache.log4j.Logger;
 
 import java.io.*;
-import java.util.List;
+import java.util.*;
 
-import jackiesdogs.bean.Order;
-import jackiesdogs.bean.OrderSearchTerms;
+import jackiesdogs.bean.*;
+import jackiesdogs.dataAccess.CustomerUtility;
 import jackiesdogs.dataAccess.OrderUtility;
 import jackiesdogs.utility.*;
 
 import org.springframework.context.ApplicationContext;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 
-@WebServlet("/loadOrder")
-public class LoadOrder extends HttpServlet {
+@WebServlet("/loadVendorSearch")
+public class LoadVendorSearch extends HttpServlet {
 	
-	private OrderUtility orderUtility;	
+	private OrderUtility orderUtility;
+	private CustomerUtility customerUtility;	
 	
 	private final Logger log = Logger.getLogger(OrderSubmit.class);
 
@@ -31,24 +32,25 @@ public class LoadOrder extends HttpServlet {
 		super.init(servletConfig);		
 		applicationContext = WebApplicationContextUtils.getWebApplicationContext(servletConfig.getServletContext());			
 		orderUtility = (OrderUtility) applicationContext.getBean("orderUtility"); //lookup OrderUtility bean
+		customerUtility = (CustomerUtility) applicationContext.getBean("customerUtility"); //lookup CustomerUtility bean		
 	}		
 	
 	@Override
 	public void doGet (HttpServletRequest request, HttpServletResponse response)
 		throws ServletException, IOException {
-		
-		String orderId = ServletUtilities.getParameter(request, "orderId");
-		if (orderId != null && orderId.length() > 0) {
-			List<Order> orders = orderUtility.findOrders(new OrderSearchTerms(Integer.parseInt(orderId)));//there is an order number so load this order
-			if (orders.size() > 0) {
-				request.setAttribute("order",orders.get(1));
-			} else {
-				log.debug("No order returned for id: " + orderId);
-			}
+		int dayOffset = -21;
+		Calendar cal = GregorianCalendar.getInstance();
+		cal.add( Calendar.DAY_OF_YEAR, dayOffset);
+		Date startOrderDate = cal.getTime();		
+		OrderSearchTerms terms = new OrderSearchTerms();
+		terms.setStartOrderDate(startOrderDate);
+		List<VendorOrder> orders = orderUtility.findVendorOrders(terms);//get default list of orders
+		if (orders.size() > 0) {
+			request.setAttribute("orders",orders);
 		} else {
-			log.debug("No order id");
+			log.debug("No orders found");
 		}
-		RequestDispatcher dispatcher = request.getRequestDispatcher("/WEB-INF/forwards/order.jsp");
+		RequestDispatcher dispatcher = request.getRequestDispatcher("/WEB-INF/includes/vendorSearch.jsp");
 		dispatcher.forward(request, response);
 	}
 }

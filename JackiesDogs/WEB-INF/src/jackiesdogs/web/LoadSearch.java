@@ -60,7 +60,7 @@ public class LoadSearch extends HttpServlet {
 		} else {
 			log.debug("No orders found");
 		}
-		RequestDispatcher dispatcher = request.getRequestDispatcher("/WEB-INF/includes/search.jsp");
+		RequestDispatcher dispatcher = request.getRequestDispatcher("/WEB-INF/forwards/search.jsp");
 		dispatcher.forward(request, response);
 	}
 }

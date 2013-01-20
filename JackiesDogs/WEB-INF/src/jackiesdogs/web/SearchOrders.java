@@ -38,8 +38,8 @@ public class SearchOrders extends HttpServlet {
 		throws ServletException, IOException {
 		OrderSearchTerms terms = new OrderSearchTerms();
 		
-		terms.setCustomerIds(ServletUtilities.getParameterValues(request, "customerId")); //get list of customers to search on from request and put it into search term object
-		terms.setCustomerIds(ServletUtilities.getParameterValues(request, "statusId")); //get list of statuses to search on from request and put it into search term object
+		terms.setCustomerIds(ServletUtilities.getParameterValues(request, "customer")); //get list of customers to search on from request and put it into search term object
+		terms.setStatusIds(ServletUtilities.getParameterValues(request, "status")); //get list of statuses to search on from request and put it into search term object
 		Date startDate = ServletUtilities.getDateParameter(request, "startDate"); //get start date
 		if (startDate != null) {
 			terms.setStartOrderDate(startDate);
@@ -75,14 +75,14 @@ public class SearchOrders extends HttpServlet {
 			log.debug("No orders found");
 		}
 
-		RequestDispatcher dispatcher = request.getRequestDispatcher("/WEB-INF/includes/search.jsp");
+		RequestDispatcher dispatcher = request.getRequestDispatcher("/WEB-INF/forwards/search.jsp");
 		dispatcher.forward(request, response);
 	}
 	
 	@Override
 	public void doGet (HttpServletRequest request, HttpServletResponse response)
 		throws ServletException, IOException {	
-		RequestDispatcher dispatcher = request.getRequestDispatcher("/WEB-INF/includes/search.jsp");
+		RequestDispatcher dispatcher = request.getRequestDispatcher("/WEB-INF/forwards/search.jsp");
 		dispatcher.forward(request, response);
 	}
 }

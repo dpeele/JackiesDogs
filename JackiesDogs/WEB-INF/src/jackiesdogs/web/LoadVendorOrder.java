@@ -17,8 +17,8 @@ import jackiesdogs.utility.*;
 import org.springframework.context.ApplicationContext;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 
-@WebServlet("/loadOrder")
-public class LoadOrder extends HttpServlet {
+@WebServlet("/loadVendorOrder")
+public class LoadVendorOrder extends HttpServlet {
 	
 	private OrderUtility orderUtility;	
 	
@@ -39,7 +39,7 @@ public class LoadOrder extends HttpServlet {
 		
 		String orderId = ServletUtilities.getParameter(request, "orderId");
 		if (orderId != null && orderId.length() > 0) {
-			List<Order> orders = orderUtility.findOrders(new OrderSearchTerms(Integer.parseInt(orderId)));//there is an order number so load this order
+			List<VendorOrder> orders = orderUtility.findVendorOrders(new OrderSearchTerms(Integer.parseInt(orderId)));//there is an order number so load this order
 			if (orders.size() > 0) {
 				request.setAttribute("order",orders.get(1));
 			} else {

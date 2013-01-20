@@ -5,6 +5,7 @@ import java.util.*;
 public class OrderSearchTerms {
 	private List<Integer> customerIds;
 	private List<Integer> statusIds;
+	private List<Integer> vendorIds;	
 	private Date startOrderDate, endOrderDate; 
 	private String delivered, personal;
 	private int id;
@@ -21,6 +22,13 @@ public class OrderSearchTerms {
 	public OrderSearchTerms() {
 	}
 
+	public List<Integer> getVendorIds() {
+		return vendorIds;
+	}
+
+	public void setVendorIds(List<Integer> vendorIds) {
+		this.vendorIds = vendorIds;
+	}
 
 	public int getId() {
 		return id;

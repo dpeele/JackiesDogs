@@ -319,6 +319,7 @@ public class OrderUtilityImpl implements OrderUtility{
 				callableStatement.setNull(2,Types.DATE);
 				callableStatement.setNull(3,Types.DATE);
 				callableStatement.setNull(4,Types.VARCHAR);
+				callableStatement.setNull(5,Types.VARCHAR);				
 			} else {
 				callableStatement.setNull(1,Types.INTEGER);
 				java.util.Date startDate = terms.getStartOrderDate();
@@ -335,16 +336,29 @@ public class OrderUtilityImpl implements OrderUtility{
 				}
 				List<Integer> statusIds = terms.getStatusIds();
 				int statusSize = statusIds.size();
-				if (statusSize > 0) { //we need to filter by customerIds
+				if (statusSize > 0) { //we need to filter by status ids
 					String statusSet = "";					
-					for (int i=0; i<statusSize; i++) { //for each customer id, add "?, " to prepared statement and add customer id to where values
+					for (int i=0; i<statusSize; i++) { //for each status id
 						statusSet = statusSet+statusIds.get(i)+",";
 					}
 					statusSet = statusSet.substring(0,statusSet.length()-1); //remove final ","
-					callableStatement.setString(5,statusSet);
+					callableStatement.setString(4,statusSet);
+				} else {
+					callableStatement.setNull(4,Types.VARCHAR);
+				}
+				List<Integer> vendorIds = terms.getVendorIds();
+				int vendorSize = vendorIds.size();
+				if (vendorSize > 0) { //we need to filter by vendor ids
+					String vendorSet = "";					
+					for (int i=0; i<vendorSize; i++) { //for each vendor id
+						vendorSet = vendorSet+vendorIds.get(i)+",";
+					}
+					vendorSet = vendorSet.substring(0,vendorSet.length()-1); //remove final ","
+					callableStatement.setString(5,vendorSet);
 				} else {
 					callableStatement.setNull(5,Types.VARCHAR);
 				}							
+				
 			}									
 			hasResults = callableStatement.execute();
 			if (hasResults) {

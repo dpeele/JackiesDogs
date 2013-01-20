@@ -1,5 +1,7 @@
 $(function () { //onload
-	$("#panels").tabs(); //resize main body of page on window resize
+	$("#panels").tabs("option", { cache: true }); //set up main tabbed panel and cache urls	 
+	
+	//resize main body of page on window resize
     $(window).resize(function() {
         $("#panels").height($(window).height() - ($("#panels").offset().top + 60));
     });

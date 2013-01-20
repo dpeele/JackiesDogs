@@ -922,7 +922,6 @@ BEGIN
 			  , i.total_weight 
 			  , i.notes AS inventory_notes
 	FROM   		product p
-		      , inventory i
 		      , unit u1
 			  , unit u2
 			  , (	SELECT 		product_id
@@ -947,8 +946,9 @@ BEGIN
 							AND v.id = pg.vendor_type
 							AND pgc.category_id = c.id 
 					GROUP BY 	product_id, description, url, website_id, vendor_name) pc 
-	WHERE 		p.id=i.product_id 
-			AND p.bill_by_unit_id = u1.id 
+	LEFT JOIN   inventory i 
+			 ON p.id=i.product_id 
+	WHERE 		p.bill_by_unit_id = u1.id 
 			AND	p.order_by_unit_id = u2.id 
 			AND pc.product_id = p.id 
 			AND pi.product_id = p.id 
@@ -1470,6 +1470,7 @@ CREATE PROCEDURE vendor_order_info_retrieve
   , IN in_start_order_date DATETIME
   , IN in_end_order_date DATETIME
   , IN in_status_ids VARCHAR(256)
+  , IN in_vendor_ids VARCHAR(256)
 )
 BEGIN
 
@@ -1492,7 +1493,8 @@ BEGIN
 			AND	(in_id IS NULL OR id = in_id)
 			AND (in_start_order_date IS NULL OR order_date > in_start_order_date)
 			AND (in_end_order_date IS NULL OR order_date < in_end_order_date)
-			AND (in_status IS NULL OR status_id IN (in_status))
+			AND (in_status_ids IS NULL OR status_id IN (in_status_ids))
+			AND (in_vendor_ids IS NULL OR vendor_id IN (in_vendor_ids))
 	ORDER BY 	order_date;
 
 END
@@ -1505,19 +1507,19 @@ DELIMITER //
 CREATE PROCEDURE vendor_order_info_update 
 /*check to see if info exists for vendor order, if not insert record, if so, update record*/
 (
-	IN in_id INT
-  , IN in_order_date DATETIME
-  , IN in_delivery_date_time DATETIME
-  , IN in_discount INT
-  , IN in_credit FLOAT
-  , IN in_delivery_fee FLOAT
-  , IN in_toll_expense FLOAT
-  , IN in_mileage INT
-  , IN in_total_cost FLOAT
-  , IN in_vendor_status_id INT
-  , IN in_vendor_id INT
-  , IN in_notes VARCHAR (2048)
-  , IN in_delete_flag BOOLEAN
+		IN in_id INT
+	  , IN in_order_date DATETIME
+	  , IN in_delivery_date_time DATETIME
+	  , IN in_discount INT
+	  , IN in_credit FLOAT
+	  , IN in_delivery_fee FLOAT
+	  , IN in_toll_expense FLOAT
+	  , IN in_mileage INT
+	  , IN in_total_cost FLOAT
+	  , IN in_vendor_status_id INT
+	  , IN in_vendor_id INT
+	  , IN in_notes VARCHAR (2048)
+	  , IN in_delete_flag BOOLEAN
 )
 BEGIN
 

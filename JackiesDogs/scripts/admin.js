@@ -3,23 +3,23 @@ var admin = {};
 admin.onload = function () { //called onload of this panel
 
     $(window).resize(function() { //resize main body of form on window resize
-        $("#admin").height($(window).height() - ($("#admin").offset().top + 75));
-        $("#leftAdmin").height($(window).height() - ($("#admin").offset().top + 65));
-        $("#rightAdmin").height($(window).height() - ($("#admin").offset().top + 65));
+        $("div#adminPanel #admin").height($(window).height() - ($("div#adminPanel #admin").offset().top + 75));
+        $("div#adminPanel #leftAdmin").height($(window).height() - ($("div#adminPanel #admin").offset().top + 65));
+        $("div#adminPanel #rightAdmin").height($(window).height() - ($("div#adminPanel #admin").offset().top + 65));
     });
     $(window).resize();	
 	
     //dialogs
-	$("div.dialog").hide(); //set all dialog divs to not be visible
+	$("div#adminPanel div.dialog").hide(); //set all dialog divs to not be visible
 	
     //add class ui-widget to all text elements and set their name attribute = to their id attribute
-    $(":input").addClass("ui-widget").attr("name",$(this).attr("id"));
+    $("div#adminPanel :input").addClass("ui-widget").attr("name",$(this).attr("id"));
     
     //format buttons
-    $(":submit").button();
+    $("div#adminPanel :submit").button();
     
     //set up form for ajax submit
-    $("#adminForm").attr( "enctype", "multipart/form-data" ).attr( "encoding", "multipart/form-data" ).submit(admin.executeAdminTask);
+    $("div#adminPanel #adminForm").attr( "enctype", "multipart/form-data" ).attr( "encoding", "multipart/form-data" ).submit(admin.executeAdminTask);
 };
 
 admin.executeAdminTask = function () {
@@ -27,19 +27,19 @@ admin.executeAdminTask = function () {
 	var div;
 	var button = event.target;
     var buttonData = data + "&command=" + button.name
-	if ($("#"+button+"Input").val().length > 0) {
+	if ($("div#adminPanel #"+button+"Input").val().length > 0) {
 		$.ajax({
 			url: "admin",
 			dataType: "json",
 			cache: false,
 			type: "post",                
-			data: $("#adminForm").serialize()+buttonData,
+			data: $("div#adminPanel #adminForm").serialize()+buttonData,
 			success: function( data ) {
-				$("#adminTableDiv").html(data.reduce(order.extractTableData));	
+				$("div#adminPanel #adminTableDiv").html(data.reduce(order.extractTableData));	
 			}
 		});
 	} else {
-		$("#"+button+"Missing").dialog();
+		$("div#adminPanel #"+button+"Missing").dialog();
 	}
 };
 
