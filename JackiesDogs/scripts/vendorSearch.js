@@ -22,22 +22,22 @@ vendorSearch.onload = function () { //called onload of this panel
     $("div#vendorSearchPanel .checked").attr("checked","true");
     
     $("div#vendorSearchPanel #vendorStatus").attr("multiple","multiple").attr("size",7); //set status listbox to height of 7 and allow multiple selection
-    $("div#vendorSearchPanel #vendor").attr("multiple","multiple").attr("size",10); //set customer listbox to height of 10 and allow multiple selection
+    $("div#vendorSearchPanel #vendor").attr("multiple","multiple").attr("size",1); //set vendor listbox to height of 1 and allow multiple selection
     
     $("div#vendorSearchPanel :input").change(updateList)	
 	
 };
 
-vendorSearch.addItem = function (id,customerName,orderDate,deliveryDate,cost,status); { //add item to order
+vendorSearch.addItem = function (id,orderDate,deliveryDate,cost,status, vendorName); { //add item to order
 	if ($("div#vendorSearchPanel #vendorOrderDetails tr").length == 1) {
 		$("div#vendorSearchPanel #vendorOrderDetails tr").remove();
 		$("div#vendorSearchPanel #vendorOrderDetails").append("<tr>\n" +
 		    					"<th>ID</th>\n" +
-	        	   				"<th>Customer Name</th>\n" +
 		    	        		"<th>Order Date</th>\n" +
 		    	        		"<th>Delivery Date</th>\n" +
 		    	        		"<th>Total Price</th>\n" +
-		    	        		"<th>Order Status</th>\n" +		    	        
+		    	        		"<th>Order Status</th>\n" +
+		    	        		"<th>Vendor</th>\n" +			    	        		
 			        			"</tr>\n"; //replace headers for order table
 	}
 	
@@ -50,11 +50,11 @@ vendorSearch.addItem = function (id,customerName,orderDate,deliveryDate,cost,sta
 	}
 	$("div#vendorSearchPanel #vendorOrderDetails tr:last").after("<tr>\n" + //add row
 										"<td>"+ id +"</td>\n" +
-										"<td>" + customerName + "</td>\n" +
 										"<td>"+ orderDate +"</td>\n" +
 										"<td>" + deliveryDate + "</td>\n" +
 										"<td>" + cost +"</td>\n" +
 										"<td>" + status + "</td>\n" +
+										"<td>" + vendorName + "</td>\n" +										
 										"<td><input type='button' id='button" +	rowValue+"'/></td>\n" +
 									"</tr>\n");
 	
@@ -95,7 +95,7 @@ vendorSearch.updateList = function () {
 		data: $("div#vendorSearchPanel #vendorOrderSearchForm").serialize(),
 		success: function( data ) {
 			$.each( data.orders, function( item ) {                      	
-				vendorSearch.addItem(item.id, item.customer.fullName, item.orderDateFormatted, item.deliveryDateTimeFormatted, item.totalCost, item.status ); //add row to table for this order
+				vendorSearch.addItem(item.id, item.orderDateFormatted, item.deliveryDateTimeFormatted, item.totalCost, item.status, item.vendor ); //add row to table for this order
 				
 			});
 		}

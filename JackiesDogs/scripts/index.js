@@ -8,11 +8,76 @@ $(function () { //onload
     $(window).resize();	
 });
 
+//create order item object
+Item = function (id, quantity, weight, name, price, billBy, estimatedWeight, description, totalWeight, quantityAvailable, productId) {
+	this.id = id; 
+	this.quantity = quantity; 
+	this. weight = parseFloat(weight); 
+	this.name = name; 
+	this.price = formatPrice(price); 
+	this.billBy = billBy; 
+	if (estimatedWeight == 0) {
+		this.estimatedWeight = 1;
+	} else {
+		this.estimatedWeight = estimatedWeight;
+	}
+	this.description = description;
+	this.totalWeight = totalWeight;
+	this.quantityAvailable = quantityAvailable;
+	this.productId = productId;
+	this.removed = false;
+	this.estimated = (this.isByThePound() && this.weight == 0) ? true : false;
+};
+//add methods
+Item.prototype.remove() {
+	this.removed = true;
+};
+Item.prototype.isRemoved() {
+	return(this.removed);
+};
+Item.prototype.isByThePound() {
+	if (this.billBy == "Pound") {
+		return (true);
+	}
+	return (false);
+};
+Item.prototype.isEstimate() {
+	return this.estimated;
+};
+Item.prototype.getFormattedPrice() {
+	var formatttedPrice = "$"+this.price;        	
+	if (this.isByThePound()) {
+		formattedPrice = formattedPrice+"/lb";
+	}	
+	return formattedPrice;
+};
+Item.prototype.getFormattedTotalPrice() {
+	var formattedPrice = "$" + this.getUnformattedTotalPrice();
+	if (this.isEstimate()) {
+		formattedPrice = formattedPrice + " (est)"
+	}
+	return (formattedPrice);
+};
+Item.prototype.getUnformattedTotalPrice() {
+	if (this.isByThePound()) { //priced by the pound but not an estimate
+		return (formatPrice(this.weight * this.price));
+	} else { //not priced by the pound
+		return (formatPrice(this.quantity * this.price));
+	}
+};
+Item.prototype.getFormattedQuantityAndWeight() {
+	if (this.isByThePound()) {
+		return (quantity + " (" + weight + "lbs)");
+	} else {
+		return (quantity);
+	}
+};
+
 formatPrice = function (n) {//format price with dollar sign and correct decimal places
 	 
 	   var int = parseInt(n = Math.abs(n).toFixed(c)) + ''; //generate whole dollar part of price 
 	   
-	   return ("$" + int + "." + Math.abs(n - i).toFixed(c).slice(2)); //return prices
+	   return (int + "." + Math.abs(n - i).toFixed(c).slice(2)); //return prices
 };
 
 if (!Array.prototype.reduce) //if it doesn't already exist, add reduce function to array object
@@ -58,12 +123,3 @@ if (!Array.prototype.reduce) //if it doesn't already exist, add reduce function 
     return rv;
   };
 }
-
-(function( $ ) { //jquery reduce function
-	$.fn.reduce = function(valueInitial, fnReduce) {
-		jQuery.each( $(this), function(i, value) {
-			valueInitial = fnReduce.apply(value, [valueInitial, i, value]);
-		});
-		return valueInitial;
-	};
-})( jQuery );

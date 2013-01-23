@@ -8,7 +8,7 @@ public class Order {
 	private List<OrderItem> orderItems;
 	private Date orderDate, deliveryDateTime; 
 	private String id, deliveryAddress, deliveryPhone, status, notes;
-	private double credit, deliveryFee, tollExpense, totalCost, changeDue;
+	private double credit, deliveryFee, tollExpense, totalCost, changeDue, totalWeight;
 	private boolean delivered, personal;
 	private int discount;
 	
@@ -53,7 +53,7 @@ public class Order {
 			Date orderDate, Date deliveryDateTime, String deliveryAddress,
 			String deliveryPhone, String status, String notes,
 			int discount, double credit, double deliveryFee,
-			double tollExpense, double totalCost, double changeDue,
+			double tollExpense, double totalCost, double totalWeight, double changeDue,
 			boolean delivered, boolean personal) {
 		this.id = id;
 		this.customer = customer;
@@ -69,6 +69,7 @@ public class Order {
 		this.deliveryFee = deliveryFee;
 		this.tollExpense = tollExpense;
 		this.totalCost = totalCost;
+		this.totalWeight = totalWeight;			
 		this.changeDue = changeDue;
 		this.delivered = delivered;
 		this.personal = personal;
@@ -77,7 +78,7 @@ public class Order {
 	public Order(String id, Date orderDate, Date deliveryDateTime,
 			String deliveryAddress, String deliveryPhone, String status,
 			String notes, int discount, double credit, double deliveryFee,
-			double tollExpense, double totalCost, double changeDue,
+			double tollExpense, double totalCost, double totalWeight, double changeDue,
 			boolean delivered, boolean personal) {
 		this.id = id;
 		this.orderDate = orderDate;
@@ -91,6 +92,7 @@ public class Order {
 		this.deliveryFee = deliveryFee;
 		this.tollExpense = tollExpense;
 		this.totalCost = totalCost;
+		this.totalWeight = totalWeight;		
 		this.changeDue = changeDue;
 		this.delivered = delivered;
 		this.personal = personal;		
@@ -99,7 +101,7 @@ public class Order {
 	public Order(Date orderDate, Date deliveryDateTime, String deliveryAddress,
 			String deliveryPhone, String status, String notes,
 			int discount, double credit, double deliveryFee,
-			double tollExpense, double totalCost, double changeDue,
+			double tollExpense, double totalCost, double totalWeight, double changeDue,
 			boolean delivered, boolean personal) {
 		this.orderDate = orderDate;
 		this.deliveryDateTime = deliveryDateTime;
@@ -112,6 +114,7 @@ public class Order {
 		this.deliveryFee = deliveryFee;
 		this.tollExpense = tollExpense;
 		this.totalCost = totalCost;
+		this.totalWeight = totalWeight;		
 		this.changeDue = changeDue;
 		this.delivered = delivered;
 		this.personal = personal;				
@@ -138,6 +141,14 @@ public class Order {
 		this.totalCost = totalCost;
 		this.changeDue = changeDue;
 		this.delivered = delivered;
+	}
+
+	public double getTotalWeight() {
+		return totalWeight;
+	}
+
+	public void setTotalWeight(double totalWeight) {
+		this.totalWeight = totalWeight;
 	}
 
 	public boolean isPersonal() {

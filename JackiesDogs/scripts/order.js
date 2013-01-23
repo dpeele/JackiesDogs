@@ -12,7 +12,10 @@ order.blankCustomer = {
     zip: "",
     phone: "",
     email: "",
-    custId: "0"};                                    
+    custId: "0"};     
+
+order.currentItem = null; //the current item selected by the user
+order.orderItems = []; //the current list of items in this order
 
 order.onload = function () { //called onload of this panel
 	 
@@ -171,7 +174,7 @@ order.onload = function () { //called onload of this panel
     }).bind("focus",function(){$(this).trigger('keydown.autocomplete');});//force autocomplete to open with just new customer entry on focus 
 
     //product autocomplete
-    $( "#item" ).autocomplete({ //look up product based on name or id
+    $("div#orderPanel #item").autocomplete({ //look up product based on name or id
         source: function( request, response ) {
             $.ajax({
                 url: "productLookup",                
@@ -197,7 +200,8 @@ order.onload = function () { //called onload of this panel
                     		id: item.id,
                     		productName: item.productName + "(" + item.billBy + ")",
                     		description: item.description,
-                    		quantity: item.inventory.quantity,
+                    		quantity: item.inventory.quantity-item.inventory.reservedQuantity,
+                    		totalWeight: item.inventory.totalWeight-item.inventory.reservedWeight,
                     		price: item.price,
                     		billBy: item.billBy, 
                     		estimatedWeight: item.estimatedWeight,    
@@ -215,13 +219,22 @@ order.onload = function () { //called onload of this panel
         	}
         },
         select: function (event, ui) {
-        	$("div#orderPanel #itemId").val(ui.item.id);
-        	$("div#orderPanel #price").val(ui.item.price);
-        	$("div#orderPanel #quantityAvailable").val(ui.item.quantity);
-        	$("div#orderPanel #item").val(ui.item.productName);
-    		$("div#orderPanel #billBy").val(ui.item.billBy); 
-    		$("div#orderPanel #estimatedWeight").val(ui.item.estimatedWeight);             
-    		$("div#orderPanel #description").val(ui.item.description);
+        	order.currentItem = new Item(0, 0, 0, ui.item.productName, ui.item.price, ui.item.billBy, ui.item.estimatedWeight, ui.item.description, ui.item.totalWeight, ui.item.quantity, ui.item.id);
+        	$("div#orderPanel #price").val(order.getFormattedPrice());
+        	$("div#orderPanel #quantityAvailable").val(order.currentItem.quantityAvailable);
+        	$("div#orderPanel #item").val(order.currentItem.name);
+        	var estimatedWeight = order.currentItem.estimatedWeight;
+        	if (estimated == 1) {
+        		estimatedWeight = estimatedWeight + " lb";
+        	} else {
+        		estimatedWeight = estimatedWeight + " lbs";
+        	}
+    		$("div#orderPanel #estimatedWeight").val(estimatedWeight);             
+    		if (order.currentItem.description.length > 0) { //add tooltip to table row if description exists
+    			$(".item").simpletip({  
+    				content: order.currentItem.description,
+    				fixed: true
+    			});
     		order.checkForShowAddButton();//see whether we should show add button
         },        
         minLength: 2,
@@ -248,7 +261,7 @@ order.checkForShowCancelButton = function () {
 };
 
 order.checkForShowAddButton = function () {
-	if (($("div#orderPanel #itemId").val().length > 0) && ($("div#orderPanel #quantity").val().length > 0)) {
+	if ($("div#orderPanel #item").val().length > 0) {
 		$("div#orderPanel #addButton").show();
 	}
 };
@@ -262,14 +275,16 @@ order.setFinalCost = function () {
 
 order.setFloatValue = function (value, name) { //if the float value isn't zero, set field name to formatted value
 	if (parseFloat(value != 0)) {
-		$("div#orderPanel #"+name).val(formatPrice(value).substring(1));
+		$("div#orderPanel #"+name).val(formatPrice(value));
 	}
 }
 
-order.setValues = function (id,deliveryDate,deliveryTime,discount,credit,deliveryFee,tollExpense,totalCost,status,changeDue,delivered,personal) {
+order.setValues = function (id,deliveryDate,deliveryTime,discount,credit,deliveryFee,tollExpense,totalCost,totalWeight,status,changeDue,delivered,personal) {
 	var totalFoodCost = totalCost + ((totalCost / 100) * discount);  //add food discount to order total
 	totalFoodCost = totalCost + credit - deliveryFee - tollExpense; //subtract other costs and add credit to order total to give us the total of just the food
-	$("div#orderPanel #totalCost").val(totalFoodCost); //set total food cost	
+	$("div#orderPanel #totalCost").val($+formatPrice(totalFoodCost)); //set total food cost
+	$("div#orderPanel #totalWeight").val(totalWeight)); //set total weight	
+	$("div#orderPanel #finalCost").val(formatPrice(totalCost)); //set total food cost		
 	if (parseInt(credit) != 0) { //if there is a credit
 		$("div#orderPanel #credit").val(credit);
 	}
@@ -323,82 +338,42 @@ order.checkQuantity = function () { //check quantity ordered vs quantity in stoc
 	}
 };
 
-order.addItem = function (id, quantity, weight, itemId, name, price, billBy, estimatedWeight, description) { //add item to order
+order.addItem = function (item,index) { //add item to order
 	if ($("div#orderPanel #orderItems tr").length == 1) {
 		$("div#orderPanel #orderItems").show();
 	}
-	var totalItemPrice;
-	var estimate;
-	var byThePound;
-	if (arguments.length == 0) {//not an existing item
-		id=0;
-		billBy=$("div#orderPanel #billBy").val();
-		quantity=$("div#orderPanel #quantity").val();
-		price=$("div#orderPanel #price").val();
-		estimatedWeight=$("div#orderPanel #estimatedWeight").val();
-		itemId=$("div#orderPanel #itemId").val();
-		name=$("div#orderPanel #item").val();
-		description=$("div#orderPanel #description").val();
-	}
-	
-	if (billBy == "Pound") {//if price is per pound, estimate weight and use this to determine estimated total price  
-		byThePound = true;
-		if (parseFloat(weight) == 0) { //no exact weight, use estimatedWeight		
-			estimate=true;
-			totalItemPrice = quantity*price*estimatedWeight;
-		} else { //exact weight is available 
-			totalItemPrice = price*weight;
-		}
-	} else {
-		totalItemPrice = quantity*price; //current total price
-	}
-
-	var rowValue = $('#orderItems tr').length+1;//row number to add
-		
-	var formattedtotalCost = formatPrice(totalItemPrice);
-
-	if (estimate) { //add indicator that this is an estimated price if applicable
-		formattedtotalCost = formattedtotalCost + " (est)";
+	if (arguments.length == 0) {//item not passed so we are adding the current item selected from the product list to the end of the list of order items		
+		item = order.currentItem;
+		item.quantity = $("div#orderPanel #quantity").val();		
+		item.weight = parseFloat(item.quantity * item.estimatedWeight);
+		index = order.orderItems.length;	
+		order.orderItems.push(item);
+		order.currentItem = {};
 	}
 	$("div#orderPanel #orderItems tr:last").after("<tr>\n" + //add row
-										"<td>"+itemId+"</td>\n" +
-										"<td id='dbIdTd"+rowValue+"'><input type='text'/></td>\n" +
-										"<td>"+name+"</td>\n" +
-										"<td><input type='text' id='quantity"+rowValue+"'/></td>\n" +
-										"<td>" + formatPrice(price)+"</td>\n" +
-										"<td id='totalItemPrice"+rowValue+"'>" + formattedtotalCost + "</td>\n" +
-										"<td><input type='button' id='button" +	rowValue+"'/></td>\n" +
-										"<td id='removedTd"+rowValue+"'><input type='text' id='removed"+rowValue+"'/></td>\n" +
+										"<td id='index"+index+"'>"+index+"</td>\n" +
+										"<td>"+item.productId+"</td>\n" +
+										"<td>"+item.name+"</td>\n" +
+										"<td><input type='text' id='quantity"+index+"' value='"+item.getFormattedQuantityAndWeight()+"'/>"</td>\n" +
+										"<td>"+item.getFormattedPrice()+"</td>\n" +
+										"<td id='totalItemPrice"+index+"'>"+item.getFormattedTotalPrice() + "</td>\n" +
+										"<td><input type='button' id='button"+index+"'/></td>\n" +
 									"</tr>\n");
 		
-	$("div#orderPanel #removedTd"+rowValue).hide(); //hide td holding field to indicate whether or not row has been hidden
-	$("div#orderPanel #")
-	$("div#orderPanel #dbIdTd"+rowValue).hide().find(":text").val(id); //hide td holding field and set dbId inside
-	$("div#orderPanel #totalItemPriceUnformatted"+rowValue).css("display","none"); //hide field to store unformatted total price
-		
-	if (description.length > 0) { //add tooltip to table row if description exists
+	$("div#orderPanel #quantity"+index).css("width","100px") //set width of quantity input
+	$("div#orderPanel #index"+index).hide(); //hide td holding index		
+	if (item.description.length > 0) { //add tooltip to table row if description exists
 		$("div#orderPanel #orderItems tr:last").simpletip({  
 			content: description,
 			fixed: true
 		});
 	}	
 		
-	if (byThePound ) { //priced by the pound, add focus event handler to pop up estimated dialog and handle that
-		if (estimate) {
-			$("div#orderPanel #quantity"+rowValue).val(quantity+" (" + quantity*estimatedWeight + "lbs)");//estimate weight from quantity
-		} else {
-			$("div#orderPanel #quantity"+rowValue).val(quantity+" (" + weight + "lbs)");//use exact weight
-		}
-		$("div#orderPanel #quantity"+rowValue).focus(function() {
-			var exactQuantity = $("div#orderPanel #quantity"+rowValue).val();
-			var exactWeight = "";
-			var start = quantity.indexOf(" ("); //location of front parenthesis if it exists
-			if (start != -1) { //front parenthesis exists and we have an exact weight for this item
-				exactWeight = exactQuantity.substring(start+2, exactQuantity.indexOf("lbs)")); //strip out weight
-				exactQuantity = exactQuantity.substring(0,start); //strip out quantity	
-			}
-			$("div#orderPanel #exactQuantity").val(exactQuantity);//set initial quantity value in dialog to value from table row
-			$("div#orderPanel #exactWeight").val(exactWeight);//set initial weight value in dialog to value from table row
+	if (item.isByThePound()) { //priced by the pound, add focus event handler to pop up estimated dialog and handle that
+		$("div#orderPanel #quantity"+index).focus(function() {
+			$("div#orderPanel #exactQuantity").val(item.quantity);//set initial quantity value in dialog to value from table row
+			var oldWeight = item.weight; //get old weight
+			$("div#orderPanel #exactWeight").val(oldWeight);//set initial weight value in dialog to value from table row
 			$("div#orderPanel #editPoundQuantityDialog").dialog({ 
 				modal: true, 
 				title: "Enter Exact Weight",
@@ -408,20 +383,26 @@ order.addItem = function (id, quantity, weight, itemId, name, price, billBy, est
 						if (!($("div#orderPanel #exactQuantityForm").validate().form()) || $("div#orderPanel #exactWeight").val()==".") {//validate form
 							$("div#orderPanel #incompletePoundQuantityDialog").dialog({ modal: true });
 							return;	
-						}																			
-						$("div#orderPanel #quantity"+rowValue).val($("div#orderPanel #exactQuantity").val()+" (" + $("div#orderPanel #exactWeight").val() + "lbs)");
-						var exacttotalCost= formatPrice(parseFloat($("div#orderPanel #exactWeight").val()) * $("div#orderPanel #price").val());
-						var exacttotalCostNumeric = exacttotalCost.substring(1);
-						var totalItemPriceNumeric;
-						var index = $("div#orderPanel #totalItemPrice"+rowValue).html().indexOf(" (est)");
-						if (index == -1) {
-							totalItemPriceNumeric = $("div#orderPanel #totalItemPrice"+rowValue).html().substring(1);
-						} else {
-							totalItemPriceNumeric = $("div#orderPanel #totalItemPrice"+rowValue).html().substring(1,index);
-						}
-						$("div#orderPanel #totalCost").val(formatPrice(parseFloat($("div#orderPanel #totalCost").val().substring(1))-totalItemPriceNumeric+exacttotalCostNumeric));//update total
-						$("div#orderPanel #totalItemPrice"+rowValue).html(exacttotalCost);
-						$("div#orderPanel #totalItemPriceUnformatted"+rowValue).val(exacttotalCostNumeric);
+						}		
+						item.estimated = false;
+						// remove weight of this item from total weight and add in new weight
+						var totalWeight = parseFloat($("div#orderPanel #totalWeight").val());
+						//get old cost for item
+						var oldCost = item.getUnformattedTotalPrice();
+						// set weight of this item to new weight
+						item.weight = parseFloat($("div#orderPanel #exactWeight").val());
+						//set weight in item table
+						$("div#orderPanel #totalWeight").val(totalWeight - oldWeight + item.weight);
+						// set quantity of this item to new quantity
+						item.quantity = $("div#orderPanel #exactQuantity").val();
+						//set quantity in item table
+						$("div#orderPanel #quantity"+index).val(item.getFormattedQuantityAndWeight());
+						//get previous total food cost
+						var totalCost = parseFloat($("div#orderPanel #totalCost").val();
+						//get new cost for item
+						var newCost = item.getUnformattedTotalPrice();
+						$("div#orderPanel #totalCost").val("$"+formatPrice(totalCost-oldCost+newCost));//update total
+						$("div#orderPanel #totalItemPrice"+index).html(item.getFormattedTotalPrice());
 						$(this).dialog("close");
 					}}, 	
 						{ 
@@ -430,50 +411,72 @@ order.addItem = function (id, quantity, weight, itemId, name, price, billBy, est
 								$(this).dialog("close"); 
 			}}]});
 		});	
-	} else { //not estimate, add keydown handler and adjust price as they type
-		$("div#orderPanel #quantity"+rowValue).val(quantity).css("width","100px"); //set quantity
-		$("div#orderPanel #quantity"+rowValue).keydown(function(event){ //add keydown event handler to quantity text box to allow 
-														 //only numbers and a decimal point and update price on quantity change			
+	} else { //not estimate, set width and add keydown handler and adjust price as they type
+		$("div#orderPanel #quantity"+index).keydown(function(event){ //add keydown event handler to quantity text box to allow 
+			//only numbers and a decimal point and update price on quantity change
 			if(order.onlyNumbers(event)) {//value may have changed, update total price
-				var totalItemPriceNumeric = $("div#orderPanel #totalItemPrice"+rowValue).html().substring(1);			
-				if ($("div#orderPanel #quantity"+rowValue).val().length == 0) { //no quantity
-					$("div#orderPanel #totalCost").val(formatPrice(parseFloat($("div#orderPanel #totalCost").val().substring(1))-totalItemPriceNumeric));//update total
-					$("div#orderPanel #totalItemPrice"+rowValue).html("$0.00");
-				} else {//handle new >0 quantity
-					var exacttotalCost= formatPrice(parseFloat($("div#orderPanel #quantity"+rowValue).val()) * $("div#orderPanel #price").val());
-					var exacttotalCostNumeric = exacttotalCost.substring(1);						
-					$("div#orderPanel #totalCost").val(formatPrice(parseFloat($("div#orderPanel #totalCost").val().substring(1))-totalItemPriceNumeric+exacttotalCostNumeric));//update total
-					$("div#orderPanel #totalItemPrice"+rowValue).html(exacttotalCost);					
-				}
+				// remove weight of this item from total weight and add in new weight
+				var totalWeight = parseFloat($("div#orderPanel #totalWeight").val());
+				//get old weight
+				var oldWeight = item.weight;
+				//get old cost for item
+				var oldCost = item.getUnformattedTotalPrice();
+				// set quantity of this item to new quantity
+				item.quantity = $("div#orderPanel #quantity"+index).val();
+				// set weight of this item to new weight
+				item.weight = parseFloat(item.quantity * item.estimatedWeight);
+				//set weight in item table
+				$("div#orderPanel #totalWeight").val(totalWeight - oldWeight + item.weight);
+				//get previous total food cost
+				var totalCost = parseFloat($("div#orderPanel #totalCost").val();
+				//get new cost for item
+				var newCost = item.getUnformattedTotalPrice();
+				$("div#orderPanel #totalCost").val("$"+formatPrice(totalCost-oldCost+newCost));//update total
+				$("div#orderPanel #totalItemPrice"+index).html(item.getFormattedTotalPrice());
 			}
 		});	
 	}
 				            			
-	$("div#orderPanel #button"+rowValue).button().attr("value","Remove").click(function(){ //add click event handler to remove button for this row
-		var totalItemPriceNumeric;
-		var index = $("div#orderPanel #totalItemPrice"+rowValue).html().indexOf(" (est)");
-		if (index == -1) {
-			totalItemPriceNumeric = $("div#orderPanel #totalItemPrice"+rowValue).html().substring(1);
-		} else {
-			totalItemPriceNumeric = $("div#orderPanel #totalItemPrice"+rowValue).html().substring(1,index);
-		}
-		$("div#orderPanel #totalCost").val(formatPrice(parseFloat($("div#orderPanel #totalCost").val().substring(1))-totalItemPriceNumeric));//update total
+	$("div#orderPanel #button"+index).button().attr("value","Remove").click(function(){ //add click event handler to remove button for this row
 		$(this).closest('tr').hide();  //remove row
 		$("div#orderPanel #removed"+rowValue).val("true");
-		if ($("div#orderPanel #orderItems tr").length == 1) {
+		if ($("div#orderPanel #orderItems tr").length == 1) { //hide table if it's empty
 			$("div#orderPanel #orderItems").hide();
-		}		
+		}	
+		//get weight for item
+		var weight = item.weight;
+		//get cost for item
+		var cost = item.getUnformattedTotalPrice();
+		//get total weight 
+		var totalWeight = parseFloat($("div#orderPanel #totalWeight").val());
+		//get total cost
+		var totalCost = parseFloat($("div#orderPanel #totalCost").val();
+		//remove cost of this item from total food cost
+		$("div#orderPanel #totalCost").val("$"+formatPrice(totalCost - cost));//update total
+		// remove weight of this item from total weight
+		$("div#orderPanel #totalWeight").val(totalWeight-weight);
+		item.remove();//set remove flag of item in array
 	});//remove item from order
-
 	$("div#orderPanel .item").val(""); //reset item fields
 	$("div#orderPanel #addButton").hide();
 	order.checkForShowSubmitButton(); //see whether we should show submit button
 	order.checkForShowCancelButton(); //see whether we should show cancel button
-	if ($("div#orderPanel #totalCost").val() != "") { // update total price
-		$("div#orderPanel #totalCost").val(formatPrice(parseFloat($("div#orderPanel #totalCost").val().substring(1))+totalItemPrice));
-	} else {
-		$("div#orderPanel #totalCost").val(formatPrice(totalItemPrice));
-	}
+	
+	if ($("div#orderPanel #totalCost").val() != "") { // update total price and weight
+		//get total cost
+		var totalCost = parseFloat($("div#orderPanel #totalCost").val();
+		//get total weight 
+		var totalWeight = parseFloat($("div#orderPanel #totalWeight").val());
+		//get cost for item
+		var cost = item.getUnformattedTotalPrice();
+		//get weight for item
+		var weight = item.weight;
+		$("div#orderPanel #totalCost").val("$"+formatPrice(totalCost+cost));
+		$("div#orderPanel #totalWeight").val(totalWeight+item.weight);
+	} else { //set price and weight
+		$("div#orderPanel #totalCost").val(item.getformattedTotalPrice());
+		$("div#orderPanel #totalWeight").val(item.weight);
+	}	
 };
 
 order.populateCustomer = function(item) { //populate customer dialog fields from json object
@@ -516,7 +519,7 @@ order.populateCustomerDiv = function() { //populate customer div from customer d
 	} else {
 		additionalInfo = additionalInfo.substring(0,additionalInfo.length-2) + "<br/>"//remove ", " and add line break if there isn't an email address 
 	}
-	customerInfo = $("div#orderPanel .customerAddress").reduce(customerInfo,addInfo); //reduce address fields to single piece of HTML
+	customerInfo = $("div#orderPanel .customerAddress").reduce(order.addInfo, customerInfo); //reduce address fields to single piece of HTML
 	$("div#orderPanel #selectedCustomerDiv").html(customerInfo+additionalInfo); //populate customer div with customer information
 };
 
@@ -551,7 +554,7 @@ order.popEditCustomer = function (dialogTitle) { //pop up customer edit dialog b
 		buttons: [ { 
 			text: "Save", 
 			click: function() { 
-				$("div#orderPanel #confirmSaveDialog").dialog({ 
+				$("div#orderPanel #confirmCustomerSaveDialog").dialog({ 
 					modal: true, 
 					buttons: [ 
 						{ text: "Yes", click:function() { 
@@ -565,7 +568,7 @@ order.popEditCustomer = function (dialogTitle) { //pop up customer edit dialog b
 		{
 			text: "Cancel", 
 			click: function() {
-    			$("div#orderPanel #confirmCancelDialog").dialog({ 
+    			$("div#orderPanel #confirmCustomerCancelDialog").dialog({ 
         			modal: true, 
         			buttons: [ 
         				{ 
@@ -632,7 +635,7 @@ order.validateAndSubmitCustomer = function () { //validate and submit customer d
 };
 
 order.validateAndSubmit = function () { //validate form data and ajax submit to server
-	$("div#orderPanel #orderInfo").val($("div#orderPanel #orderItems tr:gt(0)").reduce("",order.extractItemData));//put table data into hidden field to be sent to server using reduce and function to pull each row's data
+	$("div#orderPanel #orderInfo").val($("div#orderPanel #orderItems tr:gt(0)").reduce(order.extractItemData));//put table data into hidden field to be sent to server using reduce and function to pull each row's data
 	
     $.ajax({ //make ajax call to submit order
         url: "submitOrder",
@@ -640,7 +643,7 @@ order.validateAndSubmit = function () { //validate form data and ajax submit to 
         type: "post",        
         data: $("div#orderPanel #orderForm").serialize(),
         success: function( data ) { //order submission succeeded
-        	$("div#orderPanel #orderSubmittedDialog").html("Order # " + data.orderId + " has been submitted. Estimated cost (minus any estimated/unavailable weights) is " + formatPrice(totalCost)+".").dialog({ modal: true }); //pop success dialog
+        	$("div#orderPanel #orderSubmittedDialog").html("Order # " + data.orderId + " has been submitted. Estimated cost (minus any estimated/unavailable weights) is $" + formatPrice(totalCost)+".").dialog({ modal: true }); //pop success dialog
         	$("div#orderPanel #orderId").val(data.orderId); //set order id
         },
         error: function () { //order submission failed
@@ -651,14 +654,12 @@ order.validateAndSubmit = function () { //validate form data and ajax submit to 
 
 order.resetForm = function () {
 	$("div#orderPanel #orderItems tr:gt(0)").remove(); //empty order table except for header
-	$("div#orderPanel input[type=text]").val(""); //empty all fields
-	$("div#orderPanel #submitButton").hide();
-	$("div#orderPanel #editCustomerButton").hide();        	
+	$("div#orderPanel input[type=text]").val(""); //empty all fields    	
 	$("div#orderPanel #selectedCustomerDiv").html("");
 	//hide buttons
     $("div#orderPanel #addButton").hide();
     $("div#orderPanel #editCustomerButton").hide();
-    $("div#orderPanel #submitButton").button().hide();
+    $("div#orderPanel #submitButton").hide();
     $("div#orderPanel #enterDeliveryZipButton").hide();
     //disable delivery fields
     $("div#orderPanel #deliveryFee").attr("disabled","true");    
@@ -803,18 +804,18 @@ order.populateDeliveryInfo = function (destinationInfo) {
 					(order.compareTime(deliveryTime,"3:00 PM")>0) && (order.compareTime("8:00 PM",deliveryTime)>0)) { // or if delivery time is between 3PM and 8PM in the evening
 			peak = true;
 		}
-		$("div#orderPanel #deliveryFee").val(formatPrice(destinationInfo.distance * 2.5).substring(1)); 
+		$("div#orderPanel #deliveryFee").val(formatPrice(destinationInfo.distance * 2.5)); 
 		if (peak == true) {
 			$("div#orderPanel #tollExpense").val(10.25);
 		} else {
 			$("div#orderPanel #tollExpense").val(8.25);
 		}
 	} else if (destinationInfo.County == "Queens County" || destinationInfo.County == "Nassau County" || destinationInfo.County == "Suffolk County" || destinationInfo.County == "Kings County") {
-		$("div#orderPanel #deliveryFee").val(formatPrice(destinationInfo.distance * 1.5).substring(1));
+		$("div#orderPanel #deliveryFee").val(formatPrice(destinationInfo.distance * 1.5));
 	} else if (destinationInfo.County == "New York County") {
-		$("div#orderPanel #deliveryFee").val(formatPrice(destinationInfo.distance * 2.5).substring(1));		
+		$("div#orderPanel #deliveryFee").val(formatPrice(destinationInfo.distance * 2.5));		
 	} else if (destinationInfo.County == "Bronx County" || destinationInfo.County == "Westchester County" || destinationInfo.County == "Richmond County") {
-		$("div#orderPanel #deliveryFee").val(formatPrice(destinationInfo.distance * 1.5).substring(1));
+		$("div#orderPanel #deliveryFee").val(formatPrice(destinationInfo.distance * 1.5));
 		$("div#orderPanel #tollExpense").val(9.60);		
 	}
 };

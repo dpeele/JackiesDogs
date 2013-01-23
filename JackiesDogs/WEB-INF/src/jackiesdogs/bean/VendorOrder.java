@@ -1,12 +1,13 @@
 package jackiesdogs.bean;
 
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class VendorOrder {
 	private String id, status, notes, vendor; 
 	private Date orderDate, deliveryDate;
 	private int discount, mileage;
-	private double credit, deliveryFee, tollExpense, totalCost;
+	private double credit, deliveryFee, tollExpense, totalCost, totalWeight;
 	private List<VendorInventory> vendorInventoryItems;
 	
 	public static Map<String,Integer> STATUS = new HashMap<String,Integer>();	
@@ -20,7 +21,7 @@ public class VendorOrder {
 	public VendorOrder(String id, Date orderDate, Date deliveryDate,
 			String status, String vendor, String notes, int discount,
 			double credit, int mileage, double deliveryFee, double tollExpense,
-			double totalCost) {
+			double totalCost, double totalWeight) {
 		this.id = id;
 		this.orderDate = orderDate;
 		this.deliveryDate = deliveryDate;
@@ -33,7 +34,26 @@ public class VendorOrder {
 		this.deliveryFee = deliveryFee;
 		this.tollExpense = tollExpense;
 		this.totalCost = totalCost;
+		this.totalWeight = totalWeight;		
 	}
+	
+	public VendorOrder(Date orderDate, Date deliveryDate,
+			String status, String vendor, String notes, int discount,
+			double credit, int mileage, double deliveryFee, double tollExpense,
+			double totalCost, double totalWeight) {
+		this.orderDate = orderDate;
+		this.deliveryDate = deliveryDate;
+		this.status = status;
+		this.vendor = vendor;
+		this.notes = notes;
+		this.discount = discount;
+		this.credit = credit;
+		this.mileage = mileage;
+		this.deliveryFee = deliveryFee;
+		this.tollExpense = tollExpense;
+		this.totalCost = totalCost;
+		this.totalWeight = totalWeight;		
+	}	
 
 	public VendorOrder(String id, String status, Date orderDate,
 			Date deliveryDate, int discount, int mileage, double credit,
@@ -59,7 +79,24 @@ public class VendorOrder {
 		this.totalCost = totalCost;
 		this.vendor = vendor;
 	}
+
+	public VendorOrder(double totalWeight, double totalCost, String vendor, List<VendorInventory> vendorInventoryItems) {
+
+		this.totalWeight = totalWeight;
+		this.totalCost = totalCost;
+		this.vendor = vendor;
+		this.orderDate = new Date();
+		this.vendorInventoryItems = vendorInventoryItems;
+	}	
 	
+	public double getTotalWeight() {
+		return totalWeight;
+	}
+
+	public void setTotalWeight(double totalWeight) {
+		this.totalWeight = totalWeight;
+	}
+
 	public List<VendorInventory> getVendorInventoryItems() {
 		return vendorInventoryItems;
 	}
@@ -163,4 +200,12 @@ public class VendorOrder {
 	public void setTotalCost(double totalCost) {
 		this.totalCost = totalCost;
 	}
+
+	public String getDeliveryDateFormatted() {
+		return new SimpleDateFormat("MM/d/yyyy", Locale.ENGLISH).format(deliveryDate);
+	}
+	
+	public String getOrderDateFormatted() {
+		return new SimpleDateFormat("MM/d/yyyy", Locale.ENGLISH).format(orderDate);
+	}	
 }

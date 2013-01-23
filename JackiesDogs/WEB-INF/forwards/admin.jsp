@@ -11,9 +11,9 @@
 </script>
 	<div id="adminPanel">
 		<fieldset id="admin">
+			<legend id="adminLegend" class="ui-widget-header">Administrative Functions:</legend>	
 			<div id="holder">		
 			<div id="leftAdmin">
-			<legend id="adminLegend" class="ui-widget-header">Administration Functions:</legend>	
 			<form id="adminForm">
 			<label for="pricelist">Upload Omas Price List:</label>
 			<input type="file" id="pricelistInput"/>

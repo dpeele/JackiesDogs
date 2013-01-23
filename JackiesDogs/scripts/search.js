@@ -21,11 +21,43 @@ search.onload = function () { //called onload of this panel
     //check prechecked checkboxes
     $("div#searchPanel .checked").attr("checked","true");
     
+    //select elements
     $("div#searchPanel #status").attr("multiple","multiple").attr("size",7); //set status listbox to height of 7 and allow multiple selection
     $("div#searchPanel #customer").attr("multiple","multiple").attr("size",10); //set customer listbox to height of 10 and allow multiple selection
+    $("div#searchPanel #vendor").change(vendorOrder.toggleVendorOrderCreation());
     
-    $("div#searchPanel :input").change(updateList)	
+    $("div#searchPanel form#customerOrderSearchForm :input").change(updateList)
+    
+	$("div#searchPanel #vendorOrderButton").button().attr("value","Generate").click(function () { //on click confirm and then create new vendor order based off of this list of orders		
+		$("div#searchPanel #confirmVendorOrderCreateDialog").dialog({ 
+			modal: true, 
+			buttons: [ 
+			    { text: "Continue", click:function() { 
+			    	var queryString = $("div#searchPanel #orderDetails tr:gt(0)").reduce(search.extractOrderId);
+			    	queryString = queryString + "vendorTypeId=" + $("div#searchPanel #vendor").val();
+			    	$(this).dialog("close");
+			        $("#orderAnchor").attr("href",$("#vendorOrderAnchor").attr("href")+"?"+escape(queryString)); //set query string of vendor order entry screen url appropriately
+			        $("#panels").tabs("option", "load", 2); //load the data into that panel
+			        $("#panels").tabs("option", "select", 2); //select that panel			        
+			}, 	
+			    { text: "Cancel", click:function() {        					 
+			    	$(this).dialog( "close" ); 
+		}}]});
+	});
 	
+};
+
+search.extractOrderId = function (string) {//retrieve data from row of order table and add it to string
+return (string+"customerOrderId="+$(this).find(":nth-child(1)").text()+"&");
+	}
+};
+
+vendorOrder.toggleVendorOrderLookup = function () {
+	if $("div#vendorOrderPanel #vendor option:selected").length) { //an option has been selected
+		$("div#vendorOrderPanel #vendorOrderButton).removeAttr("disabled");		
+	} else { //otherwise no vendor has been selected so we disable vendor order creation button
+		$("div#vendorOrderPanel #vendorOrderButton).attr("disabled", "disabled"); 
+	}
 };
 
 search.addItem = function (id,customerName,orderDate,deliveryDate,cost,status); { //add item to order
@@ -68,21 +100,32 @@ search.addItem = function (id,customerName,orderDate,deliveryDate,cost,status); 
 			        $("#orderAnchor").attr("href",$("#orderAnchor").attr("href")+"?"+escape("orderId="+id)); //set url of order entry screen to appropriate id
 			        $("#panels").tabs("option", "load", 0); //load the data into that panel
 			        $("#panels").tabs("option", "select", 0); //select that panel			        
-			}}, 	
+			}, 	
 			    { text: "Cancel", click:function() {        					 
 			    	$(this).dialog( "close" ); 
 		}}]});
 	});
 
 	$("div#searchPanel #button"+rowValue).button().attr("value","Remove").click(function(){ //add click event handler to remove button for this row
-		$(this).closest('tr').remove();  //hide row
-		if ($("div#searchPanel #orderDetails tr").length == 1) {
-			$("div#searchPanel #orderDetails tr").remove(); //no orders, only header- remove and 
-			$("div#searchPanel #orderDetails").append("<tr>\n" +
-			    					"<th colspan='6'>No orders match your search</th>\n" +		    	        
-				        			"</tr>\n"; //replace headers for order table
-
-		}		
+		$("div#searchPanel #orderDetails tr:last").click(function () { //on click of row, confirm and then remove row
+			var id = $(this).find(":nth-child(1)").val(); 
+			$("div#searchPanel #confirmOrderRemoveDialog").dialog({ 
+				modal: true, 
+				buttons: [ 
+				    { text: "Continue", click:function() { 
+				    	$(this).dialog("close");
+						$(this).closest('tr').remove();  //hide row
+						if ($("div#searchPanel #orderDetails tr").length == 1) {
+							$("div#searchPanel #orderDetails tr").remove(); //no orders, only header- remove and 
+							$("div#searchPanel #orderDetails").append("<tr>\n" +
+							    					"<th colspan='6'>No orders match your search</th>\n" +		    	        
+								        			"</tr>\n"; //replace headers for order table
+						}						
+					}}, 	
+				    { text: "Cancel", click:function() {        					 
+				    	$(this).dialog( "close" ); 
+			}}]});
+		});
 	});//remove item from order
 };
 

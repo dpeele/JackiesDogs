@@ -19,7 +19,9 @@ public class OrderUtilityImpl implements OrderUtility{
 	
 	private final String findOrderSql = "{CALL order_info_retrieve (?, ?, ?, ?, ?, ?, ?)}";
 	
-	private final String findVendorOrderSql = "{CALL vendor_order_info_retrieve (?, ?, ?, ?)}";	
+	private final String findVendorOrderSql = "{CALL vendor_order_info_retrieve (?, ?, ?, ?)}";
+	
+	private final String generateVendorOrderSql = "{CALL generate_vendor_order(?, ?)}";		
 	
 	private final String updateOrderSql = "{CALL order_info_update(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}";
 	
@@ -133,6 +135,7 @@ public class OrderUtilityImpl implements OrderUtility{
 										  resultSet.getDouble("delivery_fee"),
 										  resultSet.getDouble("toll_expense"),
 										  resultSet.getDouble("total_cost"),
+										  resultSet.getDouble("total_weight"),										  
 										  resultSet.getDouble("change_due"),										 
 										  resultSet.getBoolean("delivered"),
 										  resultSet.getBoolean("personal"));
@@ -225,12 +228,13 @@ public class OrderUtilityImpl implements OrderUtility{
 				callableStatement.setNull(9, Types.FLOAT);
 				callableStatement.setNull(10, Types.FLOAT);
 				callableStatement.setNull(11, Types.FLOAT);
-				callableStatement.setNull(12, Types.INTEGER);
-				callableStatement.setNull(13, Types.FLOAT);
-				callableStatement.setNull(14, Types.INTEGER);
-				callableStatement.setNull(15, Types.VARCHAR);
-				callableStatement.setNull(16, Types.INTEGER);			
-				callableStatement.setByte(17, (byte)1);
+				callableStatement.setNull(12, Types.FLOAT);				
+				callableStatement.setNull(13, Types.INTEGER);
+				callableStatement.setNull(14, Types.FLOAT);
+				callableStatement.setNull(15, Types.INTEGER);
+				callableStatement.setNull(16, Types.VARCHAR);
+				callableStatement.setNull(17, Types.INTEGER);			
+				callableStatement.setByte(18, (byte)1);
 			} else {
 				callableStatement.setDate(2, new java.sql.Date(order.getOrderDate().getTime()));
 				callableStatement.setInt(3, Integer.parseInt(order.getCustomer().getId()));
@@ -242,12 +246,13 @@ public class OrderUtilityImpl implements OrderUtility{
 				callableStatement.setDouble(9, order.getDeliveryFee());
 				callableStatement.setDouble(10, order.getTollExpense());
 				callableStatement.setDouble(11, order.getTotalCost());
-				callableStatement.setInt(12, Order.STATUS.get(order.getStatus()));
-				callableStatement.setDouble(13, order.getChangeDue());
-				callableStatement.setByte(14, order.isDelivered()? (byte)1 : (byte)0);
-				callableStatement.setString(15, order.getNotes());
-				callableStatement.setByte(16, order.isPersonal()? (byte)1 : (byte)0);		
-				callableStatement.setByte(17, (byte)0);			
+				callableStatement.setDouble(12, order.getTotalWeight());				
+				callableStatement.setInt(13, Order.STATUS.get(order.getStatus()));
+				callableStatement.setDouble(14, order.getChangeDue());
+				callableStatement.setByte(15, order.isDelivered()? (byte)1 : (byte)0);
+				callableStatement.setString(16, order.getNotes());
+				callableStatement.setByte(17, order.isPersonal()? (byte)1 : (byte)0);		
+				callableStatement.setByte(18, (byte)0);			
 			}
 			hasResults = callableStatement.execute();
 			if (hasResults) {
@@ -299,6 +304,87 @@ public class OrderUtilityImpl implements OrderUtility{
 		}
 		return order;
 	}		
+	
+	public VendorOrder generateVendorOrder (List<Integer> orderIds, int vendorTypeId) {
+		Connection connection = null;
+		CallableStatement callableStatement = null;
+		ResultSet resultSet = null;
+		VendorOrder vendorOrder = null;
+		List<VendorInventory> vendorInventoryItems = new ArrayList<VendorInventory>();		
+		boolean hasResults;
+		double totalCost = 0;
+		double totalWeight = 0;
+		double cost = 0;
+		double weight = 0;		
+		
+		try {			
+			connection = dataSource.getConnection(); //get connection from dataSource
+			connection.setTransactionIsolation(Connection.TRANSACTION_REPEATABLE_READ); //prevent dirty reads, phantom reads, and nonrepeatable reads
+			callableStatement = connection.prepareCall(generateVendorOrderSql); //prepare callable statement
+			int orderSize = orderIds.size();			
+			if (orderSize > 0) { //we have order ids to generate order from
+				String orderSet = "";					
+				for (int i=0; i<orderSize; i++) { //for each order id
+					orderSet = orderSet+orderIds.get(i)+",";
+				}
+				orderSet = orderSet.substring(0,orderSet.length()-1); //remove final ","
+				callableStatement.setString(1,orderSet);
+			} else {
+				log.error("No order ids passed.");
+				return null;
+			}			
+			if (vendorTypeId != 0) {
+				callableStatement.setInt(2,vendorTypeId);
+			} else {
+				log.error("No vendor type id passed.");
+				return null;
+			}
+			hasResults = callableStatement.execute();
+			if (hasResults) {
+				resultSet = callableStatement.getResultSet();
+				if (resultSet.isBeforeFirst()) {
+					while (resultSet.next()) {
+						cost = resultSet.getDouble("cost");
+						weight = resultSet.getDouble("weight");
+						totalCost = totalCost + cost;
+						totalWeight = totalWeight + weight;
+						vendorInventoryItems.add(new VendorInventory(new Product(resultSet.getString("product_id"),
+																				 resultSet.getString("product_name"),
+																				 resultSet.getString("vendor_id")),
+																	 resultSet.getInt("quantity"), weight, cost));
+					}
+					vendorOrder = new VendorOrder (totalWeight, totalCost, new ArrayList<String>(ProductGroup.VENDORS.keySet()).get(vendorTypeId-1), vendorInventoryItems);
+				} else {
+					throw new SQLException ("Unable to create vendor order.");
+				} 
+			} else {
+				throw new SQLException ("Unable to create vendor order.");
+			}
+		} catch (SQLException se) {
+			log.error ("SQL error: " + se);
+			return null;
+		} finally {
+			try {
+				resultSet.close();
+			} catch (Exception se) {
+				log.error("Unable to close resultSet: " + se);
+				se.printStackTrace();
+			}
+			try {
+				callableStatement.close();
+			} catch (Exception se) {
+				log.error("Unable to close callableStatement: " + se);
+				se.printStackTrace();
+			}							
+			try {
+				connection.close();
+			} catch (Exception se) {
+				log.error("Unable to close connection: " + se);
+				se.printStackTrace();
+			}			
+		}
+		return vendorOrder;		
+	}
 
 	public List<VendorOrder> findVendorOrders (OrderSearchTerms terms) {
 		List<VendorOrder> vendorOrders = new ArrayList<VendorOrder>();
@@ -378,7 +464,8 @@ public class OrderUtilityImpl implements OrderUtility{
 										  resultSet.getInt("mileage"),
 										  resultSet.getDouble("delivery_fee"),
 										  resultSet.getDouble("toll_expense"),
-										  resultSet.getDouble("total_cost"));
+										  resultSet.getDouble("total_cost"),
+										  resultSet.getDouble("total_weight"));
 						vendorInventoryItems = null;
 						if (id != 0) {
 							vendorInventoryItems = productUtility.findVendorInventoryByOrderId(id);
@@ -447,10 +534,11 @@ public class OrderUtilityImpl implements OrderUtility{
 				callableStatement.setNull(7, Types.FLOAT);
 				callableStatement.setNull(8, Types.INTEGER);
 				callableStatement.setNull(9, Types.FLOAT);
-				callableStatement.setNull(10, Types.INTEGER);
-				callableStatement.setNull(11, Types.INTEGER);				
-				callableStatement.setNull(12, Types.VARCHAR);			
-				callableStatement.setByte(13, (byte)1);
+				callableStatement.setNull(10, Types.FLOAT);				
+				callableStatement.setNull(11, Types.INTEGER);
+				callableStatement.setNull(12, Types.INTEGER);				
+				callableStatement.setNull(13, Types.VARCHAR);			
+				callableStatement.setByte(14, (byte)1);
 			} else {			
 				callableStatement.setDate(2, new java.sql.Date(vendorOrder.getOrderDate().getTime()));
 				callableStatement.setDate(3, new java.sql.Date(vendorOrder.getDeliveryDate().getTime()));
@@ -460,10 +548,11 @@ public class OrderUtilityImpl implements OrderUtility{
 				callableStatement.setDouble(7, vendorOrder.getTollExpense());
 				callableStatement.setInt(8, vendorOrder.getMileage());			
 				callableStatement.setDouble(9, vendorOrder.getTotalCost());
-				callableStatement.setInt(10, VendorOrder.STATUS.get(vendorOrder.getStatus()));
-				callableStatement.setInt(11, ProductGroup.VENDORS.get(vendorOrder.getVendor()));
-				callableStatement.setString(12, vendorOrder.getNotes());
-				callableStatement.setByte(13, (byte)0);
+				callableStatement.setDouble(10, vendorOrder.getTotalWeight());				
+				callableStatement.setInt(11, VendorOrder.STATUS.get(vendorOrder.getStatus()));
+				callableStatement.setInt(12, ProductGroup.VENDORS.get(vendorOrder.getVendor()));
+				callableStatement.setString(13, vendorOrder.getNotes());
+				callableStatement.setByte(14, (byte)0);
 			}
 			hasResults = callableStatement.execute();
 			if (hasResults) {

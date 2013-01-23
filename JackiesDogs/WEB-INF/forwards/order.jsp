@@ -1,5 +1,5 @@
 <%@ page import="java.util.*" %>
-<%@ page import="jackiesdogs.utility.*" %>
+<%@ page import="jackiesdogs.bean.*" %>
 <%@ page import="java.text.SimpleDateFormat" %>
 <%response.setHeader("Pragma","no-cache");
   response.setHeader("Cache-Control","no-cache");
@@ -15,7 +15,7 @@
 				String deliveryDate = new SimpleDateFormat("MM/d/yyyy", Locale.ENGLISH).format(deliveryDateTime); //convert date/time to date string
 				String deliveryTime = new SimpleDateFormat("h:mm a", Locale.ENGLISH).format(deliveryDateTime); //convert date/time to time string
 		%>
-		order.setValues("<%=order.getId()%>","<%=deliveryDate%>","<%=deliveryTime%>","<%=order.getDiscount()%>","<%=order.getCredit()%>","<%=order.getDeliveryFee()%>","<%=order.getTollExpense()%>","<%=order.getTotalCost()%>","<%=order.getStatus()%>","<%=order.getChangeDue()%>","<%=order.isDelivered()%>","<%=order.isPersonal()%>");
+		order.setValues("<%=order.getId()%>","<%=deliveryDate%>","<%=deliveryTime%>","<%=order.getDiscount()%>","<%=order.getCredit()%>","<%=order.getDeliveryFee()%>","<%=order.getTollExpense()%>","<%=order.getTotalCost()%>","<%=order.getTotalWeight()%>","<%=order.getStatus()%>","<%=order.getChangeDue()%>","<%=order.isDelivered()%>","<%=order.isPersonal()%>");
 		<%
 				List<OrderItem> orderItems = order.getOrderItems();
 				Customer customer = order.getCustomer();
@@ -39,9 +39,9 @@
 </script>
 	<div id="orderPanel">
 		<fieldset id="details">
+			<legend id="orderLegend" class="ui-widget-header">Enter Information:</legend>	
 			<div id="holderOrder" class="holder">		
 			<div id="leftOrder">
-			<legend id="orderLegend" class="ui-widget-header">Enter Information:</legend>	
 			<label for="customerLookup">Lookup Customer: </label> 
 			<input type="text" id="customerLookup"/>
 			<div id="selectedCustomerDiv"></div>
@@ -53,12 +53,11 @@
 			<input type="text" id="quantityAvailable" class="readOnly item"/>
 			<br/>										
 			<label for="item">Select Item:</label> 
-			<input type="text" id="item" class="item"/>
-			<input type="text" id="itemId" class="hidden item"/>
-			<input type="text" id="billBy" class="hidden item"/>
-			<input type="text" id="estimatedWeight" class="hidden item"/>
-			<input type="text" id="description" class="hidden item"/>
-			<input type="text" id="price" class="hidden item"/>
+			<input type="text" id="item" class="item"/>		
+			<label for="estimatedWeight">Estimated Weight:</label>	
+			<input type="text" id="estimatedWeight" class="item"/>
+			<label for="price">Price:</label>				
+			<input type="text" id="price" class="item"/>
 			<input type="Button" id="addButton"/>	
 			<hr/>				
 			<form id="orderForm">		
@@ -66,6 +65,8 @@
 			<input type="text" id="totalCost" class="total readOnly cost"/>	
 			<label for="finalCost">Total Cost:</label>		
 			<input type="text" id="finalCost" class="total readOnly"/>
+			<label for="totalWeight">Total Weight:</label>		
+			<input type="text" id="totalWeight" class="readOnly"/>lbs			
 			<input type="text" id="custId" class="required hidden"/>	
 			<input type="text" id="orderId" class="hidden"/>				
 			<input type="text" id="orderInfo" class="hidden"/>	
@@ -133,8 +134,8 @@
 		<div id="orderCancelledDialog" class="dialog"></div>
 		<div id="orderCancellationFailedDialog" class="dialog">The order cancellation failed, please contact the admin.</div>		
 		<div id="customerSubmissionFailedDialog" class="dialog">The customer submission failed, please contact the admin.</div>		
-		<div id="confirmCancelDialog" class="dialog">Are you sure you want to cancel?</div>
-		<div id="confirmSaveDialog" class="dialog">Are you sure you want to save customer?</div>	
+		<div id="confirmCustomerCancelDialog" class="dialog">Are you sure you want to cancel?</div>
+		<div id="confirmCustomerSaveDialog" class="dialog">Are you sure you want to save customer?</div>	
 		<div id="confirmCancelDialog" class="dialog">Are you sure you want to cancel order?</div>			
 		<div id="quantityOverrideDialog" class="dialog">Quantity ordered is more than quantity in stock.</div>	
 		<div id="editPoundQuantityDialog" class="dialog">

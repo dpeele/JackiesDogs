@@ -1,6 +1,7 @@
 package jackiesdogs.dataAccess;
 
 import jackiesdogs.bean.*;
+
 import java.util.*;
 import java.sql.*;
 
@@ -9,6 +10,8 @@ public interface OrderUtility {
 	public List<Order> findOrders (OrderSearchTerms terms);
 	
 	public Order updateOrder (Order order);
+	
+	public VendorOrder generateVendorOrder (List<Integer> orderIds, int vendorTypeId);
 	
 	public List<VendorOrder> findVendorOrders (OrderSearchTerms terms);
 	

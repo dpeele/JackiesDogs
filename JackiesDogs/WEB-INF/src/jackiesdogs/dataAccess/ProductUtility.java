@@ -11,7 +11,7 @@ import java.sql.*;
 
 public interface ProductUtility {
 	
-	public List<Product> findProducts (String id, String match, int limit);
+	public List<Product> findProducts (String id, String match, int limit, String vendorTypeId);
 	
 	public Product updateProduct (Product product);		
 	

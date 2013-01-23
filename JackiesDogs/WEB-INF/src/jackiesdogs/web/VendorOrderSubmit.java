@@ -23,10 +23,10 @@ public class VendorOrderSubmit extends HttpServlet {
 	
 	private final Logger log = Logger.getLogger(VendorOrderSubmit.class);
 	
-	private List<OrderItem> retrieveOrderItems(String data) {
+	private List<VendorInventory> retrieveVendorInventoryItems(String data) {
 		String[] items = data.split(">"); //split data into order items
-		List<OrderItem> orderItems = new ArrayList<OrderItem>();
-		OrderItem orderItem;
+		List<VendorInventory> orderItems = new ArrayList<VendorInventory>();
+		VendorInventory orderItem;
 		for (String item : items) {//each item
 			if (item.length() == 0) {
 				continue;
@@ -41,9 +41,9 @@ public class VendorOrderSubmit extends HttpServlet {
 			if (start != -1) { //front parenthesis exists and we have an exact weight for this item
 				weight = quantity.substring(start+2, quantity.indexOf("lbs)")); //strip out weight
 				quantity = quantity.substring(0,start); //strip out quantity
-				orderItem = new OrderItem(Integer.parseInt(quantity),Double.parseDouble(weight),new Product(id));
+				orderItem = new VendorInventory(Integer.parseInt(quantity),Double.parseDouble(weight),new Product(id));
 			} else {
-				orderItem = new OrderItem(Integer.parseInt(quantity),new Product(id));
+				orderItem = new VendorInventory(Integer.parseInt(quantity),new Product(id));
 			}
 			if (!dbId.equals("0")) {
 				orderItem.setId(dbId);
@@ -88,30 +88,19 @@ public class VendorOrderSubmit extends HttpServlet {
 		String deliveryDateString = ServletUtilities.getParameter(request, "deliveryDate");			
 		String orderInfo = ServletUtilities.getParameter(request, "orderInfo");
 		int discount = ServletUtilities.getIntParameter(request, "discount");
+		int mileage = ServletUtilities.getIntParameter(request, "mileage");
+		int vendor = ServletUtilities.getIntParameter(request, "vendor");		
 		double credit = ServletUtilities.getDoubleParameter(request, "credit");
 		double deliveryFee = ServletUtilities.getDoubleParameter(request, "deliveryFee");
 		double tollExpense = ServletUtilities.getDoubleParameter(request, "tollExpense");
 		String status = ServletUtilities.getParameter(request, "status");
-		double changeDue = ServletUtilities.getDoubleParameter(request, "changeDue");
-		String deliveredString = ServletUtilities.getParameter(request, "delivered");
-		String personalString = ServletUtilities.getParameter(request, "personal");		
 		double totalCost = ServletUtilities.getDoubleParameter(request, "finalCost");
-		String deliveryTimeString = ServletUtilities.getParameter(request, "deliveryTime");
-		List<OrderItem> orderItems = retrieveOrderItems(orderInfo);
-		
-		boolean delivered = false;
-		if (deliveredString.length() > 0) {
-			delivered = true;
-		}		
-		boolean personal = false;
-		if (personalString.length() > 0) {
-			personal = true;
-		}						
-		
-		VendorOrder order = new VendorOrder(new Date(),ServletUtilities.getDateFromString(deliveryDateString+" "+deliveryTimeString),"","",status,"",discount,
-				credit,deliveryFee,tollExpense,totalCost,changeDue,delivered, personal);		
-		order.setOrderItems(orderItems);
-		order.setCustomer(new Customer(custId));
+		double totalWeight = ServletUtilities.getDoubleParameter(request, "totalWeight");		
+		List<VendorInventory> orderItems = retrieveVendorInventoryItems(orderInfo);
+				
+		VendorOrder order = new VendorOrder(new Date(),ServletUtilities.getDateFromString(deliveryDateString),status,new ArrayList<String>(ProductGroup.VENDORS.keySet()).get(vendor-1),"",discount,
+				credit,mileage,deliveryFee,tollExpense,totalCost,totalWeight);		
+		order.setVendorInventoryItems(orderItems);
 		if (orderId.equals("0")) {
 			order = orderUtility.updateVendorOrder(order); //insert order and return new id
 			orderId = order.getId();
@@ -119,7 +108,7 @@ public class VendorOrderSubmit extends HttpServlet {
 			order.setId(orderId);
 			order = orderUtility.updateVendorOrder(order); //insert order and return new id
 			if (order == null) {
-				log.error ("Unable to update customer with id: " + orderId); //error, no records updated
+				log.error ("Unable to update vendor order with id: " + orderId); //error, no records updated
 				return;
 			}
 		}

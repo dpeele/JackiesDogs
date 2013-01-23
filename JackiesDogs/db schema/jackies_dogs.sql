@@ -185,6 +185,7 @@ CREATE TABLE vendor_order_info /* table to store info for each vendor order sent
   , toll_expense FLOAT
   , mileage INT
   , total_cost FLOAT
+  , total_weight FLOAT
   , vendor_status_id INT
   , vendor_id INT
   , change_due FLOAT
@@ -232,8 +233,8 @@ CREATE TABLE inventory /*table to store inventory in stock*/
   , quantity INT NOT NULL
   , total_weight INT NOT NULL
   , cost FLOAT NOT NULL
-  , special_quantity INT NOT NULL
-  , special_cost FLOAT NOT NULL
+  , reserved_quantity INT NOT NULL
+  , reserved_weight FLOAT NOT NULL
   , notes VARCHAR(2048)
   , last_modified_date DATETIME
 	
@@ -260,6 +261,7 @@ CREATE TABLE order_info /* table to store info for each order*/
   , delivery_fee FLOAT
   , toll_expense FLOAT
   , total_cost FLOAT
+  , total_weight FLOAT
   , status_id INT
   , change_due FLOAT
   , delivered BOOLEAN
@@ -784,10 +786,10 @@ BEGIN
 	IF in_id IS NOT NULL THEN
 
 		UPDATE 	inventory 
-		SET 	special_quantity = in_special_quantity + quantity
+		SET 	reserved_quantity = in_special_quantity + quantity
 			  , quantity = quantity + in_quantity
 			  , total_weight = in_total_weight
-			  , special_cost = cost
+			  , reserved_weight = cost
 			  , cost = in_cost
 			  , notes = in_notes
 			  , last_modified_date = NOW()
@@ -896,6 +898,7 @@ CREATE PROCEDURE product_retrieve
 	IN in_id INT
   , IN in_match VARCHAR(32)
   , IN in_limit INT
+  , IN in_vendor_type_id INT
 )
 BEGIN
 
@@ -916,9 +919,9 @@ BEGIN
 			  , u2.unit_name AS order_by_unit_name
 			  , i.id AS inventory_id
 			  , i.quantity
-			  , i.special_quantity
+			  , i.reserved_quantity
 			  , i.cost
-			  , i.special_cost
+			  , i.reserved_weight
 			  , i.total_weight 
 			  , i.notes AS inventory_notes
 	FROM   		product p
@@ -937,6 +940,7 @@ BEGIN
 							  , url
 							  , website_id
 							  , vendor_name
+							  , v.id as vendor_type_id
 							  , GROUP_CONCAT(category_name SEPARATOR '|') AS categories 
 					FROM 		category c
 							  , product_group_category pgc
@@ -945,7 +949,7 @@ BEGIN
 					WHERE 		pgc.product_group_id = pg.id 
 							AND v.id = pg.vendor_type
 							AND pgc.category_id = c.id 
-					GROUP BY 	product_id, description, url, website_id, vendor_name) pc 
+					GROUP BY 	product_id, description, url, website_id, vendor_name, v.id) pc 
 	LEFT JOIN   inventory i 
 			 ON p.id=i.product_id 
 	WHERE 		p.bill_by_unit_id = u1.id 
@@ -954,6 +958,7 @@ BEGIN
 			AND pi.product_id = p.id 
 			AND (in_match IS NULL OR p.product_name LIKE CONCAT('%',in_match,'%'))
 			AND (in_id IS NULL OR id = in_id)
+			AND (in_vendor_type_id IS NULL OR in_vendor_type_id = vendor_type_id)
 	ORDER BY 	product_name 
 	LIMIT 		in_limit;
 
@@ -988,6 +993,7 @@ BEGIN
 			  , oi.delivery_fee
 			  , oi.toll_expense
 			  , oi.total_cost
+			  , oi.total_weight
 			  , oi.change_due
 			  , oi.delivered
 			  , oi.personal
@@ -1035,6 +1041,7 @@ CREATE PROCEDURE order_info_update
   , IN in_delivery_fee FLOAT
   , IN in_toll_expense FLOAT
   , IN in_total_cost FLOAT
+  , IN in_total_weight FLOAT
   , IN in_status_id INT
   , IN in_change_due FLOAT
   , IN in_delivered BOOLEAN
@@ -1068,6 +1075,7 @@ BEGIN
 				  , delivery_fee = in_delivery_fee
 				  , toll_expense = in_toll_expense
 				  , total_cost = in_total_cost
+				  , total_weight = in_total_weight
 				  , status_id = in_status_id
 				  , change_due = in_change_due
 				  , delivered = in_delivered
@@ -1096,6 +1104,7 @@ BEGIN
 			  , in_delivery_fee
 			  , in_toll_expense
 			  , in_total_cost
+			  , in_total_weight
 			  , in_status_id
 			  , in_change_due
 			  , in_delivered
@@ -1483,6 +1492,7 @@ BEGIN
 			  , oi.delivery_fee
 			  , oi.toll_expense
 			  , oi.total_cost
+			  , oi.total_weight
 			  , s.vendor_status_name
 			  , v.vendor_name
 			  , oi.notes
@@ -1494,7 +1504,7 @@ BEGIN
 			AND (in_start_order_date IS NULL OR order_date > in_start_order_date)
 			AND (in_end_order_date IS NULL OR order_date < in_end_order_date)
 			AND (in_status_ids IS NULL OR status_id IN (in_status_ids))
-			AND (in_vendor_ids IS NULL OR vendor_id IN (in_vendor_ids))
+			AND (in_vendor_ids IS NULL OR v.id IN (in_vendor_ids))
 	ORDER BY 	order_date;
 
 END
@@ -1516,6 +1526,7 @@ CREATE PROCEDURE vendor_order_info_update
 	  , IN in_toll_expense FLOAT
 	  , IN in_mileage INT
 	  , IN in_total_cost FLOAT
+	  , IN in_total_weight FLOAT
 	  , IN in_vendor_status_id INT
 	  , IN in_vendor_id INT
 	  , IN in_notes VARCHAR (2048)
@@ -1546,6 +1557,7 @@ BEGIN
 				  , toll_expense = in_toll_expense
 				  , mileage = in_mileage
 				  , total_cost = in_total_cost
+				  , total_weight = in_total_weight
 				  , vendor_status_id = in_vendor_status_id
 				  , vendor_id = in_vendor_id
 				  , notes = in_notes
@@ -1570,6 +1582,7 @@ BEGIN
 			  , in_toll_expense
 			  , in_mileage
 			  , in_total_cost
+			  , in_total_weight
 			  , in_vendor_status_id
 			  , in_vendor_id
 			  , in_notes
@@ -1672,7 +1685,7 @@ BEGIN
 			SELECT 	id
 			INTO 	in_product_id
 			FROM	product
-			WHERE 	vendor_id = in_vendor_id
+			WHERE 	vendor_id = in_vendor_id;
 	
 		END IF;
 
@@ -1696,3 +1709,67 @@ END
 //
 DELIMITER ;
 
+DROP PROCEDURE IF EXISTS generate_vendor_order;
+
+
+DELIMITER //
+CREATE PROCEDURE generate_vendor_order
+/*create vendor order from set of customer orders, subtracting existing inventory*/
+(	
+	IN in_order_ids VARCHAR(512)
+  , IN in_vendor_type_id INT
+)
+BEGIN
+
+	/* create table that sums the quantity and estimated weight for each item in order to given vendor*/
+	CREATE TABLE temp_vendor_order_inventory 
+	AS (SELECT		oi.product_id
+				  ,	p.vendor_id
+				  , p.product_name
+				  , SUM(oi.quantity) AS quantity
+				  , SUM(oi.weight) AS weight
+				  , i.cost /* we will multiply this later */
+		FROM 		order_item oi
+				  , product p
+				  , inventory i
+				  , product_group pg
+				  , product_group_member pgm
+		WHERE 		i.product_id = oi.product_id
+				AND p.id = oi.product_id
+			    AND pgm.product_id = p.id
+				AND pg.product_group_id = pg.id
+				AND vendor_type_id = in_vendor_type_id
+				AND oi.order_id in (in_order_ids)
+		GROUP BY	oi.product_id, p.vendor_id, p.product_name, i.cost);
+
+	/*now we need to subtract existing quantity and weight in inventory from order*/
+	UPDATE	temp_vendor_order_inventory tvoi
+	SET 	tvoi.quantity = tvoi.quantity - (	SELECT 	quantity - reserved_quantity
+												FROM   	inventory i
+												WHERE i.product_id = tvoi.product_id)
+		  , tvoi.weight = tvoi.weight - (	SELECT 	total_weight - reserved_weight
+											FROM   	inventory i
+											WHERE i.product_id = tvoi.product_id);
+
+	/*update cost for items sold by anything other than the pound*/
+	UPDATE	temp_vendor_order_inventory tvoi, product p, unit u
+	SET 	tvoi.cost = tvoi.cost * tvoi.quantity
+	WHERE 	p.id = tvoi.product_id
+		AND u.id = p.bill_by_unit_id
+		AND u.unit_name <> "Pound";
+
+	/*update cost for items sold by the pound*/
+	UPDATE	temp_vendor_order_inventory tvoi, product p, unit u
+	SET 	tvoi.cost = tvoi.cost * tvoi.weight
+	WHERE 	p.id = tvoi.product_id
+		AND u.id = p.bill_by_unit_id
+		AND u.unit_name = "Pound";
+	
+	SELECT 		*
+	FROM		temp_vendor_order_inventory
+	WHERE		quantity > 0
+	ORDER BY 	product_name;
+
+END 
+//
+DELIMITER ;

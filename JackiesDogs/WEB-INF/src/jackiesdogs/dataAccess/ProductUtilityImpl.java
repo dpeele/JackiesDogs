@@ -16,7 +16,7 @@ public class ProductUtilityImpl implements ProductUtility {
 	
 	private final Logger log = Logger.getLogger(ProductUtilityImpl.class);
 		
-	private final String findProductsSql = "{CALL product_retrieve (?, ?, ?)}";
+	private final String findProductsSql = "{CALL product_retrieve (?, ?, ?, ?)}";
 	
 	private final String updateProductSql = "{CALL product_update (?, ?, ?, ?, ?, ?, ?, ?)}";
 	
@@ -42,7 +42,7 @@ public class ProductUtilityImpl implements ProductUtility {
 		this.dataSource = dataSource; //set dataSource
 	}
 		
-	public List<Product> findProducts (String id, String match, int limit) {
+	public List<Product> findProducts (String id, String match, int limit, String vendorTypeId) {
 		Connection connection = null;
 		CallableStatement callableStatement = null;
 		ResultSet resultSet = null;
@@ -67,7 +67,12 @@ public class ProductUtilityImpl implements ProductUtility {
 			} else {
 				callableStatement.setString(2,match);
 			}
-			callableStatement.setInt(3, limit);						
+			callableStatement.setInt(3, limit);			
+			if (vendorTypeId == null) {
+				callableStatement.setNull(1, Types.INTEGER);
+			} else {
+				callableStatement.setInt(1, Integer.parseInt(vendorTypeId));				
+			}
 			hasResults = callableStatement.execute();			
 			if (hasResults) {
 				resultSet = callableStatement.getResultSet();
@@ -99,9 +104,9 @@ public class ProductUtilityImpl implements ProductUtility {
 						Inventory inventory = new Inventory (resultSet.getString("inventoryId"),
 															 resultSet.getString("inventory_notes"),						 
 															 resultSet.getInt("quantity"),						 						
-															 resultSet.getInt("special_quantity"),
+															 resultSet.getInt("reserved_quantity"),
 															 resultSet.getDouble("cost"),						 
-															 resultSet.getDouble("special_cost"),	
+															 resultSet.getDouble("reserved_weight"),	
 															 resultSet.getDouble("total_weight"));	
 						product.setInventory(inventory);
 						products.add(product);
@@ -242,8 +247,8 @@ public class ProductUtilityImpl implements ProductUtility {
 				callableStatement.setInt(3, inventory.getQuantity());			
 				callableStatement.setDouble(4, inventory.getActualTotalWeight());
 				callableStatement.setDouble(5, inventory.getCost());
-				callableStatement.setDouble(6, inventory.getSpecialQuantity());
-				callableStatement.setDouble(7, inventory.getSpecialCost());
+				callableStatement.setDouble(6, inventory.getReservedQuantity());
+				callableStatement.setDouble(7, inventory.getReservedWeight());
 				callableStatement.setString(8, inventory.getNotes());
 				if (vendorId == null) {
 					callableStatement.setNull(2, Types.VARCHAR);

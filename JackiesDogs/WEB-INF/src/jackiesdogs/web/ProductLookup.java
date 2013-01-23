@@ -47,18 +47,20 @@ public class ProductLookup extends HttpServlet {
 		}
 		
 		String match = ServletUtilities.getParameter(request, "match"); //retrieve substring to match from request
+
 		if (match.length() == 0) {
 			log.error("No substring to match passed in request");
 			return; //no substring to match
 		}
-				
+
+		String vendorTypeId = ServletUtilities.getParameter(request, "vendorType"); //retrieve optional vendor type id
+		
 		response.setHeader("Pragma","no-cache");
 		response.setHeader("Cache-Control","no-cache");
 		response.setDateHeader("Expires",-1);
 		response.setHeader("Content-Type","application/json");
 		PrintWriter out = response.getWriter();
-
-		List<Product> products = productUtility.findProducts(null,match,maxRowsInt); //retrieve list of matching products		
+		List<Product> products = productUtility.findProducts(null,match,maxRowsInt,vendorTypeId); //retrieve list of matching products		
 		if (products.size() == 0) {
 			out.print("{[]}");
 		} else {

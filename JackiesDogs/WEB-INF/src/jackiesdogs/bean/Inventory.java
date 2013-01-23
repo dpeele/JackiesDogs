@@ -2,29 +2,29 @@ package jackiesdogs.bean;
 
 public class Inventory {
 	private String id, notes;
-	private int quantity, specialQuantity; 
-	private double cost, specialCost, actualTotalWeight;
+	private int quantity, reservedQuantity; 
+	private double cost, reservedWeight, actualTotalWeight;
 	
 	public Inventory(String id, String notes, int quantity,
-			int specialQuantity, double cost, double specialCost,
+			int reservedQuantity, double cost, double reservedWeight,
 			double actualTotalWeight) {
 		this.id = id;
 		this.notes = notes;
 		this.quantity = quantity;
-		this.specialQuantity = specialQuantity;
+		this.reservedQuantity = reservedQuantity;
 		this.cost = cost;
-		this.specialCost = specialCost;
+		this.reservedWeight = reservedWeight;
 		this.actualTotalWeight = actualTotalWeight;
 	}
 
 	public Inventory(String notes, int quantity,
-			int specialQuantity, double cost, double specialCost,
+			int reservedQuantity, double cost, double reservedWeight,
 			double actualTotalWeight) {
 		this.notes = notes;
 		this.quantity = quantity;
-		this.specialQuantity = specialQuantity;
+		this.reservedQuantity = reservedQuantity;
 		this.cost = cost;
-		this.specialCost = specialCost;
+		this.reservedWeight = reservedWeight;
 		this.actualTotalWeight = actualTotalWeight;
 	}
 
@@ -77,12 +77,12 @@ public class Inventory {
 		this.quantity = quantity;
 	}
 
-	public int getSpecialQuantity() {
-		return specialQuantity;
+	public int getReservedQuantity() {
+		return reservedQuantity;
 	}
 
-	public void setSpecialQuantity(int specialQuantity) {
-		this.specialQuantity = specialQuantity;
+	public void setReservedQuantity(int reservedQuantity) {
+		this.reservedQuantity = reservedQuantity;
 	}
 
 	public double getCost() {
@@ -93,12 +93,12 @@ public class Inventory {
 		this.cost = cost;
 	}
 
-	public double getSpecialCost() {
-		return specialCost;
+	public double getReservedWeight() {
+		return reservedWeight;
 	}
 
-	public void setSpecialCost(double specialCost) {
-		this.specialCost = specialCost;
+	public void setReservedWeight(double reservedWeight) {
+		this.reservedWeight = reservedWeight;
 	}
 
 	public double getActualTotalWeight() {

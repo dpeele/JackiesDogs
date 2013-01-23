@@ -28,6 +28,13 @@ public class Product {
 		this.id = id;
 	}	
 
+	public Product(String id, String productName, String vendorId) {
+		this.id = id;
+		this.productName = productName;
+		this.vendorId = vendorId;
+	}	
+	
+
 	public Product() {
 	}		
 	

@@ -11,7 +11,7 @@
 			List<VendorOrder> vendorOrders = (List<VendorOrder>)request.getAttribute("orders");
 			if (vendorOrders != null) {//we passed a list of vendorOrders to the page
 				for (VendorOrder vendorOrder: vendorOrders) {		%>
-		vendorOrder.addItem("<%=vendorOrder.getId()%>","<%=vendorOrder.getCustomer().getFullName()%>","<%=vendorOrder.getVendorOrderDateFormatted()%>","<%=vendorOrder.getDeliveryDateTimeFormatted()%>","<%=vendorOrder.getTotalCost()%>","<%=vendorOrder.getStatus()%>");
+		vendorOrder.addItem("<%=vendorOrder.getId()%>","<%=vendorOrder.getOrderDateFormatted()%>","<%=vendorOrder.getDeliveryDateTimeFormatted()%>","<%=vendorOrder.getTotalCost()%>","<%=vendorOrder.getStatus()%>","<%=vendorOrder.getVendor()%>");
 		<%
 				}		
 			}
@@ -21,9 +21,9 @@
 </script>
 	<div id="vendorSearchPanel">
 		<fieldset id="vendorSearch">
+			<legend id="vendorSearchLegend" class="ui-widget-header">Search Vendor Orders:</legend>	
 			<div id="holder">		
 			<div id="leftVendorSearch">
-			<legend id="vendorSearchLegend" class="ui-widget-header">Search Vendor Orders:</legend>	
 			<form id="VendorOrderSearchForm">
 			<label for="vendorStartDate">Start Date:</label>
 			<input type="text" id="vendorStartDate" class="date"/>					
@@ -41,17 +41,19 @@
 			<%
 			   }
 			%>
+			</select>
 			<br/>
 			<label for="vendor">Vendor (Hold down Ctl to make multiple selections):</label>
 			<select id="vendor">
 			<%
-				Set<String> vendorKeys = ProductGroup.VENDORS.keySet(); 
-				   for (String key: vendorKeys) { //iterate through vendors
+				List<String> vendorKeys = new ArrayList<String>(ProductGroup.VENDORS.keySet()); 
+				for (int i=0; i<vendorKeys.size(); i++) { //iterate through vendors
 			%>
-				<option value="<%=ProductGroup.VENDORS.get(key)%>"><%=ProductGroup.VENDORS.get(key)%></option>			
+			<option value="<%=i%>"><%=ProductGroup.VENDORS.get(vendorKeys.get(i))%></option>
 			<%
-			   }
+				}
 			%>
+			</select>
 			<br/>			
 			</form>
 			</div>

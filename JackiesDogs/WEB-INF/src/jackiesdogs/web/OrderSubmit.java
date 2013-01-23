@@ -99,6 +99,7 @@ public class OrderSubmit extends HttpServlet {
 		String deliveredString = ServletUtilities.getParameter(request, "delivered");
 		String personalString = ServletUtilities.getParameter(request, "personal");		
 		double totalCost = ServletUtilities.getDoubleParameter(request, "finalCost");
+		double totalWeight = ServletUtilities.getDoubleParameter(request, "totalWeight");		
 		String deliveryTimeString = ServletUtilities.getParameter(request, "deliveryTime");
 		List<OrderItem> orderItems = retrieveOrderItems(orderInfo);
 		
@@ -112,7 +113,7 @@ public class OrderSubmit extends HttpServlet {
 		}						
 		
 		Order order = new Order(new Date(),ServletUtilities.getDateFromString(deliveryDateString+" "+deliveryTimeString),"","",status,"",discount,
-				credit,deliveryFee,tollExpense,totalCost,changeDue,delivered, personal);		
+				credit,deliveryFee,tollExpense,totalCost,totalWeight,changeDue,delivered, personal);		
 		order.setOrderItems(orderItems);
 		order.setCustomer(new Customer(custId));
 		if (orderId.equals("0")) {
@@ -122,7 +123,7 @@ public class OrderSubmit extends HttpServlet {
 			order.setId(orderId);
 			order = orderUtility.updateOrder(order); //insert order and return new id
 			if (order == null) {
-				log.error ("Unable to update customer with id: " + orderId); //error, no records updated
+				log.error ("Unable to update customer order with id: " + orderId); //error, no records updated
 				return;
 			}
 		}
