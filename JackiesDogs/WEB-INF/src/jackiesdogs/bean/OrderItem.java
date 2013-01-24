@@ -5,7 +5,7 @@ public class OrderItem {
 	private double weight;
 	private String id, notes;
 	private Product product;
-	private boolean removed;
+	private boolean removed, estimate;
 	
 	public OrderItem(String id, Product product, int quantity, double weight,
 			String notes) {
@@ -46,12 +46,28 @@ public class OrderItem {
 		this.weight = weight;
 		this.notes = notes;
 	}
+	
+	public OrderItem(String id, int quantity, double weight, String notes, boolean estimate) {
+		this.id = id;
+		this.quantity = quantity;
+		this.weight = weight;
+		this.notes = notes;
+		this.estimate = estimate;
+	}	
 
 	public OrderItem(String id, int quantity, String notes) {
 		this.id = id;
 		this.quantity = quantity;
 		this.notes = notes;		
 	}	
+
+	public boolean isEstimate() {
+		return estimate;
+	}
+
+	public void setEstimate(boolean estimate) {
+		this.estimate = estimate;
+	}
 
 	public boolean isRemoved() {
 		return removed;

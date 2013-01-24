@@ -1,7 +1,5 @@
 package jackiesdogs.utility;
 
-import jackiesdogs.web.OrderSubmit;
-
 import javax.servlet.http.*;
 
 import java.util.*;
@@ -12,7 +10,7 @@ import org.apache.log4j.Logger;
 
 public class ServletUtilities {
 
-	private static final Logger log = Logger.getLogger(OrderSubmit.class);
+	private static final Logger log = Logger.getLogger(ServletUtilities.class);
 	
 	public static String getParameter(HttpServletRequest request, String parameterName) {
 		String parameter = request.getParameter(parameterName);
@@ -21,6 +19,22 @@ public class ServletUtilities {
 		}
 		return (parameter.trim()); //retrieve parameter from request and trim any whitespace
 	}
+	
+	public static List<String> getStringParameterValues(HttpServletRequest request, String parameterName) {
+		String[] parameterArray = request.getParameterValues(parameterName);
+		List<String> parameterList = new ArrayList<String>();
+		if (parameterArray == null) {
+			return parameterList;
+		}
+		for (String parameter: parameterArray) {
+			try {
+				parameterList.add(parameter.trim());
+			} catch (NumberFormatException nfe) {
+				log.error("Unable to parse to int : " + parameter);
+			}
+		}
+		return (parameterList); //retrieve list of parameters from request
+	}		
 	
 	public static List<Integer> getParameterValues(HttpServletRequest request, String parameterName) {
 		String[] parameterArray = request.getParameterValues(parameterName);

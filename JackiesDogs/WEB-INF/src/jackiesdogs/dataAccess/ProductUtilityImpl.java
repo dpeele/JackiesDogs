@@ -22,7 +22,7 @@ public class ProductUtilityImpl implements ProductUtility {
 	
 	private final String updateInventorySql = "{CALL inventory_update (?, ?, ?, ?, ?, ?, ?, ?)}";
 	
-	private final String updateVendorInventorySql = "{CALL vendor_inventory_update (?, ?, ?, ?, ?, ?, ?, ?, ?)}";	
+	private final String updateVendorInventorySql = "{CALL vendor_inventory_update (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}";	
 	
 	private final String findVendorInventorySql = "{CALL vendor_inventory_retrieve (?)}";
 	
@@ -325,7 +325,8 @@ public class ProductUtilityImpl implements ProductUtility {
 					callableStatement.setNull(6, Types.FLOAT);
 					callableStatement.setNull(7, Types.FLOAT);
 					callableStatement.setNull(8, Types.VARCHAR);
-					callableStatement.setByte(9, (byte)1);				
+					callableStatement.setByte(9, (byte)1);
+					callableStatement.setNull(10, Types.INTEGER);					
 				} else {	
 					callableStatement.setInt(2, vendorOrderId);
 					if (product.getId() == null) {
@@ -339,6 +340,11 @@ public class ProductUtilityImpl implements ProductUtility {
 					callableStatement.setDouble(7, vendorInventory.getCost());
 					callableStatement.setString(8, vendorInventory.getNotes());
 					callableStatement.setByte(9, (byte)0);
+					if (vendorInventory.isEstimate()) {
+						callableStatement.setByte(10, (byte)1);
+					} else {
+						callableStatement.setByte(10, (byte)0);
+					}
 				}
 				hasResults = callableStatement.execute();
 				if (hasResults) { 
@@ -387,7 +393,10 @@ public class ProductUtilityImpl implements ProductUtility {
 		List<VendorInventory> vendorInventoryItems = new ArrayList<VendorInventory>();
 		boolean hasResults;
 		VendorInventory vendorInventory; 
+		Inventory inventory;
 		Product product;
+		String categoryString;
+		List<String> categories = null;
 		try {			
 			connection = dataSource.getConnection(); //get connection from dataSource			
 			connection.setTransactionIsolation(Connection.TRANSACTION_REPEATABLE_READ); //prevent dirty reads, phantom reads, and nonrepeatable reads			
@@ -404,12 +413,24 @@ public class ProductUtilityImpl implements ProductUtility {
 												 			resultSet.getInt("quantity"),
 												 			resultSet.getDouble("total_weight"),
 												 			resultSet.getDouble("cost"),
-												 			resultSet.getString("notes"));										 
+												 			resultSet.getString("notes"),
+															resultSet.getByte("estimate") == (byte)1 ? true : false);								
+						categoryString = resultSet.getString("categories");
+						if (categoryString != null && categoryString.contains("|")) {
+							categories = new ArrayList<String>(Arrays.asList(categoryString.split("|")));
+						}						
 						product = new Product (resultSet.getString("product_id"),
 													   resultSet.getString("product_name"),
 													   resultSet.getString("description"),
 													   resultSet.getDouble("price"),
-													   resultSet.getString("vendor_id"));	
+													   resultSet.getString("unit_name"),
+													   resultSet.getInt("estimated_weight"),													   
+													   resultSet.getString("vendor_id"),
+													   resultSet.getString("vendor_name"),
+													   categories);	
+						inventory = new Inventory (resultSet.getInt("quantity"),
+								   				   resultSet.getDouble("total_weight"));
+						product.setInventory(inventory);
 						vendorInventory.setProduct(product);
 						vendorInventoryItems.add(vendorInventory);
 					}

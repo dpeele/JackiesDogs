@@ -97,7 +97,7 @@ public class OmaUploader implements UploadUtility {
 				}
 				product = new Product();
 				product.setVendorId(vendorId);
-				inventory.add(new VendorInventory(product, quantity, weight, price));
+				inventory.add(new VendorInventory(product, quantity, weight, price, false));
 			}
     	}	
 		String logDescription;

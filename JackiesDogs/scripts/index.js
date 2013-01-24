@@ -9,7 +9,7 @@ $(function () { //onload
 });
 
 //create order item object
-Item = function (id, quantity, weight, name, price, billBy, estimatedWeight, description, totalWeight, quantityAvailable, productId) {
+Item = function (id, quantity, weight, name, price, billBy, estimatedWeight, description, totalWeight, quantityAvailable, productId, /*optional*/ estimated) {
 	this.id = id; 
 	this.quantity = quantity; 
 	this. weight = parseFloat(weight); 
@@ -26,7 +26,11 @@ Item = function (id, quantity, weight, name, price, billBy, estimatedWeight, des
 	this.quantityAvailable = quantityAvailable;
 	this.productId = productId;
 	this.removed = false;
-	this.estimated = (this.isByThePound() && this.weight == 0) ? true : false;
+	if (estimated != null) {
+		this.estimated = estimated;
+	} else {
+		this.estimated = (this.isByThePound() && this.weight == 0) ? true : false;
+	}
 };
 //add methods
 Item.prototype.remove() {

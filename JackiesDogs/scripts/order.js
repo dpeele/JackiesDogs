@@ -338,30 +338,27 @@ order.checkQuantity = function () { //check quantity ordered vs quantity in stoc
 	}
 };
 
-order.addItem = function (item,index) { //add item to order
+order.addItem = function (item) { //add item to order
 	if ($("div#orderPanel #orderItems tr").length == 1) {
 		$("div#orderPanel #orderItems").show();
 	}
 	if (arguments.length == 0) {//item not passed so we are adding the current item selected from the product list to the end of the list of order items		
 		item = order.currentItem;
 		item.quantity = $("div#orderPanel #quantity").val();		
-		item.weight = parseFloat(item.quantity * item.estimatedWeight);
-		index = order.orderItems.length;	
-		order.orderItems.push(item);
+		item.weight = parseFloat(item.quantity * item.estimatedWeight);	
+		order.orderItems[order.productId] = item;
 		order.currentItem = {};
 	}
 	$("div#orderPanel #orderItems tr:last").after("<tr>\n" + //add row
-										"<td id='index"+index+"'>"+index+"</td>\n" +
-										"<td>"+item.productId+"</td>\n" +
+										"<td id='productId"+order.productId+"'>"+order.productId+"</td>\n" +
 										"<td>"+item.name+"</td>\n" +
-										"<td><input type='text' id='quantity"+index+"' value='"+item.getFormattedQuantityAndWeight()+"'/>"</td>\n" +
+										"<td><input type='text' id='quantity"+order.productId+"' value='"+item.getFormattedQuantityAndWeight()+"'/>"</td>\n" +
 										"<td>"+item.getFormattedPrice()+"</td>\n" +
-										"<td id='totalItemPrice"+index+"'>"+item.getFormattedTotalPrice() + "</td>\n" +
-										"<td><input type='button' id='button"+index+"'/></td>\n" +
+										"<td id='totalItemPrice"+order.productId+"'>"+item.getFormattedTotalPrice() + "</td>\n" +
+										"<td><input type='button' id='button"+order.productId+"'/></td>\n" +
 									"</tr>\n");
 		
-	$("div#orderPanel #quantity"+index).css("width","100px") //set width of quantity input
-	$("div#orderPanel #index"+index).hide(); //hide td holding index		
+	$("div#orderPanel #quantity"+order.productId).css("width","100px") //set width of quantity input		
 	if (item.description.length > 0) { //add tooltip to table row if description exists
 		$("div#orderPanel #orderItems tr:last").simpletip({  
 			content: description,
@@ -370,7 +367,7 @@ order.addItem = function (item,index) { //add item to order
 	}	
 		
 	if (item.isByThePound()) { //priced by the pound, add focus event handler to pop up estimated dialog and handle that
-		$("div#orderPanel #quantity"+index).focus(function() {
+		$("div#orderPanel #quantity"+order.productId).focus(function() {
 			$("div#orderPanel #exactQuantity").val(item.quantity);//set initial quantity value in dialog to value from table row
 			var oldWeight = item.weight; //get old weight
 			$("div#orderPanel #exactWeight").val(oldWeight);//set initial weight value in dialog to value from table row
@@ -396,13 +393,13 @@ order.addItem = function (item,index) { //add item to order
 						// set quantity of this item to new quantity
 						item.quantity = $("div#orderPanel #exactQuantity").val();
 						//set quantity in item table
-						$("div#orderPanel #quantity"+index).val(item.getFormattedQuantityAndWeight());
+						$("div#orderPanel #quantity"+order.productId).val(item.getFormattedQuantityAndWeight());
 						//get previous total food cost
 						var totalCost = parseFloat($("div#orderPanel #totalCost").val();
 						//get new cost for item
 						var newCost = item.getUnformattedTotalPrice();
 						$("div#orderPanel #totalCost").val("$"+formatPrice(totalCost-oldCost+newCost));//update total
-						$("div#orderPanel #totalItemPrice"+index).html(item.getFormattedTotalPrice());
+						$("div#orderPanel #totalItemPrice"+order.productId).html(item.getFormattedTotalPrice());
 						$(this).dialog("close");
 					}}, 	
 						{ 
@@ -412,7 +409,7 @@ order.addItem = function (item,index) { //add item to order
 			}}]});
 		});	
 	} else { //not estimate, set width and add keydown handler and adjust price as they type
-		$("div#orderPanel #quantity"+index).keydown(function(event){ //add keydown event handler to quantity text box to allow 
+		$("div#orderPanel #quantity"+order.productId).keydown(function(event){ //add keydown event handler to quantity text box to allow 
 			//only numbers and a decimal point and update price on quantity change
 			if(order.onlyNumbers(event)) {//value may have changed, update total price
 				// remove weight of this item from total weight and add in new weight
@@ -422,7 +419,7 @@ order.addItem = function (item,index) { //add item to order
 				//get old cost for item
 				var oldCost = item.getUnformattedTotalPrice();
 				// set quantity of this item to new quantity
-				item.quantity = $("div#orderPanel #quantity"+index).val();
+				item.quantity = $("div#orderPanel #quantity"+order.productId).val();
 				// set weight of this item to new weight
 				item.weight = parseFloat(item.quantity * item.estimatedWeight);
 				//set weight in item table
@@ -432,12 +429,12 @@ order.addItem = function (item,index) { //add item to order
 				//get new cost for item
 				var newCost = item.getUnformattedTotalPrice();
 				$("div#orderPanel #totalCost").val("$"+formatPrice(totalCost-oldCost+newCost));//update total
-				$("div#orderPanel #totalItemPrice"+index).html(item.getFormattedTotalPrice());
+				$("div#orderPanel #totalItemPrice"+order.productId).html(item.getFormattedTotalPrice());
 			}
 		});	
 	}
 				            			
-	$("div#orderPanel #button"+index).button().attr("value","Remove").click(function(){ //add click event handler to remove button for this row
+	$("div#orderPanel #button"+order.productId).button().attr("value","Remove").click(function(){ //add click event handler to remove button for this row
 		$(this).closest('tr').hide();  //remove row
 		$("div#orderPanel #removed"+rowValue).val("true");
 		if ($("div#orderPanel #orderItems tr").length == 1) { //hide table if it's empty
@@ -493,7 +490,7 @@ order.populateCustomer = function(item) { //populate customer dialog fields from
     $("div#orderPanel #editCustId").val(item.custId);        		   
 };
 
-order.addInfo = function (customerInfo, i) {
+order.addInfo = function (customerInfo) {
 	var value = $(this).val();
 	if (value.length != 0) {
 		customerInfo = customerInfo + value;
@@ -634,22 +631,34 @@ order.validateAndSubmitCustomer = function () { //validate and submit customer d
 	$("div#orderPanel #customerDialog").dialog("close");
 };
 
-order.validateAndSubmit = function () { //validate form data and ajax submit to server
-	$("div#orderPanel #orderInfo").val($("div#orderPanel #orderItems tr:gt(0)").reduce(order.extractItemData));//put table data into hidden field to be sent to server using reduce and function to pull each row's data
+order.validateAndSubmit = function () {
+	var orderItemQueryString = escape(order.orderItems.reduce(ExtractItemData));
 	
     $.ajax({ //make ajax call to submit order
         url: "submitOrder",
         cache: false,
         type: "post",        
-        data: $("div#orderPanel #orderForm").serialize(),
+        data: orderItemQueryString + $("div#orderPanel #orderForm").serialize(),
         success: function( data ) { //order submission succeeded
-        	$("div#orderPanel #orderSubmittedDialog").html("Order # " + data.orderId + " has been submitted. Estimated cost (minus any estimated/unavailable weights) is $" + formatPrice(totalCost)+".").dialog({ modal: true }); //pop success dialog
+        	if (data.estimates) {
+        		$("div#orderPanel #orderSubmittedDialog").html("Order # " + data.orderId + " has been submitted. Your total is $" + formatPrice(totalCost)+". You have estimated items in your order so this is a preliminary total and you will be contact shortly with your final bill.").dialog({ modal: true }); //pop success dialog
+        	} else {
+        		$("div#orderPanel #orderSubmittedDialog").html("Order # " + data.orderId + " has been submitted. Total cost is $" + formatPrice(totalCost)+".").dialog({ modal: true }); //pop success dialog
+        	}
+        	order.updateOrderItemIds(data.newOrderItems);
         	$("div#orderPanel #orderId").val(data.orderId); //set order id
         },
         error: function () { //order submission failed
         	$("div#orderPanel #orderSubmissionFailedDialog").dialog({ modal: true }); //pop failure dialog
         }
     });
+};
+
+//set the id of any orderItems that were new on this submit 
+order.updateOrderItemIds = function (newOrderItems) {
+	for (orderItem in newOrderItems) {
+		order.orderItems[orderItem.product.id].id = orderItem.id;
+	}
 };
 
 order.resetForm = function () {
@@ -667,6 +676,7 @@ order.resetForm = function () {
     $("div#orderPanel #orderId").val("0")   //set orderId to blank order
     order.defaultLabels(); //reset fieldset and panel labels
     $("div#orderPanel #orderItems").hide(); //hide order item table since it's now empty
+    order.orderItems = [];
 };
 
 order.confirmCancel = function () { //confirm order cancelation
@@ -685,6 +695,7 @@ order.confirmCancel = function () { //confirm order cancelation
 order.cancelOrder = function () { //cancel order- submit to server if it is an existing order that must be updated in the database
 	if ($("div#orderPanel #orderId").val() == "0") {
 		order.resetForm();
+		return;
 	}
     $.ajax({ //make ajax call to submit order
         url: "submitOrder",
@@ -693,7 +704,7 @@ order.cancelOrder = function () { //cancel order- submit to server if it is an e
         data: $("div#orderPanel #orderForm").serialize()+"&cancelled=" + encodeURIComponent("Cancelled"),//append cancelled parameter to form data
         success: function( data ) { //order submission succeeded
         	$("div#orderPanel #orderSubmittedDialog").html("Order # " + data.orderId + " has been cancelled.").dialog({ modal: true }); //pop successful cancellation dialog
-    		order.resetForm();        	
+    		order.resetForm();    
         },
         error: function () { //order submission failed
         	$("div#orderPanel #orderCancellationFailedDialog").dialog({ modal: true }); //pop failure dialog
@@ -701,12 +712,19 @@ order.cancelOrder = function () { //cancel order- submit to server if it is an e
     });
 };
 
-order.extractItemData = function (string) {//retrieve data from row of order table and add it to string
-	if ($(this).find(":nth-child(2)").val() == "0" && $(this).find(":nth-child(8)").val() == "true") {
-		return;
+order.addOrderItems = function () { //add all items of existing order
+	for (item in order.orderItems) {
+		order.addItem(item);
+	}
+};
+
+order.extractItemData = function (string) {//retrieve data from order array element and add it to string
+	if (this.isRemoved() && this.id == 0) {
+		return string;
+	}
 	} else {
-		return (string+"id="+$(this).find(":nth-child(1)").text()+"#quantity="+$(this).find(":nth-child(4)").find(":text").val()
-				+"#dbId="+$(this).find(":nth-child(2)").find(":text").val()+"#removed="+$(this).find(":nth-child(8)").find(":text").val()+">");
+		return (string+"items=id="+this.productId+"#quantity="+this.quantity+
+				+"#dbId="+this.id+"#removed="+$(this).isRemoved()+"#estimate="+$(this).isEstimate()+"#weight="+$(this).weight+"&");
 	}
 };
 

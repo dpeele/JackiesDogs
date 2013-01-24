@@ -25,13 +25,20 @@
 		<%
 				OrderItem orderItem;
 				Product product;
+				String productId;
+				Inventory inventory;
 				for (int i=0; i<orderItems.size(); i++) {
 					orderItem = orderItems.get(i);				
 					product = orderItem.getProduct();
+					productId = product.getId();
+					inventory = product.getInventory();
 		%>
-		order.addItem("<%=orderItem.getId()%>","<%=orderItem.getQuantity()%>","<%=orderItem.getWeight()%>","<%=product.getId()%>","<%=product.getProductName() + "(" + product.getBillBy() + ")"%>","<%=product.getPrice()%>","<%=product.getBillBy()%>","<%=product.getEstimatedWeight()%>","<%=product.getDescription()%>");
+		order.orderItems[productId] = new Item("<%=orderItem.getId()%>","<%=orderItem.getQuantity()%>","<%=orderItem.getWeight()%>","<%=product.getProductName() + "(" + product.getBillBy() + ")"%>","<%=product.getPrice()%>","<%=product.getBillBy()%>","<%=product.getEstimatedWeight()%>","<%=product.getDescription()%>","<%=inventory.getActualTotalWeight()%>","<%=inventory.getQuantity()%>","<%=product.getId()%>","<%=orderItem.isEstimate()%>");
 		<%
 				}
+		%>
+		order.addOrderItems();
+		<%
 			}
 		%>
 	});

@@ -5,7 +5,7 @@ public class VendorInventory {
 	private Product product;
 	private int quantity;
 	private double totalWeight, cost;
-	private boolean removed;	
+	private boolean removed, estimate;	
 	
 	public VendorInventory(String id, Product product, int quantity,
 			double totalWeight, double cost, String notes) {
@@ -18,12 +18,13 @@ public class VendorInventory {
 	}
 	
 	public VendorInventory(String id, int quantity,
-			double totalWeight, double cost, String notes) {
+			double totalWeight, double cost, String notes, boolean estimate) {
 		this.id = id;		
 		this.quantity = quantity;
 		this.totalWeight = totalWeight;
 		this.cost = cost;
 		this.notes = notes;
+		this.estimate = estimate;
 	}
 	
 	public VendorInventory(Product product, int quantity,
@@ -33,6 +34,30 @@ public class VendorInventory {
 		this.totalWeight = totalWeight;
 		this.cost = cost;
 	}	
+	
+	public VendorInventory(Product product, int quantity,
+			double totalWeight, double cost, boolean estimate) {
+		this.product = product;
+		this.quantity = quantity;
+		this.totalWeight = totalWeight;
+		this.cost = cost;
+		this.estimate = estimate;
+	}	
+
+	public VendorInventory(Product product, int quantity,
+			double totalWeight) {
+		this.product = product;
+		this.quantity = quantity;
+		this.totalWeight = totalWeight;
+	}
+	
+	public boolean isEstimate() {
+		return estimate;
+	}
+
+	public void setEstimate(boolean estimate) {
+		this.estimate = estimate;
+	}
 	
 	public boolean isRemoved() {
 		return removed;

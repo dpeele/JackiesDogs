@@ -107,6 +107,18 @@ public class Product {
 		this.categories = categories;
 	}
 	
+	public Product(String id, String productName, String description, double price, 
+			String billBy, int estimatedWeight, String vendorId, String vendorName, List<String> categories) {
+		this.id = id;
+		this.productName = productName;
+		this.description = description;
+		this.price = price;
+		this.billBy = billBy; 
+		this.estimatedWeight = estimatedWeight; 
+		this.vendorId = vendorId;		
+		this.categories = categories;
+	}
+	
 	public Product(String id, String productName, String description, List<String> imageUrls, 
 			String notes, double price, String orderBy, String billBy, int estimatedWeight, 
 			List<String> categories, String vendorId) {

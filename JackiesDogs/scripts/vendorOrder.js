@@ -258,30 +258,31 @@ vendorOrder.checkQuantity = function () { //check quantity ordered vs quantity i
 	}
 };
 
-vendorOrder.addItem = function (item,index) { //add item to order
+vendorOrder.addItem = function (item) { //add item to order
 	if ($("div#vendorOrderPanel #orderItems tr").length == 1) {
+		$("div#vendorOrderPanel #vendor")..attr("disabled","true");
 		$("div#vendorOrderPanel #orderItems").show();
 	}
 	if (arguments.length == 0) {//item not passed so we are adding the current item selected from the product list to the end of the list of order items		
 		item = vendorOrder.currentItem;
 		item.quantity = $("div#vendorOrderPanel #quantity").val();		
 		item.weight = parseFloat(item.quantity * item.estimatedWeight);
-		index = vendorOrder.orderItems.length;	
-		vendorOrder.orderItems.push(item);
+		order.productId = vendorOrder.orderItems.length;	
+		vendorOrder.orderItems[order.productId]=item;
 		vendorOrder.currentItem = {};
 	}
 	$("div#vendorOrderPanel #orderItems tr:last").after("<tr>\n" + //add row
-										"<td id='index"+index+"'>"+index+"</td>\n" +
+										"<td id='productId"+order.productId+"'>"+order.productId+"</td>\n" +
 										"<td>"+item.productId+"</td>\n" +
 										"<td>"+item.name+"</td>\n" +
-										"<td><input type='text' id='quantity"+index+"' value='"+item.getFormattedQuantityAndWeight()+"'/>"</td>\n" +
+										"<td><input type='text' id='quantity"+order.productId+"' value='"+item.getFormattedQuantityAndWeight()+"'/>"</td>\n" +
 										"<td>"+item.getFormattedPrice()+"</td>\n" +
-										"<td id='totalItemPrice"+index+"'>"+item.getFormattedTotalPrice() + "</td>\n" +
-										"<td><input type='button' id='button"+index+"'/></td>\n" +
+										"<td id='totalItemPrice"+order.productId+"'>"+item.getFormattedTotalPrice() + "</td>\n" +
+										"<td><input type='button' id='button"+order.productId+"'/></td>\n" +
 									"</tr>\n");
 		
-	$("div#vendorOrderPanel #quantity"+index).css("width","100px") //set width of quantity input
-	$("div#vendorOrderPanel #index"+index).hide(); //hide td holding index		
+	$("div#vendorOrderPanel #quantity"+order.productId).css("width","100px") //set width of quantity input
+	$("div#vendorOrderPanel #order.productId"+order.productId).hide(); //hide td holding order.productId		
 	if (item.description.length > 0) { //add tooltip to table row if description exists
 		$("div#vendorOrderPanel #orderItems tr:last").simpletip({  
 			content: description,
@@ -290,7 +291,7 @@ vendorOrder.addItem = function (item,index) { //add item to order
 	}	
 		
 	if (item.isByThePound()) { //priced by the pound, add focus event handler to pop up estimated dialog and handle that
-		$("div#vendorOrderPanel #quantity"+index).focus(function() {
+		$("div#vendorOrderPanel #quantity"+order.productId).focus(function() {
 			$("div#vendorOrderPanel #exactQuantity").val(item.quantity);//set initial quantity value in dialog to value from table row
 			var oldWeight = item.weight; //get old weight
 			$("div#vendorOrderPanel #exactWeight").val(oldWeight);//set initial weight value in dialog to value from table row
@@ -316,13 +317,13 @@ vendorOrder.addItem = function (item,index) { //add item to order
 						// set quantity of this item to new quantity
 						item.quantity = $("div#vendorOrderPanel #exactQuantity").val();
 						//set quantity in item table
-						$("div#vendorOrderPanel #quantity"+index).val(item.getFormattedQuantityAndWeight());
+						$("div#vendorOrderPanel #quantity"+order.productId).val(item.getFormattedQuantityAndWeight());
 						//get previous total food cost
 						var totalCost = parseFloat($("div#vendorOrderPanel #totalCost").val();
 						//get new cost for item
 						var newCost = item.getUnformattedTotalPrice();
 						$("div#vendorOrderPanel #totalCost").val("$"+formatPrice(totalCost-oldCost+newCost));//update total
-						$("div#vendorOrderPanel #totalItemPrice"+index).html(item.getFormattedTotalPrice());
+						$("div#vendorOrderPanel #totalItemPrice"+order.productId).html(item.getFormattedTotalPrice());
 						$(this).dialog("close");
 					}}, 	
 						{ 
@@ -332,7 +333,7 @@ vendorOrder.addItem = function (item,index) { //add item to order
 			}}]});
 		});	
 	} else { //not estimate, set width and add keydown handler and adjust price as they type
-		$("div#vendorOrderPanel #quantity"+index).keydown(function(event){ //add keydown event handler to quantity text box to allow 
+		$("div#vendorOrderPanel #quantity"+order.productId).keydown(function(event){ //add keydown event handler to quantity text box to allow 
 			//only numbers and a decimal point and update price on quantity change
 			if(vendorOrder.onlyNumbers(event)) {//value may have changed, update total price
 				// remove weight of this item from total weight and add in new weight
@@ -342,7 +343,7 @@ vendorOrder.addItem = function (item,index) { //add item to order
 				//get old cost for item
 				var oldCost = item.getUnformattedTotalPrice();
 				// set quantity of this item to new quantity
-				item.quantity = $("div#vendorOrderPanel #quantity"+index).val();
+				item.quantity = $("div#vendorOrderPanel #quantity"+order.productId).val();
 				// set weight of this item to new weight
 				item.weight = parseFloat(item.quantity * item.estimatedWeight);
 				//set weight in item table
@@ -352,15 +353,16 @@ vendorOrder.addItem = function (item,index) { //add item to order
 				//get new cost for item
 				var newCost = item.getUnformattedTotalPrice();
 				$("div#vendorOrderPanel #totalCost").val("$"+formatPrice(totalCost-oldCost+newCost));//update total
-				$("div#vendorOrderPanel #totalItemPrice"+index).html(item.getFormattedTotalPrice());
+				$("div#vendorOrderPanel #totalItemPrice"+order.productId).html(item.getFormattedTotalPrice());
 			}
 		});	
 	}
 				            			
-	$("div#vendorOrderPanel #button"+index).button().attr("value","Remove").click(function(){ //add click event handler to remove button for this row
+	$("div#vendorOrderPanel #button"+order.productId).button().attr("value","Remove").click(function(){ //add click event handler to remove button for this row
 		$(this).closest('tr').hide();  //remove row
 		$("div#vendorOrderPanel #removed"+rowValue).val("true");
 		if ($("div#vendorOrderPanel #orderItems tr").length == 1) { //hide table if it's empty
+			$("div#vendorOrderPanel #vendor").removeAttr("disabled");
 			$("div#vendorOrderPanel #orderItems").hide();
 		}	
 		//get weight for item
@@ -400,21 +402,30 @@ vendorOrder.addItem = function (item,index) { //add item to order
 };
 
 vendorOrder.validateAndSubmit = function () { //validate form data and ajax submit to server
-	$("div#vendorOrderPanel #orderInfo").val($("div#vendorOrderPanel #orderItems tr:gt(0)").reduce(vendorOrder.extractItemData));//put table data into hidden field to be sent to server using reduce and function to pull each row's data
+	var orderItemQueryString = escape(order.orderItems.reduce(ExtractItemData));
 	
     $.ajax({ //make ajax call to submit order
         url: "submitOrder",
         cache: false,
         type: "post",        
-        data: $("div#vendorOrderPanel #orderForm").serialize(),
+        data: orderItemQueryString + $("div#vendorOrderPanel #orderForm").serialize(),
         success: function( data ) { //order submission succeeded
-        	$("div#vendorOrderPanel #orderSubmittedDialog").html("Order # " + data.orderId + " has been submitted. Estimated cost (minus any estimated/unavailable weights) is " + formatPrice(totalCost)+".").dialog({ modal: true }); //pop success dialog
+        	$("div#vendorOrderPanel #orderSubmittedDialog").html("Vendor order # " + data.orderId + " has been saved. Estimated cost is " + formatPrice(totalCost)+".").dialog({ modal: true }); //pop success dialog
+        	vendorOrder.updateOrderItemIds(data.newOrderItems);
         	$("div#vendorOrderPanel #orderId").val(data.orderId); //set order id
+
         },
         error: function () { //order submission failed
         	$("div#vendorOrderPanel #orderSubmissionFailedDialog").dialog({ modal: true }); //pop failure dialog
         }
     });
+};
+
+//set the id of any orderItems that were new on this submit 
+vendorOrder.updateOrderItemIds = function (newOrderItems) {
+	for (orderItem in newOrderItems) {
+		vendorOrder.orderItems[orderItem.product.id].id = orderItem.id;
+	}
 };
 
 vendorOrder.resetForm = function () {
@@ -431,6 +442,7 @@ vendorOrder.resetForm = function () {
     $("div#vendorOrderPanel #orderId").val("0")   //set orderId to blank order
     vendorOrder.defaultLabels(); //reset fieldset and panel labels
     $("div#vendorOrderPanel #orderItems").hide(); //hide order item table since it's now empty
+    order.orderItems = [];
 };
 
 vendorOrder.confirmCancel = function () { //confirm order cancelation
@@ -449,28 +461,36 @@ vendorOrder.confirmCancel = function () { //confirm order cancelation
 vendorOrder.cancelOrder = function () { //cancel order- submit to server if it is an existing order that must be updated in the database
 	if ($("div#vendorOrderPanel #orderId").val() == "0") {
 		vendorOrder.resetForm();
+		return;
 	}
     $.ajax({ //make ajax call to submit order
         url: "submitOrder",
         cache: false,
         type: "post",        
         data: $("div#vendorOrderPanel #orderForm").serialize()+"&cancelled=" + encodeURIComponent("Cancelled"),//append cancelled parameter to form data
-        success: function( data ) { //order submission succeeded
+        success: function( data ) { //order cancel succeeded
         	$("div#vendorOrderPanel #orderSubmittedDialog").html("Order # " + data.orderId + " has been cancelled.").dialog({ modal: true }); //pop successful cancellation dialog
     		vendorOrder.resetForm();        	
         },
-        error: function () { //order submission failed
+        error: function () { //order cancel failed
         	$("div#vendorOrderPanel #orderCancellationFailedDialog").dialog({ modal: true }); //pop failure dialog
         }
     });
 };
 
-vendorOrder.extractItemData = function (string) {//retrieve data from row of order table and add it to string
-	if ($(this).find(":nth-child(2)").val() == "0" && $(this).find(":nth-child(8)").val() == "true") {
-		return;
+order.addOrderItems = function () { //add all items of existing order
+	for (item in order.orderItems) {
+		order.addItem(item);
+	}
+};
+
+vendorOrder.extractItemData = function (string) {//retrieve data from order array element and add it to string
+	if (this.isRemoved() && this.id == 0) {
+		return string;
+	}
 	} else {
-		return (string+"id="+$(this).find(":nth-child(1)").text()+"#quantity="+$(this).find(":nth-child(4)").find(":text").val()
-				+"#dbId="+$(this).find(":nth-child(2)").find(":text").val()+"#removed="+$(this).find(":nth-child(8)").find(":text").val()+">");
+		return (string+"items=id="+this.productId+"#quantity="+this.quantity+
+				+"#dbId="+this.id+"#removed="+$(this).isRemoved()+"#estimate="+$(this).isEstimate()+"#weight="+$(this).weight+"&");
 	}
 };
 

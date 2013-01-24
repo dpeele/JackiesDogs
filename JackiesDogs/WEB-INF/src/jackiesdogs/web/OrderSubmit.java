@@ -5,6 +5,7 @@ import javax.servlet.http.*;
 import javax.servlet.annotation.WebServlet;
 
 import org.apache.log4j.Logger;
+import org.json.JSONArray;
 
 import java.io.*;
 import java.util.*;
@@ -26,8 +27,7 @@ public class OrderSubmit extends HttpServlet {
 	
 	private final Logger log = Logger.getLogger(OrderSubmit.class);
 	
-	private List<OrderItem> retrieveOrderItems(String data) {
-		String[] items = data.split(">"); //split data into order items
+	private List<OrderItem> retrieveOrderItems(List<String> items) {				
 		List<OrderItem> orderItems = new ArrayList<OrderItem>();
 		OrderItem orderItem;
 		for (String item : items) {//each item
@@ -38,22 +38,19 @@ public class OrderSubmit extends HttpServlet {
 			String id = fields[0].substring(3).trim(); //strip out label from id			
 			String quantity = fields[1].substring(9).trim(); //strip out label from quantity
 			String dbId = fields[2].substring(5).trim(); //strip out label from database id
-			String removed = fields[3].substring(8).trim(); //strip out label from database removed flag
-			String weight;
-			int start = quantity.indexOf(" ("); //location of front parenthesis if it exists
-			if (start != -1) { //front parenthesis exists and we have an exact weight for this item
-				weight = quantity.substring(start+2, quantity.indexOf("lbs)")); //strip out weight
-				quantity = quantity.substring(0,start); //strip out quantity
-				orderItem = new OrderItem(Integer.parseInt(quantity),Double.parseDouble(weight),new Product(id));
-			} else {
-				orderItem = new OrderItem(Integer.parseInt(quantity),new Product(id));
-			}
+			String removed = fields[3].substring(8).trim(); //strip out label from removed value
+			String estimate = fields[4].substring(9).trim(); //strip out label from estimate value			
+			String weight = fields[5].substring(7).trim(); //strip out label from weight value;
+			orderItem = new OrderItem(Integer.parseInt(quantity),Double.parseDouble(weight),new Product(id));
 			if (!dbId.equals("0")) {
 				orderItem.setId(dbId);
 			}
-			if (removed.length() > 0) {
+			if (removed.equals("true")) {
 				orderItem.setRemoved(true);
 			}
+			if (estimate.equals("true")) {
+				orderItem.setEstimate(true);
+			}			
 			orderItems.add(orderItem);
 		}
 		return orderItems;
@@ -89,7 +86,7 @@ public class OrderSubmit extends HttpServlet {
 		
 		String custId = ServletUtilities.getParameter(request, "custId");
 		String deliveryDateString = ServletUtilities.getParameter(request, "deliveryDate");			
-		String orderInfo = ServletUtilities.getParameter(request, "orderInfo");
+		List<String> items = ServletUtilities.getStringParameterValues(request, "items");
 		int discount = ServletUtilities.getIntParameter(request, "discount");
 		double credit = ServletUtilities.getDoubleParameter(request, "credit");
 		double deliveryFee = ServletUtilities.getDoubleParameter(request, "deliveryFee");
@@ -101,7 +98,17 @@ public class OrderSubmit extends HttpServlet {
 		double totalCost = ServletUtilities.getDoubleParameter(request, "finalCost");
 		double totalWeight = ServletUtilities.getDoubleParameter(request, "totalWeight");		
 		String deliveryTimeString = ServletUtilities.getParameter(request, "deliveryTime");
-		List<OrderItem> orderItems = retrieveOrderItems(orderInfo);
+		List<OrderItem> orderItems = retrieveOrderItems(items);
+		boolean estimates = false;
+		List<OrderItem> newOrderItems = new ArrayList<OrderItem>();
+		for (OrderItem orderItem : orderItems) {
+			if (orderItem.getId() == null) {
+				newOrderItems.add(orderItem);
+			}
+			if (orderItem.isEstimate()) {
+				estimates = true;
+			}
+		}
 		
 		boolean delivered = false;
 		if (deliveredString.length() > 0) {
@@ -127,7 +134,7 @@ public class OrderSubmit extends HttpServlet {
 				return;
 			}
 		}
-				
-		out.print("{\"orderId\":\""+orderId+"\",\"totalCost\":\""+totalCost+"\"}"); // send customer id back to front end		
+		JSONArray newOrderItemsJSON = new JSONArray(newOrderItems);
+		out.print("{\"orderId\":\""+orderId+"\",\"totalCost\":\""+totalCost+"\",\"newOrderItems\":\""+newOrderItemsJSON+"\",\"estimates\":"+estimates+"}"); // send customer id back to front end		
 	}
 }

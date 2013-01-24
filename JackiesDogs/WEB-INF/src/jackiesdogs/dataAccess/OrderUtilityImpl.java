@@ -29,7 +29,7 @@ public class OrderUtilityImpl implements OrderUtility{
 
 	private final String findOrderItemsSql = "{CALL order_item_retrieve (?)}";
 
-	private final String updateOrderItemSql = "{CALL order_item_update(?, ?, ?, ?, ?, ?)}";
+	private final String updateOrderItemSql = "{CALL order_item_update(?, ?, ?, ?, ?, ?, ?, ?)}";
 
 	public OrderUtilityImpl (DataSource dataSource, ProductUtility productUtility) {
 		this.dataSource = dataSource; //set dataSource
@@ -316,7 +316,11 @@ public class OrderUtilityImpl implements OrderUtility{
 		double totalWeight = 0;
 		double cost = 0;
 		double weight = 0;		
-		
+		Product product;
+		Inventory inventory;
+		VendorInventory vendorInventory;
+		String categoryString;
+		List<String> categories = null;
 		try {			
 			connection = dataSource.getConnection(); //get connection from dataSource
 			connection.setTransactionIsolation(Connection.TRANSACTION_REPEATABLE_READ); //prevent dirty reads, phantom reads, and nonrepeatable reads
@@ -348,10 +352,27 @@ public class OrderUtilityImpl implements OrderUtility{
 						weight = resultSet.getDouble("weight");
 						totalCost = totalCost + cost;
 						totalWeight = totalWeight + weight;
-						vendorInventoryItems.add(new VendorInventory(new Product(resultSet.getString("product_id"),
-																				 resultSet.getString("product_name"),
-																				 resultSet.getString("vendor_id")),
-																	 resultSet.getInt("quantity"), weight, cost));
+						categoryString = resultSet.getString("categories");
+						if (categoryString != null && categoryString.contains("|")) {
+							categories = new ArrayList<String>(Arrays.asList(categoryString.split("|")));
+						}								
+						product = new Product (resultSet.getString("product_id"),
+								   resultSet.getString("product_name"),
+								   resultSet.getString("description"),
+								   resultSet.getDouble("price"),
+								   resultSet.getString("unit_name"),
+								   resultSet.getInt("estimated_weight"),
+								   resultSet.getString("vendor_name"),
+								   resultSet.getString("vendor_id"),
+								   categories);
+						inventory = new Inventory (resultSet.getInt("quantity"),
+							   resultSet.getDouble("total_weight"));	
+						product.setInventory(inventory);
+						vendorInventory = new VendorInventory(product, resultSet.getInt("quantity"), weight, cost);
+						if (product.getBillBy() == "Pound") {
+							vendorInventory.setEstimate(true);
+						}							
+						vendorInventoryItems.add(vendorInventory);
 					}
 					vendorOrder = new VendorOrder (totalWeight, totalCost, new ArrayList<String>(ProductGroup.VENDORS.keySet()).get(vendorTypeId-1), vendorInventoryItems);
 				} else {
@@ -622,6 +643,7 @@ public class OrderUtilityImpl implements OrderUtility{
 			hasResults = callableStatement.execute();
 			Product product;
 			OrderItem orderItem;
+			Inventory inventory;
 			if (hasResults) {
 				resultSet = callableStatement.getResultSet();
 				if (!resultSet.isBeforeFirst()) { //returns false if ResultSet is empty 
@@ -635,15 +657,20 @@ public class OrderUtilityImpl implements OrderUtility{
 						orderItem = new OrderItem(resultSet.getString("order_item_id"),
 												 			resultSet.getInt("quantity"),
 												 			resultSet.getDouble("weight"),
-												 			resultSet.getString("notes"));										 
+												 			resultSet.getString("notes"),
+															resultSet.getByte("estimate") == (byte)1 ? true : false);
 						product = new Product (resultSet.getString("product_id"),
 													   resultSet.getString("product_name"),
 													   resultSet.getString("description"),
 													   resultSet.getDouble("price"),
 													   resultSet.getString("unit_name"),
 													   resultSet.getInt("estimated_weight"),
+													   resultSet.getString("vendor_name"),
 													   resultSet.getString("vendor_id"),
 													   categories);
+						inventory = new Inventory (resultSet.getInt("quantity"),
+												   resultSet.getDouble("total_weight"));
+						product.setInventory(inventory);
 						orderItem.setProduct(product);
 						orderItems.add(orderItem);
 					}
@@ -705,13 +732,19 @@ public class OrderUtilityImpl implements OrderUtility{
 					callableStatement.setNull(5, Types.FLOAT);
 					callableStatement.setNull(6, Types.VARCHAR);					
 					callableStatement.setByte(7, (byte)1);
+					callableStatement.setNull(8, Types.INTEGER);					
 				} else { //update/insert item
 					callableStatement.setInt(1, orderId);
 					callableStatement.setInt(2, Integer.parseInt(orderItem.getProduct().getId()));
 					callableStatement.setInt(3, orderItem.getQuantity());
 					callableStatement.setDouble(4, orderItem.getWeight());
 					callableStatement.setString(5, orderItem.getNotes());
-					callableStatement.setByte(7, (byte)0);						
+					callableStatement.setByte(7, (byte)0);		
+					if (orderItem.isEstimate()) {
+						callableStatement.setByte(8, (byte)1);
+					} else {
+						callableStatement.setByte(8, (byte)0);
+					}
 				}					
 				hasResults = callableStatement.execute();			
 				if (hasResults) {

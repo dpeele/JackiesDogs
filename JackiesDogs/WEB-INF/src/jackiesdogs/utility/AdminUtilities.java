@@ -3,8 +3,7 @@ package jackiesdogs.utility;
 import java.io.*;
 import java.nio.charset.Charset;
 
-
-public class AdminUtilities {
+public class AdminUtilities {	
 	
 	/*convert file with given fileName to a String*/
 	public static String fileToString(String fileName) {

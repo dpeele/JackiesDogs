@@ -5,6 +5,7 @@ import javax.servlet.http.*;
 import javax.servlet.annotation.WebServlet;
 
 import org.apache.log4j.Logger;
+import org.json.JSONArray;
 
 import java.io.*;
 import java.util.*;
@@ -23,38 +24,34 @@ public class VendorOrderSubmit extends HttpServlet {
 	
 	private final Logger log = Logger.getLogger(VendorOrderSubmit.class);
 	
-	private List<VendorInventory> retrieveVendorInventoryItems(String data) {
-		String[] items = data.split(">"); //split data into order items
-		List<VendorInventory> orderItems = new ArrayList<VendorInventory>();
-		VendorInventory orderItem;
-		for (String item : items) {//each item
-			if (item.length() == 0) {
-				continue;
+	private List<VendorInventory> retrieveVendorInventoryItems(List<String> items) {
+			List<VendorInventory> orderItems = new ArrayList<VendorInventory>();
+			VendorInventory orderItem;
+			for (String item : items) {//each item
+				if (item.length() == 0) {
+					continue;
+				}
+				String[] fields = item.split("#"); //split item into fields		
+				String id = fields[0].substring(3).trim(); //strip out label from id			
+				String quantity = fields[1].substring(9).trim(); //strip out label from quantity
+				String dbId = fields[2].substring(5).trim(); //strip out label from database id
+				String removed = fields[3].substring(8).trim(); //strip out label from removed value
+				String estimate = fields[4].substring(9).trim(); //strip out label from estimate value			
+				String weight = fields[5].substring(7).trim(); //strip out label from weight value;
+				orderItem = new VendorInventory(new Product(id),Integer.parseInt(quantity),Double.parseDouble(weight));
+				if (!dbId.equals("0")) {
+					orderItem.setId(dbId);
+				}
+				if (removed.trim().equals("true")) {
+					orderItem.setRemoved(true);
+				}
+				if (estimate.equals("true")) {
+					orderItem.setEstimate(true);
+				}							
+				orderItems.add(orderItem);
 			}
-			String[] fields = item.split("#"); //split item into fields		
-			String id = fields[0].substring(3).trim(); //strip out label from id			
-			String quantity = fields[1].substring(9).trim(); //strip out label from quantity
-			String dbId = fields[2].substring(5).trim(); //strip out label from database id
-			String removed = fields[3].substring(8).trim(); //strip out label from database removed flag
-			String weight;
-			int start = quantity.indexOf(" ("); //location of front parenthesis if it exists
-			if (start != -1) { //front parenthesis exists and we have an exact weight for this item
-				weight = quantity.substring(start+2, quantity.indexOf("lbs)")); //strip out weight
-				quantity = quantity.substring(0,start); //strip out quantity
-				orderItem = new VendorInventory(Integer.parseInt(quantity),Double.parseDouble(weight),new Product(id));
-			} else {
-				orderItem = new VendorInventory(Integer.parseInt(quantity),new Product(id));
-			}
-			if (!dbId.equals("0")) {
-				orderItem.setId(dbId);
-			}
-			if (removed.length() > 0) {
-				orderItem.setRemoved(true);
-			}
-			orderItems.add(orderItem);
+			return orderItems;
 		}
-		return orderItems;
-	}
 	
 	private ApplicationContext applicationContext;
 
@@ -84,9 +81,8 @@ public class VendorOrderSubmit extends HttpServlet {
 			return;
 		}
 		
-		String custId = ServletUtilities.getParameter(request, "custId");
 		String deliveryDateString = ServletUtilities.getParameter(request, "deliveryDate");			
-		String orderInfo = ServletUtilities.getParameter(request, "orderInfo");
+		List<String> orderInfo = ServletUtilities.getStringParameterValues(request, "items");
 		int discount = ServletUtilities.getIntParameter(request, "discount");
 		int mileage = ServletUtilities.getIntParameter(request, "mileage");
 		int vendor = ServletUtilities.getIntParameter(request, "vendor");		
@@ -97,7 +93,13 @@ public class VendorOrderSubmit extends HttpServlet {
 		double totalCost = ServletUtilities.getDoubleParameter(request, "finalCost");
 		double totalWeight = ServletUtilities.getDoubleParameter(request, "totalWeight");		
 		List<VendorInventory> orderItems = retrieveVendorInventoryItems(orderInfo);
-				
+		List<VendorInventory> newOrderItems = new ArrayList<VendorInventory>();
+		for (VendorInventory orderItem : orderItems) {
+			if (orderItem.getId() == null) {
+				newOrderItems.add(orderItem);
+			}
+		}		
+		
 		VendorOrder order = new VendorOrder(new Date(),ServletUtilities.getDateFromString(deliveryDateString),status,new ArrayList<String>(ProductGroup.VENDORS.keySet()).get(vendor-1),"",discount,
 				credit,mileage,deliveryFee,tollExpense,totalCost,totalWeight);		
 		order.setVendorInventoryItems(orderItems);
@@ -113,6 +115,7 @@ public class VendorOrderSubmit extends HttpServlet {
 			}
 		}
 				
-		out.print("{\"orderId\":\""+orderId+"\",\"totalCost\":\""+totalCost+"\"}"); // send customer id back to front end		
+		JSONArray newOrderItemsJSON = new JSONArray(newOrderItems);
+		out.print("{\"orderId\":\""+orderId+"\",\"totalCost\":\""+totalCost+"\",\"newOrderItems\":\""+newOrderItemsJSON+"\"}"); // send customer id back to front end		
 	}
 }

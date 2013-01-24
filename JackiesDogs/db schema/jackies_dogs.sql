@@ -212,6 +212,7 @@ CREATE TABLE vendor_inventory /*table to store inventory requested/received from
   , cost FLOAT NOT NULL
   , notes VARCHAR(2048)
   , deleted BOOLEAN
+  , estimate BOOLEAN
   , last_modified_date DATETIME
 	
   , FOREIGN KEY (product_id) REFERENCES product(id) 
@@ -290,6 +291,7 @@ CREATE TABLE order_item /* table to store items for each order*/
   , weight FLOAT NOT NULL
   , notes VARCHAR (2048)
   , deleted BOOLEAN
+  , estimated BOOLEAN
   , last_modified_date DATETIME
 
   , FOREIGN KEY (order_id) REFERENCES order_info(id) 
@@ -1135,6 +1137,7 @@ BEGIN
 			  , oi.quantity
 			  , oi.weight
 			  , oi.notes
+			  , oi.estimate
 			  , p.id AS product_id
 			  , p.product_name
 			  , pc.description
@@ -1143,10 +1146,13 @@ BEGIN
 			  , p.estimated_weight
 			  , p.vendor_id
 			  , pc.vendor_name
-			  , pc.categories 
+			  , pc.categories 	
+			  , i.quantity
+			  , i.total_weight
 	FROM 		order_item oi
 			  , product p
 			  , unit u
+			  , inventory i
 			  , (SELECT 	product_id
 						  , description
 						  , vendor_name
@@ -1155,7 +1161,7 @@ BEGIN
 						  , product_group_category pgc
 						  , product_group_member pgm
 						  , product_group pg 
-						  , vendor v
+						  , vendor v				          
 				WHERE 		pgc.product_group_id = pg.id 
 						AND pgm.product_group_id = pg.id
 						AND v.id = pg.vendor_type
@@ -1164,6 +1170,7 @@ BEGIN
 	WHERE 		pc.product_id = p.id 
 			AND oi.product_id = p.id 
 			AND p.bill_by_unit_id = u.id 
+			AND i.product_id = p.id
 			AND order_id = in_id 
 			AND deleted = FALSE
 	ORDER BY 	p.product_name;
@@ -1185,6 +1192,7 @@ CREATE PROCEDURE order_item_update
   , IN in_weight FLOAT
   , IN in_notes VARCHAR (2048)
   , IN in_deleted BOOLEAN
+  , IN in_estimated BOOLEAN
 )
 BEGIN
 
@@ -1208,6 +1216,7 @@ BEGIN
 				  , weight = in_weight
 				  , notes = in_notes 
 				  , deleted = FALSE
+				  , estimate = in_estimate
 				  , last_modified_date = NOW()
 			WHERE 	id = in_id;
 
@@ -1227,6 +1236,7 @@ BEGIN
 			  , in_weight
 			  , in_notes
 			  , FALSE
+			  , in_estimate
 			  , NOW();
 
 		/* capture auto_increment value*/
@@ -1612,16 +1622,41 @@ BEGIN
 			  , vi.total_weight
 			  , vi.notes
 		      , vi.cost
+			  , vi.estimate			   
 			  , p.id AS product_id
 			  , p.product_name
 			  , pc.description
 			  , p.price
+		      , p.estimated_weight
 			  , p.vendor_id
+			  , u.unit_name
 			  , pc.vendor_name
+			  , i.quantity
+			  , i.total_weight
+		      , pc.categories
 	FROM 		vendor_inventory vi
 			  , product p
+			  , (SELECT 	product_id
+						  , description
+						  , vendor_name
+						  , GROUP_CONCAT(category_name SEPARATOR '|') AS categories 
+				 FROM		category c
+						  , product_group_category pgc
+						  , product_group_member pgm
+						  , product_group pg 
+						  , vendor v				          
+				WHERE 		pgc.product_group_id = pg.id 
+						AND pgm.product_group_id = pg.id
+						AND v.id = pg.vendor_type
+						AND pgc.category_id = c.id 
+				GROUP BY 	product_id, description, vendor_name) pc 
+			  , inventory i
+			  , unit u
 	WHERE 		vi.product_id = p.id 
 			AND vendor_order_id = in_id 
+			AND i.product_id = p.id
+			AND p.id = pc.product_id
+		    AND p.bill_by_unit_id = u.id
 			AND deleted = FALSE
 	ORDER BY 	p.product_name;
 
@@ -1644,6 +1679,7 @@ CREATE PROCEDURE vendor_inventory_update
   , IN cost FLOAT
   , IN in_notes VARCHAR (2048)
   , IN in_deleted BOOLEAN
+  , IN estimate BOOLEAN
 
 )
 BEGIN
@@ -1669,6 +1705,7 @@ BEGIN
 				  , cost = in_cost
 				  , notes = in_notes 
 				  , deleted = FALSE
+				  , estimate = in_estimate
 				  , last_modified_date = NOW()
 			WHERE 	id = in_id;
 
@@ -1698,6 +1735,7 @@ BEGIN
 			  , in_cost
 			  , in_notes
 			  , FALSE
+			  , in_estimate
 			  , NOW();
 
 		/* capture auto_increment value*/
@@ -1724,8 +1762,6 @@ BEGIN
 	/* create table that sums the quantity and estimated weight for each item in order to given vendor*/
 	CREATE TABLE temp_vendor_order_inventory 
 	AS (SELECT		oi.product_id
-				  ,	p.vendor_id
-				  , p.product_name
 				  , SUM(oi.quantity) AS quantity
 				  , SUM(oi.weight) AS weight
 				  , i.cost /* we will multiply this later */
@@ -1764,12 +1800,49 @@ BEGIN
 	WHERE 	p.id = tvoi.product_id
 		AND u.id = p.bill_by_unit_id
 		AND u.unit_name = "Pound";
-	
-	SELECT 		*
-	FROM		temp_vendor_order_inventory
-	WHERE		quantity > 0
-	ORDER BY 	product_name;
 
-END 
+	SELECT 		oi.id AS order_item_id
+			  , oi.quantity
+			  , oi.weight
+			  , oi.notes
+			  , p.id AS product_id
+			  , p.product_name
+			  , pc.description
+			  , p.price
+			  , u.unit_name
+			  , p.estimated_weight
+			  , p.vendor_id
+			  , pc.vendor_name
+			  , pc.categories 	
+			  , i.quantity
+			  , i.total_weight
+	FROM 		temporary_vendor_order_item oi
+			  , product p
+			  , unit u
+			  , inventory i
+			  , (SELECT 	product_id
+						  , description
+						  , vendor_name
+						  , GROUP_CONCAT(category_name SEPARATOR '|') AS categories 
+				 FROM		category c
+						  , product_group_category pgc
+						  , product_group_member pgm
+						  , product_group pg 
+						  , vendor v				          
+				WHERE 		pgc.product_group_id = pg.id 
+						AND pgm.product_group_id = pg.id
+						AND v.id = pg.vendor_type
+						AND pgc.category_id = c.id 
+				GROUP BY 	product_id, description, vendor_name) pc 
+	WHERE 		pc.product_id = p.id 
+			AND oi.product_id = p.id 
+			AND p.bill_by_unit_id = u.id 
+			AND i.product_id = p.id
+			AND order_id = in_id 
+			AND oi.quantity > 0
+	ORDER BY 	p.product_name;
+
+END
 //
 DELIMITER ;
+
