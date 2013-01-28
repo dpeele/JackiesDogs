@@ -97,7 +97,7 @@ public class ProductUtilityImpl implements ProductUtility {
 								 			  resultSet.getDouble("price"),					 
 								 			  resultSet.getString("bill_by_unit_name"),
 								 			  resultSet.getString("order_by_unit_name"),						 
-								 			  resultSet.getInt("estimated_weight"),
+								 			  resultSet.getDouble("estimated_weight"),
 								 			  categories,
 								 			  resultSet.getString("vendor_id"),
 								 			  resultSet.getString("vendor_name"));
@@ -162,7 +162,7 @@ public class ProductUtilityImpl implements ProductUtility {
 			callableStatement.setDouble(3, product.getPrice());
 			callableStatement.setInt(4, Product.UNITS.get(product.getOrderBy()));
 			callableStatement.setInt(5, Product.UNITS.get(product.getBillBy()));
-			callableStatement.setInt(6, product.getEstimatedWeight());
+			callableStatement.setDouble(6, product.getEstimatedWeight());
 			callableStatement.setString(7, product.getNotes());
 			callableStatement.setString(8, product.getVendorId());							
 			hasResults = callableStatement.execute();
@@ -424,7 +424,7 @@ public class ProductUtilityImpl implements ProductUtility {
 													   resultSet.getString("description"),
 													   resultSet.getDouble("price"),
 													   resultSet.getString("unit_name"),
-													   resultSet.getInt("estimated_weight"),													   
+													   resultSet.getDouble("estimated_weight"),													   
 													   resultSet.getString("vendor_id"),
 													   resultSet.getString("vendor_name"),
 													   categories);	

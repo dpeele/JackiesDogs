@@ -9,7 +9,7 @@ $(function () { //onload
 });
 
 //create order item object
-Item = function (id, quantity, weight, name, price, billBy, estimatedWeight, description, totalWeight, quantityAvailable, productId, /*optional*/ estimated) {
+function Item (id, quantity, weight, name, price, billBy, estimatedWeight, description, totalWeight, quantityAvailable, productId, /*optional*/ estimated) {
 	this.id = id; 
 	this.quantity = quantity; 
 	this. weight = parseFloat(weight); 
@@ -17,9 +17,9 @@ Item = function (id, quantity, weight, name, price, billBy, estimatedWeight, des
 	this.price = formatPrice(price); 
 	this.billBy = billBy; 
 	if (estimatedWeight == 0) {
-		this.estimatedWeight = 1;
+		this.estimatedWeight = 1.0;
 	} else {
-		this.estimatedWeight = estimatedWeight;
+		this.estimatedWeight = parseFloat(estimatedWeight);
 	}
 	this.description = description;
 	this.totalWeight = totalWeight;

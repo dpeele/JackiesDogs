@@ -138,6 +138,7 @@
 		<div id="incompleteDeliveryDialog" class="dialog">Please fill in zip.</div>				
 		<div id="orderSubmittedDialog" class="dialog"></div>
 		<div id="orderSubmissionFailedDialog" class="dialog">The order submission failed, please contact the admin.</div>
+		<div id="itemAlreadyAddedDialog" class="dialog">This item has already been added to your order. If you want to change the quantity, please adjust it in the list of order items at right.</div>		
 		<div id="orderCancelledDialog" class="dialog"></div>
 		<div id="orderCancellationFailedDialog" class="dialog">The order cancellation failed, please contact the admin.</div>		
 		<div id="customerSubmissionFailedDialog" class="dialog">The customer submission failed, please contact the admin.</div>		

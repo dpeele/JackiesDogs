@@ -6,8 +6,8 @@ public class Product {
 	private String id, productName, description, productUrl, notes, 
 		 orderBy, billBy, vendorId, vendorName;
 	private List<String> categories, imageUrls;
-	private int estimatedWeight, websiteId;
-	private double price;
+	private int websiteId;
+	private double price, estimatedWeight;
 	private Inventory inventory;
 	
 	public static Map<String,Integer> UNITS = new HashMap<String,Integer>();
@@ -48,7 +48,7 @@ public class Product {
 	}
 
 	public Product(String id, String productName, String description, double price, 
-			String orderBy, String billBy, int estimatedWeight, String vendorId, Inventory inventory) {
+			String orderBy, String billBy, double estimatedWeight, String vendorId, Inventory inventory) {
 		this.id = id;
 		this.productName = productName;
 		this.description = description;
@@ -61,7 +61,7 @@ public class Product {
 	}
 
 	public Product(String id, String productName, String description, double price, 
-			String billBy, int estimatedWeight, String vendorId, Inventory inventory) {
+			String billBy, double estimatedWeight, String vendorId, Inventory inventory) {
 		this.id = id;
 		this.productName = productName;
 		this.description = description;
@@ -73,7 +73,7 @@ public class Product {
 	}	
 	
 	public Product(String id, String productName, String description, double price, 
-					String orderBy, String billBy, int estimatedWeight, String vendorId) {
+					String orderBy, String billBy, double estimatedWeight, String vendorId) {
 		this.id = id;
 		this.productName = productName;
 		this.description = description;
@@ -85,7 +85,7 @@ public class Product {
 	}
 	
 	public Product(String productName, double price, String orderBy, String billBy,  
-			int estimatedWeight, String notes, String vendorId) {
+			double estimatedWeight, String notes, String vendorId) {
 		this.productName = productName;
 		this.price = price;
 		this.orderBy = orderBy; 
@@ -96,7 +96,7 @@ public class Product {
 	}	
 
 	public Product(String id, String productName, String description, double price, 
-			String billBy, int estimatedWeight, String vendorId, List<String> categories) {
+			String billBy, double estimatedWeight, String vendorId, List<String> categories) {
 		this.id = id;
 		this.productName = productName;
 		this.description = description;
@@ -108,7 +108,7 @@ public class Product {
 	}
 	
 	public Product(String id, String productName, String description, double price, 
-			String billBy, int estimatedWeight, String vendorId, String vendorName, List<String> categories) {
+			String billBy, double estimatedWeight, String vendorId, String vendorName, List<String> categories) {
 		this.id = id;
 		this.productName = productName;
 		this.description = description;
@@ -120,7 +120,7 @@ public class Product {
 	}
 	
 	public Product(String id, String productName, String description, List<String> imageUrls, 
-			String notes, double price, String orderBy, String billBy, int estimatedWeight, 
+			String notes, double price, String orderBy, String billBy, double estimatedWeight, 
 			List<String> categories, String vendorId) {
 		this.id = id;
 		this.productName = productName;
@@ -136,7 +136,7 @@ public class Product {
 	}
 	
 	public Product(String id, String productName, String description, List<String> imageUrls, 
-			String notes, double price, String orderBy, String billBy, int estimatedWeight, 
+			String notes, double price, String orderBy, String billBy, double estimatedWeight, 
 			List<String> categories, String vendorId, Inventory inventory) {
 		this.id = id;
 		this.productName = productName;
@@ -153,7 +153,7 @@ public class Product {
 	}	
 
 	public Product(String id, String productName, String description, List<String> imageUrls, String productUrl,
-			String notes, double price, String orderBy, String billBy, int estimatedWeight, List<String> categories, String vendorId, String vendorName) {
+			String notes, double price, String orderBy, String billBy, double estimatedWeight, List<String> categories, String vendorId, String vendorName) {
 		this.id = id;
 		this.productName = productName;
 		this.description = description;
@@ -169,7 +169,7 @@ public class Product {
 	}
 	
 	public Product(String id, String productName, String description, List<String> imageUrls, String productUrl,
-			String notes, double price, String orderBy, String billBy, int estimatedWeight, List<String> categories, String vendorId,
+			String notes, double price, String orderBy, String billBy, double estimatedWeight, List<String> categories, String vendorId,
 			Inventory inventory) {
 		this.id = id;
 		this.productName = productName;
@@ -265,11 +265,11 @@ public class Product {
 		this.billBy = billBy;
 	}
 
-	public int getEstimatedWeight() {
+	public double getEstimatedWeight() {
 		return estimatedWeight;
 	}
 
-	public void setEstimatedWeight(int estimatedWeight) {
+	public void setEstimatedWeight(double estimatedWeight) {
 		this.estimatedWeight = estimatedWeight;
 	}
 

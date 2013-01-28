@@ -38,6 +38,13 @@ public class AdminUtilities {
     	String[] words = string.split(" ");
     	String finalTitle = "";
     	for (String word : words) {
+    		if (word.matches("[\\-(,].*")) {
+    			finalTitle = finalTitle + word.substring(0,1);
+    			word = word.substring(1);
+    		}
+    		if (word.length() == 0) {
+    			continue;
+    		}
     		if (word.length() == 1) {
     			finalTitle = finalTitle + word.toUpperCase() + " ";
     		} else if( word.length() > 1) {
@@ -45,6 +52,33 @@ public class AdminUtilities {
     		}
     	}
     	finalTitle = finalTitle.substring(0,finalTitle.length()-1);
+    	words = finalTitle.split(",");
+    	finalTitle = "";
+    	for (String word : words) {
+    		if (word.matches("[\\-(].*")) {
+    			finalTitle = finalTitle + word.substring(0,1);
+    			word = word.substring(1);
+    		}
+    		if (word.length() == 0) {
+    			continue;
+    		}
+    		if (word.length() == 1) {
+    			finalTitle = finalTitle + word.toUpperCase() + ",";
+    		} else if( word.length() > 1) {
+    			finalTitle = finalTitle + word.substring(0,1).toUpperCase() + word.substring(1) + ",";
+    		}
+    	}
+    	finalTitle = finalTitle.substring(0,finalTitle.length()-1);    	
+    	words = finalTitle.split("'");
+    	finalTitle = "";
+    	for (String word : words) {
+    		if (word.length() == 1) {
+    			finalTitle = finalTitle + word.toUpperCase() + "'";
+    		} else if( word.length() > 1) {
+    			finalTitle = finalTitle + word.substring(0,1).toUpperCase() + word.substring(1) + "'";
+    		}
+    	}
+    	finalTitle = finalTitle.substring(0,finalTitle.length()-1);     	
     	return finalTitle;
     }
     

@@ -40,9 +40,9 @@ public class OmaOrderExtractor implements PdfExtractorUtility{
         	document = new PDDocument(cosDoc); //get higer level reprensation of pdf document
             parsedText = stripper.getText(document); //strip text from document
             dataHolder = Arrays.asList(parsedText.split("\\r?\\n")); //convert output stream to string, then split string by line and put into array, then convert array to list
-            /*if (!file.delete()) {
+            if (!file.delete()) {
             	log.error("Unable to delete file.");
-            } */           
+            }           
         } catch (IOException ioe) {
         	log.error("Error reading pdf file: " + ioe);
         }

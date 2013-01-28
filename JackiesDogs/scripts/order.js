@@ -74,7 +74,7 @@ order.onload = function () { //called onload of this panel
 	$("div#orderPanel :checkbox").attr("value","true");
     
 	//buttons- all hidden initially
-    $("div#orderPanel #addButton").button().attr("value","Add Item").click(order.addItem).hide(); //add item to order
+    $("div#orderPanel #addButton").button().attr("value","Add Item").click(function () {order.checkQuantity(order.addItem,order.currentItem, $("div#orderPanel #quantity").val());}).hide(); //add item to order
     $("div#orderPanel #editCustomerButton").button().attr("value","Edit Customer").click(function () {order.popEditCustomer("Edit Customer");}).hide();//pop customer div
     $("div#orderPanel #submitButton").button().attr("value","Submit Order").click(order.validateAndSubmit).hide();//submit order
     $("div#orderPanel #cancelButton").button().attr("value","Cancel Order").click(order.confirmCancel).hide();//cancel order    
@@ -320,45 +320,93 @@ order.checkForDeliveryButton = function () {
 	}	
 };
 
-order.checkQuantity = function () { //check quantity ordered vs quantity in stock and confirm if quantity ordered is greater
-	var quantityCheck =$("div#orderPanel #quantityAvailable").val() -$("div#orderPanel #quantity").val(); //make sure you aren't adding more than we have
+order.checkQuantity = function (destinationFunction, item, quantity) { //check quantity ordered vs quantity in stock and confirm if quantity ordered is greater
+	var quantityCheck =item.availableQuantity - quantity; //make sure you aren't adding more than we have
 	if (quantityCheck < 0) {
 		$("div#orderPanel #quantityOverrideDialog").dialog({ 
 			modal: true, 
 			buttons: [ 
 				{ text: "Continue", click:function() { 
 					$(this).dialog("close");
-					order.addItem();									
+					destinationFunction(item, quantity);									
 				}}, 	
 				{ text: "Cancel", click:function() {        					 
 					$(this).dialog( "close" ); 
 		}}]});		
 	} else {
-		order.addItem();
+		destinationFunction(item, quantity);
 	}
 };
 
-order.addItem = function (item) { //add item to order
+//update the total quantity and weight
+order.updateTotalQuantity = function (item, newQuantity) {
+	//get current total weight
+	var totalWeight = parseFloat($("div#orderPanel #totalWeight").val());
+	//get old weight				
+	var oldWeight = item.weight;
+	//get old cost for item
+	var oldCost = item.getUnformattedTotalPrice();
+	// set quantity of this item to new quantity
+	item.quantity = newQuantity;
+	// set weight of this item to new weight
+	item.weight = parseFloat(item.quantity * item.estimatedWeight);
+	//set weight in item table
+	$("div#orderPanel #totalWeight").val(totalWeight - oldWeight + item.weight);
+	//get previous total food cost
+	var totalCost = parseFloat($("div#orderPanel #totalCost").val();
+	//get new cost for item
+	var newCost = item.getUnformattedTotalPrice();
+	$("div#orderPanel #totalCost").val("$"+formatPrice(totalCost-oldCost+newCost));//update total
+	$("div#orderPanel #totalItemPrice"+item.productId).html(item.getFormattedTotalPrice());
+}
+
+//update total quantity, total weight, item quantity, and item weight
+order.updateTotalQuantityAndWeight = function (item, newWeight) {
+	item.estimated = false;
+	// remove weight of this item from total weight and add in new weight
+	var totalWeight = parseFloat($("div#orderPanel #totalWeight").val());
+	//get old cost for item
+	var oldCost = item.getUnformattedTotalPrice();
+	// set weight of this item to new weight
+	item.weight = newWeight;
+	//set weight in item table
+	$("div#orderPanel #totalWeight").val(totalWeight - oldWeight + item.weight);
+	// set quantity of this item to new quantity
+	item.quantity = $("div#orderPanel #exactQuantity").val();						
+	//set quantity in item table
+	$("div#orderPanel #quantity"+item.productId).val(item.getFormattedQuantityAndWeight());
+	//get previous total food cost
+	var totalCost = parseFloat($("div#orderPanel #totalCost").val();
+	//get new cost for item
+	var newCost = item.getUnformattedTotalPrice();
+	$("div#orderPanel #totalCost").val("$"+formatPrice(totalCost-oldCost+newCost));//update total
+	$("div#orderPanel #totalItemPrice"+item.productId).html(item.getFormattedTotalPrice());
+}
+
+order.addItem = function (item, quantity) { //add item to order
 	if ($("div#orderPanel #orderItems tr").length == 1) {
 		$("div#orderPanel #orderItems").show();
 	}
-	if (arguments.length == 0) {//item not passed so we are adding the current item selected from the product list to the end of the list of order items		
-		item = order.currentItem;
-		item.quantity = $("div#orderPanel #quantity").val();		
+	if (quantity != null) {//new item passed from form, not existing item passed from loaded order	
+		if (order.orderItems[item.productId] != null) { //this item is already in the table
+			$("div#orderPanel #itemAlreadyAddedDialog").dialog({ modal: true });
+			return;				
+		}
+		item.quantity = quantity;		
 		item.weight = parseFloat(item.quantity * item.estimatedWeight);	
-		order.orderItems[order.productId] = item;
+		order.orderItems[item.productId] = item;
 		order.currentItem = {};
 	}
 	$("div#orderPanel #orderItems tr:last").after("<tr>\n" + //add row
-										"<td id='productId"+order.productId+"'>"+order.productId+"</td>\n" +
+										"<td id='productId"+item.productId+"'>"+item.productId+"</td>\n" +
 										"<td>"+item.name+"</td>\n" +
-										"<td><input type='text' id='quantity"+order.productId+"' value='"+item.getFormattedQuantityAndWeight()+"'/>"</td>\n" +
+										"<td><input type='text' id='quantity"+item.productId+"' value='"+item.getFormattedQuantityAndWeight()+"'/>"</td>\n" +
 										"<td>"+item.getFormattedPrice()+"</td>\n" +
-										"<td id='totalItemPrice"+order.productId+"'>"+item.getFormattedTotalPrice() + "</td>\n" +
-										"<td><input type='button' id='button"+order.productId+"'/></td>\n" +
+										"<td id='totalItemPrice"+item.productId+"'>"+item.getFormattedTotalPrice() + "</td>\n" +
+										"<td><input type='button' id='button"+item.productId+"'/></td>\n" +
 									"</tr>\n");
 		
-	$("div#orderPanel #quantity"+order.productId).css("width","100px") //set width of quantity input		
+	$("div#orderPanel #quantity"+item.productId).css("width","100px") //set width of quantity input		
 	if (item.description.length > 0) { //add tooltip to table row if description exists
 		$("div#orderPanel #orderItems tr:last").simpletip({  
 			content: description,
@@ -367,7 +415,7 @@ order.addItem = function (item) { //add item to order
 	}	
 		
 	if (item.isByThePound()) { //priced by the pound, add focus event handler to pop up estimated dialog and handle that
-		$("div#orderPanel #quantity"+order.productId).focus(function() {
+		$("div#orderPanel #quantity"+item.productId).focus(function() {
 			$("div#orderPanel #exactQuantity").val(item.quantity);//set initial quantity value in dialog to value from table row
 			var oldWeight = item.weight; //get old weight
 			$("div#orderPanel #exactWeight").val(oldWeight);//set initial weight value in dialog to value from table row
@@ -381,26 +429,23 @@ order.addItem = function (item) { //add item to order
 							$("div#orderPanel #incompletePoundQuantityDialog").dialog({ modal: true });
 							return;	
 						}		
-						item.estimated = false;
-						// remove weight of this item from total weight and add in new weight
-						var totalWeight = parseFloat($("div#orderPanel #totalWeight").val());
-						//get old cost for item
-						var oldCost = item.getUnformattedTotalPrice();
-						// set weight of this item to new weight
-						item.weight = parseFloat($("div#orderPanel #exactWeight").val());
-						//set weight in item table
-						$("div#orderPanel #totalWeight").val(totalWeight - oldWeight + item.weight);
-						// set quantity of this item to new quantity
-						item.quantity = $("div#orderPanel #exactQuantity").val();
-						//set quantity in item table
-						$("div#orderPanel #quantity"+order.productId).val(item.getFormattedQuantityAndWeight());
-						//get previous total food cost
-						var totalCost = parseFloat($("div#orderPanel #totalCost").val();
-						//get new cost for item
-						var newCost = item.getUnformattedTotalPrice();
-						$("div#orderPanel #totalCost").val("$"+formatPrice(totalCost-oldCost+newCost));//update total
-						$("div#orderPanel #totalItemPrice"+order.productId).html(item.getFormattedTotalPrice());
-						$(this).dialog("close");
+						var newWeight = parseFloat($("div#orderPanel #exactWeight").val());
+						if (newWeight > item.totalWeight) {
+							$("div#orderPanel #quantityOverrideDialog").dialog({ 
+								modal: true, 
+								buttons: [ 
+									{ text: "Continue", click:function() { 
+										$(this).dialog("close");
+										order.UpdateTotalQuantityAndWeight(item, newWeight);		
+										$(this).dialog("close");										
+									}}, 	
+									{ text: "Cancel", click:function() {        					 
+										$(this).dialog( "close" ); 
+							}}]});		
+						} else {
+							order.UpdateTotalQuantityAndWeight(item, newWeight);
+							$(this).dialog("close");							
+						}
 					}}, 	
 						{ 
 							text: "Cancel", 
@@ -408,33 +453,22 @@ order.addItem = function (item) { //add item to order
 								$(this).dialog("close"); 
 			}}]});
 		});	
-	} else { //not estimate, set width and add keydown handler and adjust price as they type
-		$("div#orderPanel #quantity"+order.productId).keydown(function(event){ //add keydown event handler to quantity text box to allow 
+	} else { //not sold by the pound, set width and add keydown handler and adjust price as they type
+		$("div#orderPanel #quantity"+item.productId).keydown(function(event){ //add keydown event handler to quantity text box to allow 
 			//only numbers and a decimal point and update price on quantity change
 			if(order.onlyNumbers(event)) {//value may have changed, update total price
-				// remove weight of this item from total weight and add in new weight
-				var totalWeight = parseFloat($("div#orderPanel #totalWeight").val());
-				//get old weight
-				var oldWeight = item.weight;
-				//get old cost for item
-				var oldCost = item.getUnformattedTotalPrice();
-				// set quantity of this item to new quantity
-				item.quantity = $("div#orderPanel #quantity"+order.productId).val();
-				// set weight of this item to new weight
-				item.weight = parseFloat(item.quantity * item.estimatedWeight);
-				//set weight in item table
-				$("div#orderPanel #totalWeight").val(totalWeight - oldWeight + item.weight);
-				//get previous total food cost
-				var totalCost = parseFloat($("div#orderPanel #totalCost").val();
-				//get new cost for item
-				var newCost = item.getUnformattedTotalPrice();
-				$("div#orderPanel #totalCost").val("$"+formatPrice(totalCost-oldCost+newCost));//update total
-				$("div#orderPanel #totalItemPrice"+order.productId).html(item.getFormattedTotalPrice());
+				//get new quantity
+				var newQuantity = $("div#orderPanel #quantity"+item.productId).val();
+				if (newQuantity > item.totalQuantity) {
+					order.checkQuantity(order.updateTotalQuantity,newQuantity);
+				} else {
+					order.updateTotalQuantity(newQuantity);
+				}
 			}
 		});	
 	}
 				            			
-	$("div#orderPanel #button"+order.productId).button().attr("value","Remove").click(function(){ //add click event handler to remove button for this row
+	$("div#orderPanel #button"+item.productId).button().attr("value","Remove").click(function(){ //add click event handler to remove button for this row
 		$(this).closest('tr').hide();  //remove row
 		$("div#orderPanel #removed"+rowValue).val("true");
 		if ($("div#orderPanel #orderItems tr").length == 1) { //hide table if it's empty

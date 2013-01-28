@@ -25,7 +25,7 @@ CREATE TABLE product /* table to store products*/
   , price FLOAT NOT NULL
   , order_by_unit_id INT
   , bill_by_unit_id INT
-  , estimated_weight INT NOT NULL
+  , estimated_weight FLOAT NOT NULL
   , notes VARCHAR(2048)
   , vendor_id VARCHAR(8)
   , last_modified_date DATETIME
@@ -835,7 +835,7 @@ CREATE PROCEDURE product_update
   , IN in_price FLOAT
   , IN in_order_by_unit_id INT
   , IN in_bill_by_unit_id INT
-  , IN in_estimated_weight INT
+  , IN in_estimated_weight FLOAT
   , IN in_notes VARCHAR(2048)
   , IN in_vendor_id VARCHAR(8)
 

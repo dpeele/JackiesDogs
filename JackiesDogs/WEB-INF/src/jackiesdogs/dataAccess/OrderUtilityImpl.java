@@ -361,7 +361,7 @@ public class OrderUtilityImpl implements OrderUtility{
 								   resultSet.getString("description"),
 								   resultSet.getDouble("price"),
 								   resultSet.getString("unit_name"),
-								   resultSet.getInt("estimated_weight"),
+								   resultSet.getDouble("estimated_weight"),
 								   resultSet.getString("vendor_name"),
 								   resultSet.getString("vendor_id"),
 								   categories);
@@ -664,7 +664,7 @@ public class OrderUtilityImpl implements OrderUtility{
 													   resultSet.getString("description"),
 													   resultSet.getDouble("price"),
 													   resultSet.getString("unit_name"),
-													   resultSet.getInt("estimated_weight"),
+													   resultSet.getDouble("estimated_weight"),
 													   resultSet.getString("vendor_name"),
 													   resultSet.getString("vendor_id"),
 													   categories);
