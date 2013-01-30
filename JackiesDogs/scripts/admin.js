@@ -23,10 +23,8 @@ admin.onload = function () { //called onload of this panel
 };
 
 admin.executeAdminTask = function () {
-	var parameter;
-	var div;
 	var button = event.target;
-    var buttonData = data + "&command=" + button.name
+    var buttonData = data + "&command=" + button.name;
 	if ($("div#adminPanel #"+button+"Input").val().length > 0) {
 		$.ajax({
 			url: "admin",
@@ -52,9 +50,9 @@ admin.extractRowData = function (string) {//generate row of log table and add it
 };
 
 admin.extractCellData = function (string) {//generate cell of log table row and add it to row string
-	return (string"<td>"+this+"</td>");
+	return (string+"<td>"+this+"</td>");
 };
 
 admin.extractHeaderData = function (string) {//generate cell of log table row and add it to row string
-	return (string"<th>"+this+"</th>");
+	return (string+"<th>"+this+"</th>");
 };

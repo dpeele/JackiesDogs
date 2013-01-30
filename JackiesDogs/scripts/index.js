@@ -1,5 +1,5 @@
 $(function () { //onload
-	$("#panels").tabs("option", { cache: true }); //set up main tabbed panel and cache urls	 
+	$("#panels").tabs({ cache: true }); //set up main tabbed panel and cache urls	 
 	
 	//resize main body of page on window resize
     $(window).resize(function() {
@@ -33,43 +33,43 @@ function Item (id, quantity, weight, name, price, billBy, estimatedWeight, descr
 	}
 };
 //add methods
-Item.prototype.remove() {
+Item.prototype.remove = function () {
 	this.removed = true;
 };
-Item.prototype.isRemoved() {
+Item.prototype.isRemoved = function () {
 	return(this.removed);
 };
-Item.prototype.isByThePound() {
+Item.prototype.isByThePound = function () {
 	if (this.billBy == "Pound") {
 		return (true);
 	}
 	return (false);
 };
-Item.prototype.isEstimate() {
+Item.prototype.isEstimate = function () {
 	return this.estimated;
 };
-Item.prototype.getFormattedPrice() {
-	var formatttedPrice = "$"+this.price;        	
+Item.prototype.getFormattedPrice = function () {
+	var formattedPrice = "$"+this.price;        	
 	if (this.isByThePound()) {
 		formattedPrice = formattedPrice+"/lb";
 	}	
 	return formattedPrice;
 };
-Item.prototype.getFormattedTotalPrice() {
+Item.prototype.getFormattedTotalPrice = function () {
 	var formattedPrice = "$" + this.getUnformattedTotalPrice();
 	if (this.isEstimate()) {
-		formattedPrice = formattedPrice + " (est)"
+		formattedPrice = formattedPrice + " (est)";
 	}
 	return (formattedPrice);
 };
-Item.prototype.getUnformattedTotalPrice() {
+Item.prototype.getUnformattedTotalPrice = function () {
 	if (this.isByThePound()) { //priced by the pound but not an estimate
 		return (formatPrice(this.weight * this.price));
 	} else { //not priced by the pound
 		return (formatPrice(this.quantity * this.price));
 	}
 };
-Item.prototype.getFormattedQuantityAndWeight() {
+Item.prototype.getFormattedQuantityAndWeight = function () {
 	if (this.isByThePound()) {
 		return (quantity + " (" + weight + "lbs)");
 	} else {

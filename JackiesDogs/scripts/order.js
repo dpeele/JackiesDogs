@@ -153,7 +153,7 @@ order.onload = function () { //called onload of this panel
                                	custId: item.id
                            	});
                         });
-                    	responseArray.push(order.blankCustomer)
+                    	responseArray.push(order.blankCustomer);
                         response(responseArray);
                     }
                 });
@@ -235,6 +235,7 @@ order.onload = function () { //called onload of this panel
     				content: order.currentItem.description,
     				fixed: true
     			});
+    		}
     		order.checkForShowAddButton();//see whether we should show add button
         },        
         minLength: 2,
@@ -271,19 +272,19 @@ order.setFinalCost = function () {
 	var finalCost = totalCost - ((totalCost / 100) * $("div#orderPanel #discount").val());  //subtract food discount from order total
 	finalCost = finalCost - $("div#orderPanel #credit").val() + $("div#orderPanel #deliveryFee").val() + $("div#orderPanel #tollExpense").val(); //add other costs and subtract credit from order total	
 	$("div#orderPanel #finalCost").val(finalCost);
-}
+};
 
 order.setFloatValue = function (value, name) { //if the float value isn't zero, set field name to formatted value
 	if (parseFloat(value != 0)) {
 		$("div#orderPanel #"+name).val(formatPrice(value));
 	}
-}
+};
 
 order.setValues = function (id,deliveryDate,deliveryTime,discount,credit,deliveryFee,tollExpense,totalCost,totalWeight,status,changeDue,delivered,personal) {
 	var totalFoodCost = totalCost + ((totalCost / 100) * discount);  //add food discount to order total
 	totalFoodCost = totalCost + credit - deliveryFee - tollExpense; //subtract other costs and add credit to order total to give us the total of just the food
 	$("div#orderPanel #totalCost").val($+formatPrice(totalFoodCost)); //set total food cost
-	$("div#orderPanel #totalWeight").val(totalWeight)); //set total weight	
+	$("div#orderPanel #totalWeight").val(totalWeight); //set total weight	
 	$("div#orderPanel #finalCost").val(formatPrice(totalCost)); //set total food cost		
 	if (parseInt(credit) != 0) { //if there is a credit
 		$("div#orderPanel #credit").val(credit);
@@ -353,12 +354,12 @@ order.updateTotalQuantity = function (item, newQuantity) {
 	//set weight in item table
 	$("div#orderPanel #totalWeight").val(totalWeight - oldWeight + item.weight);
 	//get previous total food cost
-	var totalCost = parseFloat($("div#orderPanel #totalCost").val();
+	var totalCost = parseFloat($("div#orderPanel #totalCost").val());
 	//get new cost for item
 	var newCost = item.getUnformattedTotalPrice();
 	$("div#orderPanel #totalCost").val("$"+formatPrice(totalCost-oldCost+newCost));//update total
 	$("div#orderPanel #totalItemPrice"+item.productId).html(item.getFormattedTotalPrice());
-}
+};
 
 //update total quantity, total weight, item quantity, and item weight
 order.updateTotalQuantityAndWeight = function (item, newWeight) {
@@ -376,12 +377,12 @@ order.updateTotalQuantityAndWeight = function (item, newWeight) {
 	//set quantity in item table
 	$("div#orderPanel #quantity"+item.productId).val(item.getFormattedQuantityAndWeight());
 	//get previous total food cost
-	var totalCost = parseFloat($("div#orderPanel #totalCost").val();
+	var totalCost = parseFloat($("div#orderPanel #totalCost").val());
 	//get new cost for item
 	var newCost = item.getUnformattedTotalPrice();
 	$("div#orderPanel #totalCost").val("$"+formatPrice(totalCost-oldCost+newCost));//update total
 	$("div#orderPanel #totalItemPrice"+item.productId).html(item.getFormattedTotalPrice());
-}
+};
 
 order.addItem = function (item, quantity) { //add item to order
 	if ($("div#orderPanel #orderItems tr").length == 1) {
@@ -400,13 +401,13 @@ order.addItem = function (item, quantity) { //add item to order
 	$("div#orderPanel #orderItems tr:last").after("<tr>\n" + //add row
 										"<td id='productId"+item.productId+"'>"+item.productId+"</td>\n" +
 										"<td>"+item.name+"</td>\n" +
-										"<td><input type='text' id='quantity"+item.productId+"' value='"+item.getFormattedQuantityAndWeight()+"'/>"</td>\n" +
+										"<td><input type='text' id='quantity"+item.productId+"' value='"+item.getFormattedQuantityAndWeight()+"'/></td>\n" +
 										"<td>"+item.getFormattedPrice()+"</td>\n" +
 										"<td id='totalItemPrice"+item.productId+"'>"+item.getFormattedTotalPrice() + "</td>\n" +
 										"<td><input type='button' id='button"+item.productId+"'/></td>\n" +
 									"</tr>\n");
 		
-	$("div#orderPanel #quantity"+item.productId).css("width","100px") //set width of quantity input		
+	$("div#orderPanel #quantity"+item.productId).css("width","100px"); //set width of quantity input		
 	if (item.description.length > 0) { //add tooltip to table row if description exists
 		$("div#orderPanel #orderItems tr:last").simpletip({  
 			content: description,
@@ -481,7 +482,7 @@ order.addItem = function (item, quantity) { //add item to order
 		//get total weight 
 		var totalWeight = parseFloat($("div#orderPanel #totalWeight").val());
 		//get total cost
-		var totalCost = parseFloat($("div#orderPanel #totalCost").val();
+		var totalCost = parseFloat($("div#orderPanel #totalCost").val());
 		//remove cost of this item from total food cost
 		$("div#orderPanel #totalCost").val("$"+formatPrice(totalCost - cost));//update total
 		// remove weight of this item from total weight
@@ -495,7 +496,7 @@ order.addItem = function (item, quantity) { //add item to order
 	
 	if ($("div#orderPanel #totalCost").val() != "") { // update total price and weight
 		//get total cost
-		var totalCost = parseFloat($("div#orderPanel #totalCost").val();
+		var totalCost = parseFloat($("div#orderPanel #totalCost").val());
 		//get total weight 
 		var totalWeight = parseFloat($("div#orderPanel #totalWeight").val());
 		//get cost for item
@@ -534,7 +535,7 @@ order.addInfo = function (customerInfo) {
 	} else if (i==5) {
 		customerInfo = customerInfo + " ";
 	} else {
-		customerInfo = customerInfo = "<br/>"
+		customerInfo = customerInfo + "<br/>";
 	}
 	return (customerInfo);
 };
@@ -548,7 +549,7 @@ order.populateCustomerDiv = function() { //populate customer div from customer d
 	if ($("div#orderPanel #email").val().length != 0) {
    		additionalInfo = additionalInfo + "email: " + $("div#orderPanel #email").val() + "<br/>";
 	} else {
-		additionalInfo = additionalInfo.substring(0,additionalInfo.length-2) + "<br/>"//remove ", " and add line break if there isn't an email address 
+		additionalInfo = additionalInfo.substring(0,additionalInfo.length-2) + "<br/>"; //remove ", " and add line break if there isn't an email address 
 	}
 	customerInfo = $("div#orderPanel .customerAddress").reduce(order.addInfo, customerInfo); //reduce address fields to single piece of HTML
 	$("div#orderPanel #selectedCustomerDiv").html(customerInfo+additionalInfo); //populate customer div with customer information
@@ -707,7 +708,7 @@ order.resetForm = function () {
     //disable delivery fields
     $("div#orderPanel #deliveryFee").attr("disabled","true");    
     $("div#orderPanel #tollExpense").attr("disabled","true");    
-    $("div#orderPanel #orderId").val("0")   //set orderId to blank order
+    $("div#orderPanel #orderId").val("0");   //set orderId to blank order
     order.defaultLabels(); //reset fieldset and panel labels
     $("div#orderPanel #orderItems").hide(); //hide order item table since it's now empty
     order.orderItems = [];
@@ -755,7 +756,6 @@ order.addOrderItems = function () { //add all items of existing order
 order.extractItemData = function (string) {//retrieve data from order array element and add it to string
 	if (this.isRemoved() && this.id == 0) {
 		return string;
-	}
 	} else {
 		return (string+"items=id="+this.productId+"#quantity="+this.quantity+
 				+"#dbId="+this.id+"#removed="+$(this).isRemoved()+"#estimate="+$(this).isEstimate()+"#weight="+$(this).weight+"&");
@@ -837,9 +837,9 @@ order.compareTime = function (time1, time2) { //get difference in seconds betwee
 	   var hour1 = order.adjustHour(splitTime1[0], splitMinute1[1]); //convert hour for 1st time to 24 hour clock
 	   var hour2 = order.adjustHour(splitTime2[0], splitMinute2[1]); //convert hour for 2nd time to 24 hour clock
 	   var seconds1 = hour1 * 3600 + minute1 * 60; //convert time1 to seconds
-	   var seconds2 = hour2 * 3600 + minute1 * 60; //convert time2 to seconds
+	   var seconds2 = hour2 * 3600 + minute2 * 60; //convert time2 to seconds
 	   return (seconds1 - seconds2); // Gets difference in seconds
-	}
+};
 
 order.populateDeliveryInfo = function (destinationInfo) {
 	if (destinationInfo.state == "NJ") { //determine delivery fee and toll based on distance, county, and state

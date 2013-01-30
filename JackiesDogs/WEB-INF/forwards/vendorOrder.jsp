@@ -27,7 +27,7 @@
 					productId = product.getId();
 					inventory = product.getInventory();
 		%>
-		order.orderItems[productId] = new Item("<%=orderItem.getId()%>","<%=orderItem.getQuantity()%>","<%=orderItem.getWeight()%>","<%=product.getProductName() + "(" + product.getBillBy() + ")"%>","<%=product.getPrice()%>","<%=product.getBillBy()%>","<%=product.getEstimatedWeight()%>","<%=product.getDescription()%>","<%=inventory.getActualTotalWeight()%>","<%=inventory.getQuantity()%>","<%=product.getId()%>","<%=orderItem.isEstimate()%>");
+		order.orderItems[productId] = new Item("<%=orderItem.getId()%>","<%=orderItem.getQuantity()%>","<%=orderItem.getTotalWeight()%>","<%=product.getProductName() + "(" + product.getBillBy() + ")"%>","<%=product.getPrice()%>","<%=product.getBillBy()%>","<%=product.getEstimatedWeight()%>","<%=product.getDescription()%>","<%=inventory.getActualTotalWeight()%>","<%=inventory.getQuantity()%>","<%=product.getId()%>","<%=orderItem.isEstimate()%>");
 		<%
 				}
 		%>

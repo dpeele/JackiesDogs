@@ -11,7 +11,7 @@
 			List<VendorOrder> vendorOrders = (List<VendorOrder>)request.getAttribute("orders");
 			if (vendorOrders != null) {//we passed a list of vendorOrders to the page
 				for (VendorOrder vendorOrder: vendorOrders) {		%>
-		vendorOrder.addItem("<%=vendorOrder.getId()%>","<%=vendorOrder.getOrderDateFormatted()%>","<%=vendorOrder.getDeliveryDateTimeFormatted()%>","<%=vendorOrder.getTotalCost()%>","<%=vendorOrder.getStatus()%>","<%=vendorOrder.getVendor()%>");
+		vendorOrder.addItem("<%=vendorOrder.getId()%>","<%=vendorOrder.getOrderDateFormatted()%>","<%=vendorOrder.getDeliveryDateFormatted()%>","<%=vendorOrder.getTotalCost()%>","<%=vendorOrder.getStatus()%>","<%=vendorOrder.getVendor()%>");
 		<%
 				}		
 			}

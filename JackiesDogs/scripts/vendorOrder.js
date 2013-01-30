@@ -152,6 +152,7 @@ vendorOrder.onload = function () { //called onload of this panel
     				content: vendorOrder.currentItem.description,
     				fixed: true
     			});
+    		}
     		vendorOrder.checkForShowAddButton();//see whether we should show add button
         },        
         minLength: 2,
@@ -160,12 +161,12 @@ vendorOrder.onload = function () { //called onload of this panel
 };
 
 vendorOrder.toggleProductLookup = function () {
-	if $("div#vendorOrderPanel #vendor option:selected").length) { //an option has been selected
-		$("div#vendorOrderPanel #item).val("");
-		$("div#vendorOrderPanel #item).removeAttr("disabled");		
+	if ($("div#vendorOrderPanel #vendor option:selected").length) { //an option has been selected
+		$("div#vendorOrderPanel #item").val("");
+		$("div#vendorOrderPanel #item").removeAttr("disabled");		
 	} else { //otherwise no vendor has been selected so we disable product lookup and put text in to explain
-		$("div#vendorOrderPanel #item).val("Select Vendor");
-		$("div#vendorOrderPanel #item).attr("disabled", "disabled"); 
+		$("div#vendorOrderPanel #item").val("Select Vendor");
+		$("div#vendorOrderPanel #item").attr("disabled", "disabled"); 
 	}
 };
 
@@ -176,7 +177,7 @@ vendorOrder.defaultLabels = function () {
 };
 
 vendorOrder.checkForShowSubmitButton = function () {
-	if ($("div#vendorOrderPanel #vendor option:selected").length) && ($('#orderItems tr').length > 1)) {
+	if (($("div#vendorOrderPanel #vendor option:selected").length) && ($('#orderItems tr').length > 1)) {
 		$("div#vendorOrderPanel #submitButton").show();
 	}
 };
@@ -198,13 +199,13 @@ vendorOrder.setFinalCost = function () {
 	var finalCost = totalCost - ((totalCost / 100) * $("div#vendorOrderPanel #discount").val());  //subtract food discount from order total
 	finalCost = finalCost - $("div#vendorOrderPanel #credit").val() + $("div#vendorOrderPanel #deliveryFee").val() + $("div#vendorOrderPanel #tollExpense").val(); //add other costs and subtract credit from order total	
 	$("div#vendorOrderPanel #finalCost").val(finalCost);
-}
+};
 
 vendorOrder.setFloatValue = function (value, name) { //if the float value isn't zero, set field name to formatted value
 	if (parseFloat(value != 0)) {
 		$("div#vendorOrderPanel #"+name).val(formatPrice(value).substring(1));
 	}
-}
+};
 
 vendorOrder.setValues = function (id,deliveryDate,discount,credit,deliveryFee,tollExpense,totalCost,totalWeight,status, mileage) {
 	var totalFoodCost = totalCost + ((totalCost / 100) * discount);  //add food discount to order total
@@ -273,12 +274,12 @@ vendorOrder.updateTotalQuantity = function (item, newQuantity) {
 	//set weight in item table
 	$("div#vendorOrderPanel #totalWeight").val(totalWeight - oldWeight + item.weight);
 	//get previous total food cost
-	var totalCost = parseFloat($("div#vendorOrderPanel #totalCost").val();
+	var totalCost = parseFloat($("div#vendorOrderPanel #totalCost").val());
 	//get new cost for item
 	var newCost = item.getUnformattedTotalPrice();
 	$("div#vendorOrderPanel #totalCost").val("$"+formatPrice(totalCost-oldCost+newCost));//update total
 	$("div#vendorOrderPanel #totalItemPrice"+item.productId).html(item.getFormattedTotalPrice());
-}
+};
 
 //update total quantity, total weight, item quantity, and item weight
 vendorOrder.updateTotalQuantityAndWeight = function (item, newWeight) {
@@ -296,16 +297,16 @@ vendorOrder.updateTotalQuantityAndWeight = function (item, newWeight) {
 	//set quantity in item table
 	$("div#vendorOrderPanel #quantity"+item.productId).val(item.getFormattedQuantityAndWeight());
 	//get previous total food cost
-	var totalCost = parseFloat($("div#vendorOrderPanel #totalCost").val();
+	var totalCost = parseFloat($("div#vendorOrderPanel #totalCost").val());
 	//get new cost for item
 	var newCost = item.getUnformattedTotalPrice();
 	$("div#vendorOrderPanel #totalCost").val("$"+formatPrice(totalCost-oldCost+newCost));//update total
 	$("div#vendorOrderPanel #totalItemPrice"+item.productId).html(item.getFormattedTotalPrice());
-}
+};
 
 vendorOrder.addItem = function (item, quantity) { //add item to order
 	if ($("div#vendorOrderPanel #orderItems tr").length == 1) {
-		$("div#vendorOrderPanel #vendor")..attr("disabled","true");
+		$("div#vendorOrderPanel #vendor").attr("disabled","true");
 		$("div#vendorOrderPanel #orderItems").show();
 	}
 	if (quantity != null) {//new item passed from form, not existing item passed from loaded vendorOrder	
@@ -322,13 +323,13 @@ vendorOrder.addItem = function (item, quantity) { //add item to order
 										"<td id='productId"+item.productId+"'>"+item.productId+"</td>\n" +
 										"<td>"+item.productId+"</td>\n" +
 										"<td>"+item.name+"</td>\n" +
-										"<td><input type='text' id='quantity"+item.productId+"' value='"+item.getFormattedQuantityAndWeight()+"'/>"</td>\n" +
+										"<td><input type='text' id='quantity"+item.productId+"' value='"+item.getFormattedQuantityAndWeight()+"'/></td>\n" +
 										"<td>"+item.getFormattedPrice()+"</td>\n" +
 										"<td id='totalItemPrice"+item.productId+"'>"+item.getFormattedTotalPrice() + "</td>\n" +
 										"<td><input type='button' id='button"+item.productId+"'/></td>\n" +
 									"</tr>\n");
 		
-	$("div#vendorOrderPanel #quantity"+item.productId).css("width","100px") //set width of quantity input
+	$("div#vendorOrderPanel #quantity"+item.productId).css("width","100px"); //set width of quantity input
 	$("div#vendorOrderPanel #item.productId"+item.productId).hide(); //hide td holding item.productId		
 	if (item.description.length > 0) { //add tooltip to table row if description exists
 		$("div#vendorOrderPanel #orderItems tr:last").simpletip({  
@@ -393,7 +394,7 @@ vendorOrder.addItem = function (item, quantity) { //add item to order
 				//set weight in item table
 				$("div#vendorOrderPanel #totalWeight").val(totalWeight - oldWeight + item.weight);
 				//get previous total food cost
-				var totalCost = parseFloat($("div#vendorOrderPanel #totalCost").val();
+				var totalCost = parseFloat($("div#vendorOrderPanel #totalCost").val());
 				//get new cost for item
 				var newCost = item.getUnformattedTotalPrice();
 				$("div#vendorOrderPanel #totalCost").val("$"+formatPrice(totalCost-oldCost+newCost));//update total
@@ -416,7 +417,7 @@ vendorOrder.addItem = function (item, quantity) { //add item to order
 		//get total weight 
 		var totalWeight = parseFloat($("div#vendorOrderPanel #totalWeight").val());
 		//get total cost
-		var totalCost = parseFloat($("div#vendorOrderPanel #totalCost").val();
+		var totalCost = parseFloat($("div#vendorOrderPanel #totalCost").val());
 		//remove cost of this item from total food cost
 		$("div#vendorOrderPanel #totalCost").val("$"+formatPrice(totalCost - cost));//update total
 		// remove weight of this item from total weight
@@ -430,7 +431,7 @@ vendorOrder.addItem = function (item, quantity) { //add item to order
 	
 	if ($("div#vendorOrderPanel #totalCost").val() != "") { // update total price and weight
 		//get total cost
-		var totalCost = parseFloat($("div#vendorOrderPanel #totalCost").val();
+		var totalCost = parseFloat($("div#vendorOrderPanel #totalCost").val());
 		//get total weight 
 		var totalWeight = parseFloat($("div#vendorOrderPanel #totalWeight").val());
 		//get cost for item
@@ -483,7 +484,7 @@ vendorOrder.resetForm = function () {
     //disable delivery fields
     $("div#vendorOrderPanel #deliveryFee").attr("disabled","true");    
     $("div#vendorOrderPanel #tollExpense").attr("disabled","true");    
-    $("div#vendorOrderPanel #orderId").val("0")   //set orderId to blank order
+    $("div#vendorOrderPanel #orderId").val("0");   //set orderId to blank order
     vendorOrder.defaultLabels(); //reset fieldset and panel labels
     $("div#vendorOrderPanel #orderItems").hide(); //hide order item table since it's now empty
     order.orderItems = [];
@@ -531,7 +532,6 @@ order.addOrderItems = function () { //add all items of existing order
 vendorOrder.extractItemData = function (string) {//retrieve data from order array element and add it to string
 	if (this.isRemoved() && this.id == 0) {
 		return string;
-	}
 	} else {
 		return (string+"items=id="+this.productId+"#quantity="+this.quantity+
 				+"#dbId="+this.id+"#removed="+$(this).isRemoved()+"#estimate="+$(this).isEstimate()+"#weight="+$(this).weight+"&");

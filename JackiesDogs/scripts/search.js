@@ -26,7 +26,7 @@ search.onload = function () { //called onload of this panel
     $("div#searchPanel #customer").attr("multiple","multiple").attr("size",10); //set customer listbox to height of 10 and allow multiple selection
     $("div#searchPanel #vendor").change(vendorOrder.toggleVendorOrderCreation());
     
-    $("div#searchPanel form#customerOrderSearchForm :input").change(updateList)
+    $("div#searchPanel form#customerOrderSearchForm :input").change(updateList);
     
 	$("div#searchPanel #vendorOrderButton").button().attr("value","Generate").click(function () { //on click confirm and then create new vendor order based off of this list of orders		
 		$("div#searchPanel #confirmVendorOrderCreateDialog").dialog({ 
@@ -39,7 +39,7 @@ search.onload = function () { //called onload of this panel
 			        $("#orderAnchor").attr("href",$("#vendorOrderAnchor").attr("href")+"?"+escape(queryString)); //set query string of vendor order entry screen url appropriately
 			        $("#panels").tabs("option", "load", 2); //load the data into that panel
 			        $("#panels").tabs("option", "select", 2); //select that panel			        
-			}, 	
+			}}, 	
 			    { text: "Cancel", click:function() {        					 
 			    	$(this).dialog( "close" ); 
 		}}]});
@@ -48,19 +48,18 @@ search.onload = function () { //called onload of this panel
 };
 
 search.extractOrderId = function (string) {//retrieve data from row of order table and add it to string
-return (string+"customerOrderId="+$(this).find(":nth-child(1)").text()+"&");
-	}
+	return (string+"customerOrderId="+$(this).find(":nth-child(1)").text()+"&");
 };
 
-vendorOrder.toggleVendorOrderLookup = function () {
-	if $("div#vendorOrderPanel #vendor option:selected").length) { //an option has been selected
-		$("div#vendorOrderPanel #vendorOrderButton).removeAttr("disabled");		
+search.toggleVendorOrderLookup = function () {
+	if ($("div#searchPanel #vendor option:selected").length) { //an option has been selected
+		$("div#searchPanel #vendorOrderButton").removeAttr("disabled");		
 	} else { //otherwise no vendor has been selected so we disable vendor order creation button
-		$("div#vendorOrderPanel #vendorOrderButton).attr("disabled", "disabled"); 
+		$("div#searchPanel #vendorOrderButton").attr("disabled", "disabled"); 
 	}
 };
 
-search.addItem = function (id,customerName,orderDate,deliveryDate,cost,status); { //add item to order
+search.addItem = function (id,customerName,orderDate,deliveryDate,cost,status) { //add item to order
 	if ($("div#searchPanel #orderDetails tr").length == 1) {
 		$("div#searchPanel #orderDetails tr").remove();
 		$("div#searchPanel #orderDetails").append("<tr>\n" +
@@ -70,12 +69,10 @@ search.addItem = function (id,customerName,orderDate,deliveryDate,cost,status); 
 		    	        		"<th>Delivery Date</th>\n" +
 		    	        		"<th>Total Price</th>\n" +
 		    	        		"<th>Order Status</th>\n" +		    	        
-			        			"</tr>\n"; //replace headers for order table
+			        			"</tr>\n"); //replace headers for order table
 	}
 	
 	var rowValue = $('#orderDetails tr').length+1;//row number to add
-		
-	var formattedCost = formatPrice(cost);
 
 	if (estimate) { //add indicator that this is an estimated price if applicable
 		formattedtotalCost = formattedtotalCost + " (est)";
@@ -100,7 +97,7 @@ search.addItem = function (id,customerName,orderDate,deliveryDate,cost,status); 
 			        $("#orderAnchor").attr("href",$("#orderAnchor").attr("href")+"?"+escape("orderId="+id)); //set url of order entry screen to appropriate id
 			        $("#panels").tabs("option", "load", 0); //load the data into that panel
 			        $("#panels").tabs("option", "select", 0); //select that panel			        
-			}, 	
+			}}, 	
 			    { text: "Cancel", click:function() {        					 
 			    	$(this).dialog( "close" ); 
 		}}]});
@@ -108,7 +105,6 @@ search.addItem = function (id,customerName,orderDate,deliveryDate,cost,status); 
 
 	$("div#searchPanel #button"+rowValue).button().attr("value","Remove").click(function(){ //add click event handler to remove button for this row
 		$("div#searchPanel #orderDetails tr:last").click(function () { //on click of row, confirm and then remove row
-			var id = $(this).find(":nth-child(1)").val(); 
 			$("div#searchPanel #confirmOrderRemoveDialog").dialog({ 
 				modal: true, 
 				buttons: [ 
@@ -119,7 +115,7 @@ search.addItem = function (id,customerName,orderDate,deliveryDate,cost,status); 
 							$("div#searchPanel #orderDetails tr").remove(); //no orders, only header- remove and 
 							$("div#searchPanel #orderDetails").append("<tr>\n" +
 							    					"<th colspan='6'>No orders match your search</th>\n" +		    	        
-								        			"</tr>\n"; //replace headers for order table
+								        			"</tr>\n"); //replace headers for order table
 						}						
 					}}, 	
 				    { text: "Cancel", click:function() {        					 

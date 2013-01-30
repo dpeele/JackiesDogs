@@ -24,11 +24,11 @@ vendorSearch.onload = function () { //called onload of this panel
     $("div#vendorSearchPanel #vendorStatus").attr("multiple","multiple").attr("size",7); //set status listbox to height of 7 and allow multiple selection
     $("div#vendorSearchPanel #vendor").attr("multiple","multiple").attr("size",1); //set vendor listbox to height of 1 and allow multiple selection
     
-    $("div#vendorSearchPanel :input").change(updateList)	
+    $("div#vendorSearchPanel :input").change(updateList);	
 	
 };
 
-vendorSearch.addItem = function (id,orderDate,deliveryDate,cost,status, vendorName); { //add item to order
+vendorSearch.addItem = function (id,orderDate,deliveryDate,cost,status, vendorName) { //add item to order
 	if ($("div#vendorSearchPanel #vendorOrderDetails tr").length == 1) {
 		$("div#vendorSearchPanel #vendorOrderDetails tr").remove();
 		$("div#vendorSearchPanel #vendorOrderDetails").append("<tr>\n" +
@@ -38,7 +38,7 @@ vendorSearch.addItem = function (id,orderDate,deliveryDate,cost,status, vendorNa
 		    	        		"<th>Total Price</th>\n" +
 		    	        		"<th>Order Status</th>\n" +
 		    	        		"<th>Vendor</th>\n" +			    	        		
-			        			"</tr>\n"; //replace headers for order table
+			        			"</tr>\n"); //replace headers for order table
 	}
 	
 	var rowValue = $('#vendorOrderDetails tr').length+1;//row number to add
@@ -67,7 +67,7 @@ vendorSearch.addItem = function (id,orderDate,deliveryDate,cost,status, vendorNa
 			    	$(this).dialog("close");
 			        $("#vendorOrderAnchor").attr("href",$("#vendorOrderAnchor").attr("href")+"?"+escape("vendorOrderId="+id)); //set url of vendor order entry screen to appropriate id
 			        $("#panels").tabs("option", "load", 2); //load the data into that panel
-			        $(#panels").tabs("option", "select", 2); //select that panel			        
+			        $("#panels").tabs("option", "select", 2); //select that panel			        
 			}}, 	
 			    { text: "Cancel", click:function() {        					 
 			    	$(this).dialog( "close" ); 
@@ -80,7 +80,7 @@ vendorSearch.addItem = function (id,orderDate,deliveryDate,cost,status, vendorNa
 			$("div#vendorSearchPanel #vendorOrderDetails tr").remove(); //no orders, only header- remove and 
 			$("div#vendorSearchPanel #vendorOrderDetails").append("<tr>\n" +
 			    					"<th colspan='6'>No orders match your vendorSearch</th>\n" +		    	        
-				        			"</tr>\n"; //replace headers for order table
+				        			"</tr>\n"); //replace headers for order table
 
 		}		
 	});//remove item from order
