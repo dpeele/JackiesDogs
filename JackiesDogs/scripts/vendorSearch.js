@@ -13,7 +13,7 @@ vendorSearch.onload = function () { //called onload of this panel
 	$("div#vendorSearchPanel div.dialog").hide(); //set all dialog divs to not be visible
 	
     //add class ui-widget to all text elements and set their name attribute = to their id attribute
-    $("div#vendorSearchPanel :input").addClass("ui-widget").attr("name",$(this).attr("id"));
+    $("div#vendorSearchPanel :input").addClass("ui-widget").attr("name",getId);
     
     //set date fields to be datepicker ui elements and disable editing
     $("div#vendorSearchPanel .date").datepicker().attr("disabled","true"); 

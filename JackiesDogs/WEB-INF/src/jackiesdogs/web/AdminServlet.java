@@ -10,6 +10,7 @@ import org.json.JSONArray;
 
 import java.io.*;
 import java.util.List;
+import java.util.Scanner;
 
 import jackiesdogs.bean.UploadLog;
 import jackiesdogs.file.*;
@@ -39,7 +40,9 @@ public class AdminServlet extends HttpServlet {
 		try {
 			Context context = (Context) new InitialContext().lookup("java:comp/env");
 			fileDirectory = (String) context.lookup("fileDirectory");
+			log.debug("File Directory = " + fileDirectory);
 			defaultOmaUrl = (String) context.lookup("defaultOmaUrl");
+			log.debug("Default Oma Url = " + defaultOmaUrl);			
 		} catch (NamingException ne) {
 			log.error("Unable to look up environmental variables in context.xml, error: " + ne);
 		}
@@ -52,15 +55,24 @@ public class AdminServlet extends HttpServlet {
 	@Override
 	public void doGet (HttpServletRequest request, HttpServletResponse response)	
 		throws ServletException, IOException {
-		RequestDispatcher dispatcher = request.getRequestDispatcher("/WEB-INF/includes/admin.jsp");
+		request.setAttribute("defaultOmaUrl", defaultOmaUrl);		
+		RequestDispatcher dispatcher = request.getRequestDispatcher("/WEB-INF/forwards/admin.jsp");
 		dispatcher.forward(request, response);				
 	}
 	@Override
 	public void doPost (HttpServletRequest request, HttpServletResponse response)
 		throws ServletException, IOException {
 		Part filePart;
+		Part commandPart;
 		String fileName;
-		String command = ServletUtilities.getParameter(request, "command");
+		Scanner scanner;
+		String command = null;		
+		commandPart = request.getPart("command");
+		scanner = new Scanner(commandPart.getInputStream());
+		if (scanner != null) {
+			command = scanner.nextLine();
+			scanner.close();
+		}
 		if (command != null && command.length() > 0) {
 			List<UploadLog> output = null;
 			if (command.equals("pricelist")) {
@@ -92,8 +104,8 @@ public class AdminServlet extends HttpServlet {
 			PrintWriter out = response.getWriter();
 			out.print("{\"uploadLogs\":"+new JSONArray(output)+"}");
 		} else {
+			request.setAttribute("defaultOmaUrl", defaultOmaUrl);			
 			log.debug("No command passed");
-			request.setAttribute("defaultOmaUrl", defaultOmaUrl);
 			RequestDispatcher requestDispatcher = request.getRequestDispatcher("WEB-INF/forwards/admin.jsp");
 			requestDispatcher.forward(request, response);
 		}

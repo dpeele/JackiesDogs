@@ -5,7 +5,7 @@
 %>
 <script type="text/javascript">
 	$(document).ready(function () {
-		search.onload();
+		admin.onload();
 	});
 	
 </script>
@@ -16,19 +16,23 @@
 			<div id="leftAdmin">
 			<form id="adminForm">
 			<label for="pricelist">Upload Omas Price List:</label>
+			<br/>
 			<input type="file" id="pricelistInput"/>
 			<br/>
-			<input type="submit" id="uploadProducts"/>
+			<input type="submit" id="pricelist"/>
 			<br/>
 			<label for="invoice">Upload Omas Invoice:</label>
+			<br/>
 			<input type="file" id="invoiceInput"/>
 			<br/>
-			<input type="submit" id="uploadInvoice"/>
+			<input type="submit" id="invoice"/>
 			<br/>
 			<label for="url">Scrape Omas Web Site:</label>
+			<br/>
 			<input type="text" id="scrapeInput" value = "<%=request.getAttribute("defaultOmaUrl")%>"/>
 			<br/>
-			<input type="submit" id="scrape"/>			
+			<input type="submit" id="scrape"/>		
+			<input type="text" id="command"/>
 			</form>
 			</div>
 			<div id="rightAdmin">

@@ -50,8 +50,7 @@ public class CustomerUpdate extends HttpServlet {
 			intCustId = Integer.parseInt(editCustId); //try to convert customer id parameter from request to int
 		} catch (NumberFormatException nfe) { //parameter was missing or not an int
 			log.error ("Unable to parse editCustId to int: " + nfe);
-			nfe.printStackTrace();
-			return;
+			return;			
 		}
 		Customer customer;
 		if (intCustId == 0) { //new customer

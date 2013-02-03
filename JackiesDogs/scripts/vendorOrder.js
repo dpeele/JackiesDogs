@@ -16,7 +16,7 @@ vendorOrder.onload = function () { //called onload of this panel
     $(window).resize();
     
     //add class ui-widget to all text elements and set their name attribute = to their id attribute
-    $("div#vendorOrderPanel :input").addClass("ui-widget").attr("name",$(this).attr("id"));
+    $("div#vendorOrderPanel :input").addClass("ui-widget").attr("name",getId);
 
 	//hide hidden fields
 	$("div#vendorOrderPanel .hidden").hide();
@@ -36,14 +36,9 @@ vendorOrder.onload = function () { //called onload of this panel
 	
 	//fields that require fixed width
 	$("div#vendorOrderPanel #quantityAvailable").css("width","75px");
-	$("div#vendorOrderPanel #item").css("width","300px");        
-    $("div#vendorOrderPanel #city").css("width","100px");
-	$("div#vendorOrderPanel #email").css("width","200px");	    
+	$("div#vendorOrderPanel #item").css("width","300px");          
 
 	//fields with set max/min lengths
-	$("div#vendorOrderPanel #phone").css("width","125px").attr("maxlength","14").attr("minlength","10");
-    $("div#vendorOrderPanel #state").css("width","25px").attr("maxlength","2").attr("minlength","2");
-    $("div#vendorOrderPanel #zip").css("width","50px").attr("maxlength","5").attr("minlength","5");
     $("div#vendorOrderPanel #deliveryZip").css("width","50px").attr("maxlength","5").attr("minlength","5");
     
     //recalculate final cost if any of the inputs are changed
@@ -77,6 +72,7 @@ vendorOrder.onload = function () { //called onload of this panel
     $("div#vendorOrderPanel #quantityAvailable").css("width","35px");
     $("div#vendorOrderPanel #discount").css("width","25px");
     $("div#vendorOrderPanel #changeDue").css("width","50px");
+    $("div#vendorOrderPanel #totalWeight").css("width","50px");
     $("div#vendorOrderPanel #credit").css("width","50px");
     $("div#vendorOrderPanel #deliveryFee").css("width","50px").attr("disabled","true");    
     $("div#vendorOrderPanel #tollExpense").css("width","50px").attr("disabled","true");        
@@ -343,7 +339,8 @@ vendorOrder.addItem = function (item, quantity) { //add item to order
 			$("div#vendorOrderPanel #exactQuantity").val(item.quantity);//set initial quantity value in dialog to value from table row
 			var oldWeight = item.weight; //get old weight
 			$("div#vendorOrderPanel #exactWeight").val(oldWeight);//set initial weight value in dialog to value from table row
-			$("div#vendorOrderPanel #editPoundQuantityDialog").dialog({ 
+			var dialog = $("div#vendorOrderPanel #editPoundQuantityDialog").dialog({ 
+				autoOpen: false,
 				modal: true, 
 				title: "Enter Exact Weight",
 				width: 400,
@@ -376,6 +373,10 @@ vendorOrder.addItem = function (item, quantity) { //add item to order
 							click:function() {        					 
 								$(this).dialog("close"); 
 			}}]});
+			// Take whole dialog and put it back into the custom scope
+			dialog.parent(".ui-dialog").appendTo("div#orderPanel");
+			// Open the dialog (if you want autoOpen)
+			dialog.dialog("open");				
 		});	
 	} else { //not estimate, set width and add keydown handler and adjust price as they type
 		$("div#vendorOrderPanel #quantity"+item.productId).keydown(function(event){ //add keydown event handler to quantity text box to allow 
@@ -445,6 +446,35 @@ vendorOrder.addItem = function (item, quantity) { //add item to order
 		$("div#vendorOrderPanel #totalWeight").val(item.weight);
 	}	
 };
+
+vendorOrder.popDelivery = function () { //pop delivery calculator div
+	$("div#vendorOrderPanel #deliveryZip").val($("div#vendorOrderPanel #zip").val()); //prepopulate with customer's zip
+	$("div#vendorOrderPanel #peak").attr("checked",false);
+	var dialog = $("div#vendorOrderPanel #enterDeliveryZipDialog").dialog({ 
+		autoOpen: false,
+		modal: true, 
+		title: "Enter Delivery Zip to Calculate Fee and Tolls",
+		width: 400,
+		buttons: [ 
+			{ text: "Submit", click:function() { 
+				if (!($("div#vendorOrderPanel #enterDeliveryZipForm").validate().form())) {//validate form
+					$("div#vendorOrderPanel #incompleteDeliveryDialog").dialog({ modal: true });
+					return;	
+				}			
+				vendorOrder.requestDestinationData($("div#vendorOrderPanel #deliveryZip").val());
+				$(this).dialog("close"); 
+			}}, 	
+				{ 
+					text: "Cancel", 
+					click:function() {        					 
+						$(this).dialog("close"); 
+	}}]});	
+	// Take whole dialog and put it back into the custom scope
+	dialog.parent(".ui-dialog").appendTo("div#vendorOrderPanel");
+	// Open the dialog (if you want autoOpen)
+	dialog.dialog("open");	
+};
+
 
 vendorOrder.validateAndSubmit = function () { //validate form data and ajax submit to server
 	var orderItemQueryString = escape(order.orderItems.reduce(ExtractItemData));
@@ -529,12 +559,12 @@ order.addOrderItems = function () { //add all items of existing order
 	}
 };
 
-vendorOrder.extractItemData = function (string) {//retrieve data from order array element and add it to string
-	if (this.isRemoved() && this.id == 0) {
+vendorOrder.extractItemData = function (string, currentValue) {//retrieve data from order array element and add it to string
+	if (currentValue.isRemoved() && currentValue.id == 0) {
 		return string;
 	} else {
-		return (string+"items=id="+this.productId+"#quantity="+this.quantity+
-				+"#dbId="+this.id+"#removed="+$(this).isRemoved()+"#estimate="+$(this).isEstimate()+"#weight="+$(this).weight+"&");
+		return (string+"items=id="+currentValue.productId+"#quantity="+currentValue.quantity+
+				+"#dbId="+currentValue.id+"#removed="+currentValue.isRemoved()+"#estimate="+currentValue.isEstimate()+"#weight="+currentValue.weight+"&");
 	}
 };
 

@@ -119,7 +119,8 @@ public class CustomerUtilityImpl implements CustomerUtility {
 				callableStatement.setNull(8, Types.VARCHAR);
 				callableStatement.setNull(9, Types.VARCHAR);
 				callableStatement.setNull(10, Types.VARCHAR);
-				callableStatement.setByte(11, (byte)1);						
+				callableStatement.setNull(11, Types.VARCHAR);				
+				callableStatement.setByte(12, (byte)1);						
 			} else {
 				callableStatement.setString(2, customer.getFirstName());
 				callableStatement.setString(3, customer.getLastName());
@@ -131,7 +132,7 @@ public class CustomerUtilityImpl implements CustomerUtility {
 				callableStatement.setString(9, customer.getPhone());
 				callableStatement.setString(10, customer.getEmail());
 				callableStatement.setString(11, customer.getNotes());
-				callableStatement.setByte(11, (byte)0);							
+				callableStatement.setByte(12, (byte)0);							
 			}
 			hasResults = callableStatement.execute();
 			if (hasResults) {

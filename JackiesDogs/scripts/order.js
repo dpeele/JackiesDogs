@@ -32,7 +32,7 @@ order.onload = function () { //called onload of this panel
     $("div#orderPanel #selectedCustomerDiv").addClass("ui-widget");
     
     //add class ui-widget to all text elements and set their name attribute = to their id attribute
-    $("div#orderPanel :input").addClass("ui-widget").attr("name",$(this).attr("id"));
+    $("div#orderPanel :input").addClass("ui-widget").attr("name",getId);
     
 	$("div#orderPanel #customerLookup").simpletip({  
 		content: "Please enter the first few letters or numbers of the first name, last name, " +
@@ -48,12 +48,11 @@ order.onload = function () { //called onload of this panel
 
 	//set default value of order id to 0
 	$("div#orderPanel #orderId").val("0");	
-
-	//quantity field requires fixed width and handler for keyup
-	$("div#orderPanel #quantity").css("width","75px").keyup(order.checkForShowAddButton); //when quantity value changes see whether we should show add button
+	
+    //number only fields
+    $("div#orderPanel .onlyNumbers").keydown(order.onlyNumbers).css("width","75px"); //only allow numbers
 	
 	//fields that require fixed width
-	$("div#orderPanel #quantityAvailable").css("width","75px");
 	$("div#orderPanel #item").css("width","300px");        
     $("div#orderPanel #city").css("width","100px");
 	$("div#orderPanel #email").css("width","200px");	    
@@ -79,24 +78,19 @@ order.onload = function () { //called onload of this panel
     $("div#orderPanel #submitButton").button().attr("value","Submit Order").click(order.validateAndSubmit).hide();//submit order
     $("div#orderPanel #cancelButton").button().attr("value","Cancel Order").click(order.confirmCancel).hide();//cancel order    
     $("div#orderPanel #enterDeliveryZipButton").button().attr("value","Calculate Delivery").click(order.popDelivery).hide();//pop delivery div
-    
-    //number only fields
-    $("div#orderPanel .onlyNumbers").keydown(order.onlyNumbers).css("width","75px"); //only allow numbers
-    
-    //set discount field widths
-    $("div#orderPanel #discount").css("width","25px");
-    $("div#orderPanel #changeDue").css("width","50px");
-    $("div#orderPanel #discount").css("width","25px");
-    
+        
     //decimal number only fields
     $("div#orderPanel .onlyDecimalNumbers").keydown(order.onlyNumbersAndDecimalPoint).css("width","75px"); //only allow numbers and a decimal point
             
-    //set field widths
-    $("div#orderPanel #quantity").css("width","35px");
-    $("div#orderPanel #quantityAvailable").css("width","35px");
+    
+	//quantity field requires fixed width and handler for keyup
+	$("div#orderPanel #quantity").css("width","35px").keyup(order.checkForShowAddButton); //when quantity value changes see whether we should show add button
+	//set special field widths
+	$("div#orderPanel #quantityAvailable").css("width","35px");
     $("div#orderPanel #discount").css("width","25px");
     $("div#orderPanel #changeDue").css("width","50px");
     $("div#orderPanel #credit").css("width","50px");
+    $("div#orderPanel #totalWeight").css("width","50px");    
     $("div#orderPanel #deliveryFee").css("width","50px").attr("disabled","true");    
     $("div#orderPanel #tollExpense").css("width","50px").attr("disabled","true");        
     
@@ -420,7 +414,8 @@ order.addItem = function (item, quantity) { //add item to order
 			$("div#orderPanel #exactQuantity").val(item.quantity);//set initial quantity value in dialog to value from table row
 			var oldWeight = item.weight; //get old weight
 			$("div#orderPanel #exactWeight").val(oldWeight);//set initial weight value in dialog to value from table row
-			$("div#orderPanel #editPoundQuantityDialog").dialog({ 
+			var dialog = $("div#orderPanel #editPoundQuantityDialog").dialog({ 
+				autoOpen: false,
 				modal: true, 
 				title: "Enter Exact Weight",
 				width: 400,
@@ -453,6 +448,10 @@ order.addItem = function (item, quantity) { //add item to order
 							click:function() {        					 
 								$(this).dialog("close"); 
 			}}]});
+			// Take whole dialog and put it back into the custom scope
+			dialog.parent(".ui-dialog").appendTo("div#orderPanel");
+			// Open the dialog (if you want autoOpen)
+			dialog.dialog("open");				
 		});	
 	} else { //not sold by the pound, set width and add keydown handler and adjust price as they type
 		$("div#orderPanel #quantity"+item.productId).keydown(function(event){ //add keydown event handler to quantity text box to allow 
@@ -502,7 +501,6 @@ order.addItem = function (item, quantity) { //add item to order
 		//get cost for item
 		var cost = item.getUnformattedTotalPrice();
 		//get weight for item
-		var weight = item.weight;
 		$("div#orderPanel #totalCost").val("$"+formatPrice(totalCost+cost));
 		$("div#orderPanel #totalWeight").val(totalWeight+item.weight);
 	} else { //set price and weight
@@ -525,17 +523,16 @@ order.populateCustomer = function(item) { //populate customer dialog fields from
     $("div#orderPanel #editCustId").val(item.custId);        		   
 };
 
-order.addInfo = function (customerInfo) {
-	var value = $(this).val();
-	if (value.length != 0) {
-		customerInfo = customerInfo + value;
-	}
-	if (i == 4) {
-		customerInfo = customerInfo + ", ";
-	} else if (i==5) {
-		customerInfo = customerInfo + " ";
-	} else {
-		customerInfo = customerInfo + "<br/>";
+order.addInfo = function (customerInfo, currentItem, index) {
+	var value = $(currentItem).val();
+	if (value.trim().length != 0) {
+		if (index==2) {
+			customerInfo = customerInfo + value + ", ";
+		} else if (index==3) {
+			customerInfo = customerInfo + value + " ";
+		} else {		
+			customerInfo = customerInfo + value + "<br/>";
+		}
 	}
 	return (customerInfo);
 };
@@ -551,14 +548,15 @@ order.populateCustomerDiv = function() { //populate customer div from customer d
 	} else {
 		additionalInfo = additionalInfo.substring(0,additionalInfo.length-2) + "<br/>"; //remove ", " and add line break if there isn't an email address 
 	}
-	customerInfo = $("div#orderPanel .customerAddress").reduce(order.addInfo, customerInfo); //reduce address fields to single piece of HTML
+	customerInfo = $.makeArray($("div#orderPanel .customerAddress")).reduce(order.addInfo, customerInfo); //reduce address fields to single piece of HTML
 	$("div#orderPanel #selectedCustomerDiv").html(customerInfo+additionalInfo); //populate customer div with customer information
 };
 
 order.popDelivery = function () { //pop delivery calculator div
 	$("div#orderPanel #deliveryZip").val($("div#orderPanel #zip").val()); //prepopulate with customer's zip
 	$("div#orderPanel #peak").attr("checked",false);
-	$("div#orderPanel #enterDeliveryZipDialog").dialog({ 
+	var dialog = $("div#orderPanel #enterDeliveryZipDialog").dialog({ 
+		autoOpen: false,
 		modal: true, 
 		title: "Enter Delivery Zip to Calculate Fee and Tolls",
 		width: 400,
@@ -576,10 +574,15 @@ order.popDelivery = function () { //pop delivery calculator div
 					click:function() {        					 
 						$(this).dialog("close"); 
 	}}]});	
+	// Take whole dialog and put it back into the custom scope
+	dialog.parent(".ui-dialog").appendTo("div#orderPanel");
+	// Open the dialog (if you want autoOpen)
+	dialog.dialog("open");	
 };
 
 order.popEditCustomer = function (dialogTitle) { //pop up customer edit dialog box
-	$("div#orderPanel #customerDialog").dialog({ 
+	var dialog = $("div#orderPanel #customerDialog").dialog({ 
+		autoOpen: false,
 		modal: true,
 		title: dialogTitle,
 		width: 500,
@@ -634,7 +637,10 @@ order.popEditCustomer = function (dialogTitle) { //pop up customer edit dialog b
         							$(this).dialog("close"); 
 	        	}}]});
 		}}]});	
-		
+	// Take whole dialog and put it back into the custom scope
+	dialog.parent(".ui-dialog").appendTo("div#orderPanel");
+	// Open the dialog (if you want autoOpen)
+	dialog.dialog("open");
 };
 
 order.clearCustomer = function () { //clear customer data
@@ -646,6 +652,8 @@ order.validateAndSubmitCustomer = function () { //validate and submit customer d
 		$("div#orderPanel #incompleteCustomerDialog").dialog({ modal: true });
 		return;	
 	}
+	//console.log($("div#orderPanel #customerForm").serialize());
+	console.log($("#customerForm").serialize());
     $.ajax({ //make ajax call to submit order
         url: "customerUpdate",
         cache: false,
@@ -753,12 +761,12 @@ order.addOrderItems = function () { //add all items of existing order
 	}
 };
 
-order.extractItemData = function (string) {//retrieve data from order array element and add it to string
-	if (this.isRemoved() && this.id == 0) {
+order.extractItemData = function (string, currentValue) {//retrieve data from order array element and add it to string
+	if (currentValue.isRemoved() && currentValue.id == 0) {
 		return string;
 	} else {
-		return (string+"items=id="+this.productId+"#quantity="+this.quantity+
-				+"#dbId="+this.id+"#removed="+$(this).isRemoved()+"#estimate="+$(this).isEstimate()+"#weight="+$(this).weight+"&");
+		return (string+"items=id="+currentValue.productId+"#quantity="+currentValue.quantity+
+				+"#dbId="+currentValue.id+"#removed="+currentValue.isRemoved()+"#estimate="+currentValue.isEstimate()+"#weight="+currentValue.weight+"&");
 	}
 };
 

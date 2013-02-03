@@ -8,8 +8,12 @@ $(function () { //onload
     $(window).resize();	
 });
 
+getId = function() {
+	return ($(this).attr("id"));
+};
+
 //create order item object
-function Item (id, quantity, weight, name, price, billBy, estimatedWeight, description, totalWeight, quantityAvailable, productId, /*optional*/ estimated) {
+var Item = function (id, quantity, weight, name, price, billBy, estimatedWeight, description, totalWeight, quantityAvailable, productId, /*optional*/ estimated) {
 	this.id = id; 
 	this.quantity = quantity; 
 	this. weight = parseFloat(weight); 

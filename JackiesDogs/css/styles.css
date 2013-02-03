@@ -41,7 +41,7 @@
 }
 
 #leftAdmin {
-	width:19%;
+	width:49%;
 	float:left;
 	white-space:nowrap;
 	overflow:auto;
@@ -49,7 +49,7 @@
 
 #rightAdmin {
 	float:right;
-	width:79%;
+	width:49%;
 }
 
 .tableDiv {

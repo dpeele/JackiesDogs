@@ -13,7 +13,7 @@ search.onload = function () { //called onload of this panel
 	$("div#searchPanel div.dialog").hide(); //set all dialog divs to not be visible
 	
     //add class ui-widget to all text elements and set their name attribute = to their id attribute
-    $("div#searchPanel :input").addClass("ui-widget").attr("name",$(this).attr("id"));
+    $("div#searchPanel :input").addClass("ui-widget").attr("name",getId);
     
     //set date fields to be datepicker ui elements and disable editing
     $("div#searchPanel .date").datepicker().attr("disabled","true"); 
@@ -33,7 +33,7 @@ search.onload = function () { //called onload of this panel
 			modal: true, 
 			buttons: [ 
 			    { text: "Continue", click:function() { 
-			    	var queryString = $("div#searchPanel #orderDetails tr:gt(0)").reduce(search.extractOrderId);
+			    	var queryString = $.makeArray($("div#searchPanel #orderDetails tr:gt(0)")).reduce(search.extractOrderId);
 			    	queryString = queryString + "vendorTypeId=" + $("div#searchPanel #vendor").val();
 			    	$(this).dialog("close");
 			        $("#orderAnchor").attr("href",$("#vendorOrderAnchor").attr("href")+"?"+escape(queryString)); //set query string of vendor order entry screen url appropriately
@@ -47,8 +47,8 @@ search.onload = function () { //called onload of this panel
 	
 };
 
-search.extractOrderId = function (string) {//retrieve data from row of order table and add it to string
-	return (string+"customerOrderId="+$(this).find(":nth-child(1)").text()+"&");
+search.extractOrderId = function (string, currentValue) {//retrieve data from row of order table and add it to string
+	return (string+"customerOrderId="+$(currentValue).find(":nth-child(1)").text()+"&");
 };
 
 search.toggleVendorOrderLookup = function () {

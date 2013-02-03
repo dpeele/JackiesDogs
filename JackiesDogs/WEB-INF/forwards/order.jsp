@@ -61,6 +61,7 @@
 			<br/>										
 			<label for="item">Select Item:</label> 
 			<input type="text" id="item" class="item"/>		
+			<br/>
 			<label for="estimatedWeight">Estimated Weight:</label>	
 			<input type="text" id="estimatedWeight" class="item"/>
 			<label for="price">Price:</label>				
