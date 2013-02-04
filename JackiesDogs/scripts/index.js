@@ -6,6 +6,17 @@ $(function () { //onload
         $("#panels").height($(window).height() - ($("#panels").offset().top + 60));
     });
     $(window).resize();	
+
+    // For forward and back- handle history
+	$.address.externalChange(function(event){
+		var name = window.location.hash != "" ? window.location.hash.split("#")[2] : "";
+	    $("#tabs").tabs( "select" , $("#tabs a[name="+ name + "]").attr('href') );
+	});
+	  
+	// when the tab is selected update the url with the hash
+	$("#tabs").bind("tabsselect", function(event, ui) { 
+		$.address.hash(ui.tab.name);
+	});
 });
 
 getId = function() {
