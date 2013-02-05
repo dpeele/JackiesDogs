@@ -58,7 +58,7 @@ public class OmasProductScraper implements Callable<ProductGroup>{
 				return productGroup;
 			}
 		} catch (IOException ioe) {
-			log.error("Jsoup error with product url: " + urlString + " with exception " + ioe);
+			log.error("Jsoup error with product url: " + urlString + " with exception ", ioe);
 			if (productGroup == null) {
 				productGroup = new ProductGroup(urlString,"","","Omas",null,null,null);
 			}

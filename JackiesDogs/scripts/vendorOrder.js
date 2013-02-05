@@ -5,7 +5,6 @@ vendorOrder.orderItems = []; //the current list of items in this order
 
 
 vendorOrder.onload = function () { //called onload of this panel
-	 
 	vendorOrder.defaultLabels(); //reset fieldset and panel labels
 	
     $(window).resize(function() { //resize main body of form on window resize
@@ -167,9 +166,9 @@ vendorOrder.toggleProductLookup = function () {
 };
 
 vendorOrder.defaultLabels = function () {
-	$("#vendorOrderAnchor").html("New Vendor Order"); //default vendor order panel label is New Vendor Order
+	$("#vendorOrderSpan").html("New Vendor Order"); //default vendor order panel label is New Vendor Order
 	$("div#vendorOrderPanel #orderLegend").html("Enter Information:"); //default legend is Enter Information:
-	 $("#vendorOrderAnchor").attr("href","loadVendorOrder"); //dafault url for panel is loadOrder
+	$("panels").tabs("url", "2", "loadVendorOrder");  //dafault url for panel is loadVendorOrder
 };
 
 vendorOrder.checkForShowSubmitButton = function () {
@@ -225,7 +224,7 @@ vendorOrder.setValues = function (id,deliveryDate,discount,credit,deliveryFee,to
 	vendorOrder.checkForShowSubmitButton();
 	vendorOrder.checkForShowCancelButton();		
 	vendorOrder.checkForDeliveryButton();
-	$("div#vendorOrderPanel #orderAnchor").html("Edit Vendor Order"); //change order panel label to Edit Vendor Order 
+	$("#vendorOrderSpan").html("Edit Vendor Order"); //change order panel label to Edit Vendor Order 
 	$("div#vendorOrderPanel #orderLegend").html("Edit Information:"); //change legend to Edit Information:	
 };
 
@@ -438,7 +437,6 @@ vendorOrder.addItem = function (item, quantity) { //add item to order
 		//get cost for item
 		var cost = item.getUnformattedTotalPrice();
 		//get weight for item
-		var weight = item.weight;
 		$("div#vendorOrderPanel #totalCost").val("$"+formatPrice(totalCost+cost));
 		$("div#vendorOrderPanel #totalWeight").val(totalWeight+item.weight);
 	} else { //set price and weight

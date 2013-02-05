@@ -24,7 +24,7 @@ vendorSearch.onload = function () { //called onload of this panel
     $("div#vendorSearchPanel #vendorStatus").attr("multiple","multiple").attr("size",7); //set status listbox to height of 7 and allow multiple selection
     $("div#vendorSearchPanel #vendor").attr("multiple","multiple").attr("size",1); //set vendor listbox to height of 1 and allow multiple selection
     
-    $("div#vendorSearchPanel :input").change(updateList);	
+    $("div#vendorSearchPanel :input").change(vendorSearch.updateList);	
 	
 };
 
@@ -64,10 +64,8 @@ vendorSearch.addItem = function (id,orderDate,deliveryDate,cost,status, vendorNa
 			modal: true, 
 			buttons: [ 
 			    { text: "Continue", click:function() { 
-			    	$(this).dialog("close");
-			        $("#vendorOrderAnchor").attr("href",$("#vendorOrderAnchor").attr("href")+"?"+escape("vendorOrderId="+id)); //set url of vendor order entry screen to appropriate id
-			        $("#panels").tabs("option", "load", 2); //load the data into that panel
-			        $("#panels").tabs("option", "select", 2); //select that panel			        
+			    	$(this).dialog("close");		    	
+			    	$("panels").tabs("url", "2", "loadVendorOrder?"+escape("vendorOrderId="+id)).tabs("option", "load", 2).tabs("option", "select", 2); //set url of order entry screen to appropriate id, load page into tab, and select tab
 			}}, 	
 			    { text: "Cancel", click:function() {        					 
 			    	$(this).dialog( "close" ); 

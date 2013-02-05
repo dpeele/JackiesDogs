@@ -30,7 +30,7 @@ public class ServletUtilities {
 			try {
 				parameterList.add(parameter.trim());
 			} catch (NumberFormatException nfe) {
-				log.error("Unable to parse to int : " + parameter);
+				log.error("Unable to parse to int : " + parameter, nfe);
 			}
 		}
 		return (parameterList); //retrieve list of parameters from request
@@ -46,7 +46,7 @@ public class ServletUtilities {
 			try {
 				parameterList.add(Integer.parseInt(parameter.trim()));
 			} catch (NumberFormatException nfe) {
-				log.error("Unable to parse to int : " + parameter);
+				log.error("Unable to parse to int : " + parameter, nfe);
 			}
 		}
 		return (parameterList); //retrieve list of parameters from request
@@ -59,7 +59,7 @@ public class ServletUtilities {
 		try {
 			return (new SimpleDateFormat("MM/d/yyyy h:mm a", Locale.ENGLISH).parse(dateString)); //convert string to date
 		} catch (ParseException pe) {
-			log.error("Unable to parse date");
+			log.error("Unable to parse date", pe);
 			pe.printStackTrace();
 			return null;
 		}
@@ -84,7 +84,7 @@ public class ServletUtilities {
 			try {
 				doubleValue = Double.parseDouble(doubleString);
 			} catch (NumberFormatException nfe) {
-				log.error("Unable to format credit ");
+				log.error("Unable to format credit", nfe);
 				nfe.printStackTrace();
 				return doubleValue;
 			}
@@ -99,7 +99,7 @@ public class ServletUtilities {
 			try {
 				intValue = Integer.parseInt(intString);
 			} catch (NumberFormatException nfe) {
-				log.error("Unable to format credit ");
+				log.error("Unable to format credit.", nfe);
 				nfe.printStackTrace();
 				return intValue;
 			}

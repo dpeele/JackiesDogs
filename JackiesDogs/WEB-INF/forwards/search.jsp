@@ -47,11 +47,13 @@
 			<select id="customer">
 			<%
 				List<Customer> customers = (List<Customer>)request.getAttribute("customers"); 
+				if (customers != null) {
 				   for (Customer customer: customers) { //iterate through statuses
 			%>
 				<option value="<%=customer.getId()%>"><%=customer.getFullName()%></option>			
 			<%
-			   }
+			   		}
+				}
 			%>
 			</select>			
 			<br/>

@@ -39,7 +39,7 @@ public class OmasCategoryScraper implements Callable<List<String>> {
 				}
 			}
 		} catch (IOException ioe) {
-			log.error("Jsoup error with category url: " + urlString + " with exception " + ioe);
+			log.error("Jsoup error with category url: " + urlString + " with exception ", ioe);
 		}
 		return urlList;
 	}

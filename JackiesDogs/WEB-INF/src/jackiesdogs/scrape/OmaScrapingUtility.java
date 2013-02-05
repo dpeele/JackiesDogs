@@ -44,9 +44,9 @@ public class OmaScrapingUtility implements ScrapingUtility{
 			try {
 				productUrls = categoryScraperFuture.get(); //get list of urls from each future
 			} catch (ExecutionException ee) {
-				log.error("Unable to execute category scrape for category: " + i + " with ExecutionException: " + ee);
+				log.error("Unable to execute category scrape for category: " + i + " with ExecutionException: ", ee);
 			} catch (InterruptedException ie) {
-				log.error("Unable to execute category scrape for category: " + i + " with InterruptedException: " + ie);
+				log.error("Unable to execute category scrape for category: " + i + " with InterruptedException: ", ie);
 			}
 			for (String productUrl: productUrls) { //if there are any urls, scrape them
 				request = new OmasProductScraper(productUtility, productUrl, i); //create Callable object to scrape site
@@ -58,9 +58,9 @@ public class OmaScrapingUtility implements ScrapingUtility{
 				try {
 					productGroup = productFuture.get(); //get the productGroup object
 				} catch (ExecutionException ee) {
-					log.error("Unable to extract productGroup from product scrape for with ExecutionException: " + ee);
+					log.error("Unable to extract productGroup from product scrape for with ExecutionException: ", ee);
 				} catch (InterruptedException ie) {
-					log.error("Unable to extract productGroup from product scrape for with ExecutionException: " + ie);
+					log.error("Unable to extract productGroup from product scrape for with ExecutionException: ", ie);
 				}
 				if (productGroup != null) {
 					errorProductGroups.add(productGroup);

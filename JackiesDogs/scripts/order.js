@@ -238,9 +238,9 @@ order.onload = function () { //called onload of this panel
 };
 
 order.defaultLabels = function () {
-	$("#orderAnchor").html("New Customer Order"); //default order panel label is New Order
+	$("#orderSpan").html("New Customer Order"); //default order panel label is New Order
 	$("div#orderPanel #orderLegend").html("Enter Information:"); //default legend is Enter Information:
-	 $("#orderAnchor").attr("href","loadOrder"); //dafault url for panel is loadOrder
+	$("panels").tabs("url", "0", "loadOrder"); //dafault url for panel is loadOrder
 };
 
 order.checkForShowSubmitButton = function () {
@@ -303,7 +303,7 @@ order.setValues = function (id,deliveryDate,deliveryTime,discount,credit,deliver
 	order.checkForShowCancelButton();		
 	order.checkForDeliveryButton();
 	$("div#orderPanel #editCustomerButton").show();
-	$("div#orderPanel #orderAnchor").html("Edit Customer Order"); //change order panel label to Edit Order 
+	$("#orderSpan").html("Edit Customer Order"); //change order panel label to Edit Order 
 	$("div#orderPanel #orderLegend").html("Edit Information:"); //change legend to Edit Information:	
 };
 

@@ -69,25 +69,25 @@ public class CustomerUtilityImpl implements CustomerUtility {
 				log.debug("No customers returned.");
 			}
 		} catch (SQLException se) {
-			log.error ("SQL error: " + se);
+			log.error ("SQL error: " , se);
 			return null;
 		} finally {
 			try {
 				resultSet.close();
 			} catch (Exception se) {
-				log.error("Unable to close resultSet: " + se);
+				log.error("Unable to close resultSet: " , se);
 				se.printStackTrace();
 			}
 			try {
 				callableStatement.close();
 			} catch (Exception se) {
-				log.error("Unable to close callableStatement: " + se);
+				log.error("Unable to close callableStatement: " , se);
 				se.printStackTrace();
 			}						
 			try {
 				connection.close();
 			} catch (Exception se) {
-				log.error("Unable to close connection: " + se);
+				log.error("Unable to close connection: " , se);
 				se.printStackTrace();
 			}			
 		}
@@ -146,25 +146,25 @@ public class CustomerUtilityImpl implements CustomerUtility {
 				throw new SQLException ("Unable to update customer.");
 			}			
 		} catch (SQLException se) {
-			log.error ("SQL error: " + se);
+			log.error ("SQL error: " , se);
 			return null;
 		} finally {
 			try {
 				resultSet.close();
 			} catch (Exception se) {
-				log.error("Unable to close resultSet: " + se);
+				log.error("Unable to close resultSet: " , se);
 				se.printStackTrace();
 			}		
 			try {
 				callableStatement.close();
 			} catch (Exception se) {
-				log.error("Unable to close callableStatement: " + se);
+				log.error("Unable to close callableStatement: " , se);
 				se.printStackTrace();
 			}							
 			try {
 				connection.close();
 			} catch (Exception se) {
-				log.error("Unable to close connection: " + se);
+				log.error("Unable to close connection: " , se);
 				se.printStackTrace();
 			}			
 		}

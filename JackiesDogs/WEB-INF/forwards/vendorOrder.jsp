@@ -7,7 +7,7 @@
 %>
 <script type="text/javascript">
 	$(document).ready(function () {
-		order.onload();
+		vendorOrder.onload();
 		<% 
 			VendorOrder order = (VendorOrder)request.getAttribute("order");
 			if (order != null) {//we passed an existing order to the page

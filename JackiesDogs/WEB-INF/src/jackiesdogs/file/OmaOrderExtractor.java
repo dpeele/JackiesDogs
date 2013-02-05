@@ -44,7 +44,7 @@ public class OmaOrderExtractor implements PdfExtractorUtility{
             	log.error("Unable to delete file.");
             }           
         } catch (IOException ioe) {
-        	log.error("Error reading pdf file: " + ioe);
+        	log.error("Error reading pdf file: ", ioe);
         }
         return dataHolder;        
     }

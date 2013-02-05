@@ -24,9 +24,9 @@ search.onload = function () { //called onload of this panel
     //select elements
     $("div#searchPanel #status").attr("multiple","multiple").attr("size",7); //set status listbox to height of 7 and allow multiple selection
     $("div#searchPanel #customer").attr("multiple","multiple").attr("size",10); //set customer listbox to height of 10 and allow multiple selection
-    $("div#searchPanel #vendor").change(vendorOrder.toggleVendorOrderCreation());
+    $("div#searchPanel #vendor").change(search.toggleVendorOrderLookup());
     
-    $("div#searchPanel form#customerOrderSearchForm :input").change(updateList);
+    $("div#searchPanel form#customerOrderSearchForm :input").change(search.updateList);
     
 	$("div#searchPanel #vendorOrderButton").button().attr("value","Generate").click(function () { //on click confirm and then create new vendor order based off of this list of orders		
 		$("div#searchPanel #confirmVendorOrderCreateDialog").dialog({ 
@@ -36,10 +36,8 @@ search.onload = function () { //called onload of this panel
 			    	var queryString = $.makeArray($("div#searchPanel #orderDetails tr:gt(0)")).reduce(search.extractOrderId);
 			    	queryString = queryString + "vendorTypeId=" + $("div#searchPanel #vendor").val();
 			    	$(this).dialog("close");
-			        $("#orderAnchor").attr("href",$("#vendorOrderAnchor").attr("href")+"?"+escape(queryString)); //set query string of vendor order entry screen url appropriately
-			        $("#panels").tabs("option", "load", 2); //load the data into that panel
-			        $("#panels").tabs("option", "select", 2); //select that panel			        
-			}}, 	
+			    	$("panels").tabs("url", "0", "loadVendorOrder?"+escape(queryString)).tabs("option", "load", 2).tabs("option", "select", 2); //set url of vendor order entry screen to appropriate id, load page into tab, and select tab
+			    }},
 			    { text: "Cancel", click:function() {        					 
 			    	$(this).dialog( "close" ); 
 		}}]});
@@ -93,10 +91,8 @@ search.addItem = function (id,customerName,orderDate,deliveryDate,cost,status) {
 			modal: true, 
 			buttons: [ 
 			    { text: "Continue", click:function() { 
-			    	$(this).dialog("close");
-			        $("#orderAnchor").attr("href",$("#orderAnchor").attr("href")+"?"+escape("orderId="+id)); //set url of order entry screen to appropriate id
-			        $("#panels").tabs("option", "load", 0); //load the data into that panel
-			        $("#panels").tabs("option", "select", 0); //select that panel			        
+			    	$(this).dialog("close");			    	
+			    	$("panels").tabs("url", "0", "loadOrder?"+escape("orderId="+id)).tabs("option", "load", 0).tabs("option", "select", 0); //set url of order entry screen to appropriate id, load page into tab, and select tab
 			}}, 	
 			    { text: "Cancel", click:function() {        					 
 			    	$(this).dialog( "close" ); 

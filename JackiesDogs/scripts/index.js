@@ -1,23 +1,69 @@
 $(function () { //onload
-	$("#panels").tabs({ cache: true }); //set up main tabbed panel and cache urls	 
+	$("#panels").tabs({ 
+		cache: true, 
+		select: handleTabSelect
+	}); //set up main tabbed panel and cache urls	 
 	
 	//resize main body of page on window resize
     $(window).resize(function() {
         $("#panels").height($(window).height() - ($("#panels").offset().top + 60));
-    });
+    });	
     $(window).resize();	
+    
+    switchTabFromHash(); //switch tab if hash was passed
 
     // For forward and back- handle history
-	$.address.externalChange(function(event){
-		var name = window.location.hash != "" ? window.location.hash.split("#")[2] : "";
-	    $("#tabs").tabs( "select" , $("#tabs a[name="+ name + "]").attr('href') );
-	});
-	  
-	// when the tab is selected update the url with the hash
-	$("#tabs").bind("tabsselect", function(event, ui) { 
-		$.address.hash(ui.tab.name);
-	});
+	$.address.externalChange(switchTabFromHash);
 });
+
+//switch tab based on tab name from hash
+switchTabFromHash = function () {
+	var hash = window.location.hash;
+	var name = (hash == "") ? "" : hash.substring(5);
+	
+	var tabNumber=0;	
+	switch (name) {
+		case "order":
+			tabNumber=0;
+			break;
+		case "search":
+			tabNumber=1;
+			break;
+		case "vendorOrder":
+			tabNumber=2;
+			break;
+		case "vendorSearch":
+			tabNumber=3;
+			break;
+		case "admin":
+			tabNumber=4;
+			break;						
+	}
+	$("#panels").tabs( "select" , tabNumber );
+};
+
+//when the tab is selected update the url with the hash
+handleTabSelect = function (event,ui) {
+	var hash="";
+	switch (ui.index) {
+		case 0:
+			hash="tab=order";
+			break;
+		case 1:
+			hash="tab=search";
+			break;
+		case 2:
+			hash="tab=vendorOrder";
+			break;
+		case 3:
+			hash="tab=vendorSearch";
+			break;
+		case 4:
+			hash="tab=admin";
+			break;						
+	}
+	window.location.hash=hash;
+};
 
 getId = function() {
 	return ($(this).attr("id"));

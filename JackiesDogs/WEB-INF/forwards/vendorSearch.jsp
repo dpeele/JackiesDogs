@@ -6,7 +6,7 @@
 %>
 <script type="text/javascript">
 	$(document).ready(function () {
-		vendorVendorSearch.onload();
+		vendorSearch.onload();
 		<% 
 			List<VendorOrder> vendorOrders = (List<VendorOrder>)request.getAttribute("orders");
 			if (vendorOrders != null) {//we passed a list of vendorOrders to the page

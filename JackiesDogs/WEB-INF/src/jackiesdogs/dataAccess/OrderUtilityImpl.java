@@ -174,25 +174,25 @@ public class OrderUtilityImpl implements OrderUtility{
 				log.debug("No orders returned.");
 			}
 		} catch (SQLException se) {
-			log.error ("SQL error: " + se);
+			log.error ("SQL error: " , se);
 			return null;
 		} finally {
 			try {
 				resultSet.close();
 			} catch (Exception se) {
-				log.error("Unable to close resultSet: " + se);
+				log.error("Unable to close resultSet: " , se);
 				se.printStackTrace();
 			}
 			try {
 				callableStatement.close();
 			} catch (Exception se) {
-				log.error("Unable to close callableStatement: " + se);
+				log.error("Unable to close callableStatement: " , se);
 				se.printStackTrace();
 			}							
 			try {
 				connection.close();
 			} catch (Exception se) {
-				log.error("Unable to close connection: " + se);
+				log.error("Unable to close connection: " , se);
 				se.printStackTrace();
 			}			
 		}
@@ -272,7 +272,7 @@ public class OrderUtilityImpl implements OrderUtility{
 			}
 			connection.commit();// commit all statement for this connection
 		} catch (SQLException se) {
-			log.error ("SQL error: " + se);
+			log.error ("SQL error: " , se);
 			if (connection != null) {
 				log.error ("Transaction is being rolled back.");
 				try {
@@ -286,19 +286,19 @@ public class OrderUtilityImpl implements OrderUtility{
 			try {
 				resultSet.close();
 			} catch (Exception se) {
-				log.error("Unable to close resultSet: " + se);
+				log.error("Unable to close resultSet: " , se);
 				se.printStackTrace();
 			}			
 			try {
 				callableStatement.close();
 			} catch (Exception se) {
-				log.error("Unable to close callableStatement: " + se);
+				log.error("Unable to close callableStatement: " , se);
 				se.printStackTrace();
 			}							
 			try {
 				connection.close();
 			} catch (Exception se) {
-				log.error("Unable to close connection: " + se);
+				log.error("Unable to close connection: " , se);
 				se.printStackTrace();
 			}			
 		}
@@ -382,25 +382,25 @@ public class OrderUtilityImpl implements OrderUtility{
 				throw new SQLException ("Unable to create vendor order.");
 			}
 		} catch (SQLException se) {
-			log.error ("SQL error: " + se);
+			log.error ("SQL error: " , se);
 			return null;
 		} finally {
 			try {
 				resultSet.close();
 			} catch (Exception se) {
-				log.error("Unable to close resultSet: " + se);
+				log.error("Unable to close resultSet: " , se);
 				se.printStackTrace();
 			}
 			try {
 				callableStatement.close();
 			} catch (Exception se) {
-				log.error("Unable to close callableStatement: " + se);
+				log.error("Unable to close callableStatement: " , se);
 				se.printStackTrace();
 			}							
 			try {
 				connection.close();
 			} catch (Exception se) {
-				log.error("Unable to close connection: " + se);
+				log.error("Unable to close connection: " , se);
 				se.printStackTrace();
 			}			
 		}
@@ -502,25 +502,25 @@ public class OrderUtilityImpl implements OrderUtility{
 				log.debug("No orders returned.");
 			}
 		} catch (SQLException se) {
-			log.error ("SQL error: " + se);
+			log.error ("SQL error: " , se);
 			return null;
 		} finally {
 			try {
 				resultSet.close();
 			} catch (Exception se) {
-				log.error("Unable to close resultSet: " + se);
+				log.error("Unable to close resultSet: " , se);
 				se.printStackTrace();
 			}
 			try {
 				callableStatement.close();
 			} catch (Exception se) {
-				log.error("Unable to close callableStatement: " + se);
+				log.error("Unable to close callableStatement: " , se);
 				se.printStackTrace();
 			}							
 			try {
 				connection.close();
 			} catch (Exception se) {
-				log.error("Unable to close connection: " + se);
+				log.error("Unable to close connection: " , se);
 				se.printStackTrace();
 			}			
 		}
@@ -593,7 +593,7 @@ public class OrderUtilityImpl implements OrderUtility{
 			}
 			connection.commit();// commit all statement for this connection
 		} catch (SQLException se) {
-			log.error ("SQL error: " + se);
+			log.error ("SQL error: " , se);
 			if (connection != null) {
 				log.error ("Transaction is being rolled back.");
 				try {
@@ -607,19 +607,19 @@ public class OrderUtilityImpl implements OrderUtility{
 			try {
 				resultSet.close();
 			} catch (Exception se) {
-				log.error("Unable to close resultSet: " + se);
+				log.error("Unable to close resultSet: " , se);
 				se.printStackTrace();
 			}			
 			try {
 				callableStatement.close();
 			} catch (Exception se) {
-				log.error("Unable to close callableStatement: " + se);
+				log.error("Unable to close callableStatement: " , se);
 				se.printStackTrace();
 			}							
 			try {
 				connection.close();
 			} catch (Exception se) {
-				log.error("Unable to close connection: " + se);
+				log.error("Unable to close connection: " , se);
 				se.printStackTrace();
 			}			
 		}
@@ -680,25 +680,25 @@ public class OrderUtilityImpl implements OrderUtility{
 				log.debug("No order item returned");
 			}
 		} catch (SQLException se) {
-			log.error ("SQL error: " + se);
+			log.error ("SQL error: " , se);
 			return null;
 		} finally {
 			try {
 				resultSet.close();
 			} catch (Exception se) {
-				log.error("Unable to close resultSet: " + se);
+				log.error("Unable to close resultSet: " , se);
 				se.printStackTrace();
 			}
 			try {
 				callableStatement.close();
 			} catch (Exception se) {
-				log.error("Unable to close callableStatement: " + se);
+				log.error("Unable to close callableStatement: " , se);
 				se.printStackTrace();
 			}							
 			try {
 				connection.close();
 			} catch (Exception se) {
-				log.error("Unable to close connection: " + se);
+				log.error("Unable to close connection: " , se);
 				se.printStackTrace();
 			}			
 		}
@@ -759,26 +759,26 @@ public class OrderUtilityImpl implements OrderUtility{
 				}
 			}
 		} catch (SQLException se) {
-			log.error ("SQL error: " + se);
+			log.error ("SQL error: " , se);
 			return null;
 		} finally {
 			try {
 				resultSet.close();
 			} catch (Exception se) {
-				log.error("Unable to close resultSet: " + se);
+				log.error("Unable to close resultSet: " , se);
 				se.printStackTrace();
 			}			
 			try {
 				callableStatement.close();
 			} catch (Exception se) {
-				log.error("Unable to close callableStatement: " + se);
+				log.error("Unable to close callableStatement: " , se);
 				se.printStackTrace();
 			}				
 			if (closeConnection) { //if this connection was created in this method instead of passed to it, close the connection
 				try {				
 					connection.close();
 				} catch (Exception se) {
-					log.error("Unable to close connection: " + se);
+					log.error("Unable to close connection: " , se);
 					se.printStackTrace();
 				}
 			}	

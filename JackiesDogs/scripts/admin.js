@@ -44,14 +44,16 @@ admin.executeAdminTask = function (event) {
 	var id = button[0].id;	
 	$("div#adminPanel #command").val(id);    
 	if ($("div#adminPanel #"+id+"Input").val().length > 0) {	
-		alert(event.target.id);
 		$(event.target).ajaxSubmit({
 			url: "admin",
 			dataType: "json",
 			cache: false,
 			type: "post",                
 			success: function( data ) {
-				$("div#adminPanel #adminTableDiv").html(data.reduce(admin.extractTableData));	
+				$("div#adminPanel #adminTableDiv").html(data.uploadLogs.reduce(admin.extractTableData));
+				if ($("div#adminPanel #adminTableDiv").html().length == 0) {
+					$("div#adminPanel #adminTableDiv").html("There are no errors to report.");
+				}
 			}
 		});
 		$("div#adminPanel #"+id+"Input").val("");

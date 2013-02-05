@@ -43,7 +43,7 @@ public class OmaProductExtractor implements ExcelExtractorUtility{
             	log.error("Unable to delete file.");
             }
         } catch (Exception e) {
-        	log.error("Error extracting data: " + e);
+        	log.error("Error extracting data: ", e);
             e.printStackTrace();
         }        
         return sheetHolder;

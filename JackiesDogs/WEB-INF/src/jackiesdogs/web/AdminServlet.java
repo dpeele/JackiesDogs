@@ -44,7 +44,7 @@ public class AdminServlet extends HttpServlet {
 			defaultOmaUrl = (String) context.lookup("defaultOmaUrl");
 			log.debug("Default Oma Url = " + defaultOmaUrl);			
 		} catch (NamingException ne) {
-			log.error("Unable to look up environmental variables in context.xml, error: " + ne);
+			log.error("Unable to look up environmental variables in context.xml, error: ", ne);
 		}
 		 
 		applicationContext = WebApplicationContextUtils.getWebApplicationContext(servletConfig.getServletContext());			

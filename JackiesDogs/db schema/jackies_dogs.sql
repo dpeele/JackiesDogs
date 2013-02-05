@@ -847,7 +847,7 @@ BEGIN
 		SELECT 	id
 		INTO 	in_id
 		FROM 	product
-		WHERE  	vendor_id = vendor_id;
+		WHERE  	vendor_id = in_vendor_id;
 
 	END IF;
 
@@ -873,7 +873,7 @@ BEGIN
 
 		INSERT 	product
 		SELECT 	0
-				in_product_name
+			  , in_product_name
 			  , in_price
 			  , in_order_by_unit_id
 			  , in_bill_by_unit_id
@@ -1388,10 +1388,12 @@ BEGIN
 			  , p.last_modified_date
 	FROM   		product p
 			  , product_group pg 
+			  , product_group_member pgm
 			  , vendor v
-	WHERE 		pg.product_id = p.id 
+	WHERE 		pgm.product_id = p.id 
+			AND pgm.product_group_id = pg.id
 			AND v.id = pg.vendor_type
-			AND last_modified_date < DATE_SUB(NOW(), INTERVAL 1 HOUR)
+			AND p.last_modified_date < DATE_SUB(NOW(), INTERVAL 1 HOUR)
 	ORDER BY 	product_name; 
 
 END

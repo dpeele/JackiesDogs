@@ -351,13 +351,6 @@ public class OmaUploader implements UploadUtility {
         	}
     	}
     	for (Product uploadProduct: products) {
-			if (uploadProduct.getEstimatedWeight() == 0) {
-				System.out.println (uploadProduct.getProductName() + " - NO ESTIMATED WEIGHT ****************************");
-			} else {
-				System.out.println (uploadProduct.getProductName() + " - " + uploadProduct.getEstimatedWeight());
-			}    		
-    	}
-    	for (Product uploadProduct: products) {
 			if (productUtility.updateProduct(uploadProduct) == null) { //update product in database
 				errorProducts.add(uploadProduct);
 			}

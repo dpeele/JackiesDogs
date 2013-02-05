@@ -43,7 +43,7 @@ public class CustomerLookup extends HttpServlet {
 		try {
 			maxRowsInt = Integer.parseInt(maxRows); //try to convert maxRows parameter from request to int
 		} catch (NumberFormatException nfe) { //parameter was missing or not an int
-			log.error ("Unable to parse maxRows to int: " + nfe);
+			log.error ("Unable to parse maxRows to int: ", nfe);
 			nfe.printStackTrace();
 		}
 		
