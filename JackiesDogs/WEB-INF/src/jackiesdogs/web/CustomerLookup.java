@@ -5,7 +5,8 @@ import javax.servlet.http.*;
 import javax.servlet.annotation.WebServlet;
 
 import org.apache.log4j.Logger;
-import org.json.*;
+
+import com.google.gson.Gson;
 
 import java.io.*;
 import java.util.*;
@@ -44,7 +45,6 @@ public class CustomerLookup extends HttpServlet {
 			maxRowsInt = Integer.parseInt(maxRows); //try to convert maxRows parameter from request to int
 		} catch (NumberFormatException nfe) { //parameter was missing or not an int
 			log.error ("Unable to parse maxRows to int: ", nfe);
-			nfe.printStackTrace();
 		}
 		
 		String match = ServletUtilities.getParameter(request, "match"); //retrieve substring to match from request
@@ -62,7 +62,8 @@ public class CustomerLookup extends HttpServlet {
 		if (customers.size() == 0) {
 			out.print("{[]}");
 		} else {
-			JSONArray customerJSON = new JSONArray(customers, false); //convert array to JSON
+	        Gson gson = new Gson();
+	        String customerJSON = gson.toJson(customers); //convert array to JSON					
 			out.print("{\"customers\":"+customerJSON+"}"); //send back JSON string
 		}
 	}

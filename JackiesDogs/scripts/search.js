@@ -33,7 +33,15 @@ search.onload = function () { //called onload of this panel
 			modal: true, 
 			buttons: [ 
 			    { text: "Continue", click:function() { 
-			    	var queryString = $.makeArray($("div#searchPanel #orderDetails tr:gt(0)")).reduce(search.extractOrderId);
+			    	var queryString = "";
+			    	if ($.makeArray($("div#searchPanel #orderDetails tr:gt(0)")) > 0) {
+			    		if ($.makeArray($("div#searchPanel #orderDetails tr:gt(0)")) == 1) {
+			    			queryString = search.extractOrderId("",$.makeArray($("div#searchPanel #orderDetails tr:gt(0)")));
+			    		} else {
+			    			queryString = $.makeArray($("div#searchPanel #orderDetails tr:gt(0)")).reduce(search.extractOrderId);
+			    		}
+			    	}
+			    	
 			    	queryString = queryString + "vendorTypeId=" + $("div#searchPanel #vendor").val();
 			    	$(this).dialog("close");
 			    	$("panels").tabs("url", "0", "loadVendorOrder?"+escape(queryString)).tabs("option", "load", 2).tabs("option", "select", 2); //set url of vendor order entry screen to appropriate id, load page into tab, and select tab

@@ -17,5 +17,5 @@ public interface OrderUtility {
 	
 	public VendorOrder updateVendorOrder (VendorOrder order);	
 	
-	public List<OrderItem> updateOrderItems (List<OrderItem> orderItems, int orderId, Connection previousConnection);
+	public List<OrderItem> updateOrderItems (List<OrderItem> orderItems, int orderId, Connection previousConnection, int status);
 }

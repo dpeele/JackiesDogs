@@ -123,19 +123,16 @@ public class ProductUtilityImpl implements ProductUtility {
 				resultSet.close();
 			} catch (Exception se) {
 				log.error("Unable to close resultSet: " , se);
-				se.printStackTrace();
 			}
 			try {
 				callableStatement.close();
 			} catch (Exception se) {
 				log.error("Unable to close callableStatement: " , se);
-				se.printStackTrace();
 			}							
 			try {
 				connection.close();
 			} catch (Exception se) {
 				log.error("Unable to close connection: " , se);
-				se.printStackTrace();
 			}			
 		}
 		return products;
@@ -202,19 +199,16 @@ public class ProductUtilityImpl implements ProductUtility {
 				resultSet.close();
 			} catch (Exception se) {
 				log.error("Unable to close resultSet: " , se);
-				se.printStackTrace();
 			}			
 			try {
 				callableStatement.close();
 			} catch (Exception se) {
 				log.error("Unable to close callableStatement: " , se);
-				se.printStackTrace();
 			}								
 			try {
 				connection.close();
 			} catch (Exception se) {
 				log.error("Unable to close connection: " , se);
-				se.printStackTrace();
 			}			
 		}
 		return product;
@@ -252,9 +246,9 @@ public class ProductUtilityImpl implements ProductUtility {
 				callableStatement.setDouble(7, inventory.getReservedWeight());
 				callableStatement.setString(8, inventory.getNotes());
 				if (vendorId == null) {
-					callableStatement.setNull(2, Types.VARCHAR);
+					callableStatement.setNull(9, Types.VARCHAR);
 				} else {
-					callableStatement.setString(2, vendorId);
+					callableStatement.setString(9, vendorId);
 				}			
 				hasResults = callableStatement.execute();
 				if (hasResults) { 
@@ -276,27 +270,24 @@ public class ProductUtilityImpl implements ProductUtility {
 				resultSet.close();
 			} catch (Exception se) {
 				log.error("Unable to close resultSet: " , se);
-				se.printStackTrace();
 			}			
 			try {
 				callableStatement.close();
 			} catch (Exception se) {
 				log.error("Unable to close callableStatement: " , se);
-				se.printStackTrace();
 			}	
 			if (closeConnection) { //if this connection was created in this method instead of passed to it, close the connection
 				try {				
 					connection.close();
 				} catch (Exception se) {
 					log.error("Unable to close connection: " , se);
-					se.printStackTrace();
 				}
 			}
 		}
 		return inventoryItems;
 	}		
 
-	public List<VendorInventory> updateVendorInventoryItems (List<VendorInventory> vendorInventoryItems, int vendorOrderId, Connection previousConnection) {
+	public List<VendorInventory> updateVendorInventoryItems (List<VendorInventory> vendorInventoryItems, int vendorOrderId, Connection previousConnection, int status) {
 		boolean closeConnection = false;
 		Connection connection = previousConnection; //set connection equal to previous connection so that we can commit in one transaction
 		CallableStatement callableStatement = null;
@@ -319,15 +310,19 @@ public class ProductUtilityImpl implements ProductUtility {
 					callableStatement.setInt(1, Integer.parseInt(id));
 				}						
 				if (vendorInventory.isRemoved()) { //remove item	
-					callableStatement.setNull(2, Types.INTEGER);
-					callableStatement.setNull(3, Types.INTEGER);
-					callableStatement.setNull(4, Types.VARCHAR);
-					callableStatement.setNull(5, Types.INTEGER);
-					callableStatement.setNull(6, Types.FLOAT);
-					callableStatement.setNull(7, Types.FLOAT);
+					callableStatement.setInt(2, vendorOrderId);
+					if (product.getId() == null) {
+						callableStatement.setNull(3, Types.INTEGER);
+					} else {
+						callableStatement.setInt(3, Integer.parseInt(product.getId()));
+					}
+					callableStatement.setString(4, product.getVendorId());
+					callableStatement.setInt(5, vendorInventory.getQuantity());
+					callableStatement.setDouble(6, vendorInventory.getTotalWeight());
+					callableStatement.setDouble(7, vendorInventory.getCost());
 					callableStatement.setNull(8, Types.VARCHAR);
-					callableStatement.setByte(9, (byte)1);
-					callableStatement.setNull(10, Types.INTEGER);					
+					callableStatement.setNull(9, Types.INTEGER);
+					callableStatement.setInt(10, 3);
 				} else {	
 					callableStatement.setInt(2, vendorOrderId);
 					if (product.getId() == null) {
@@ -340,12 +335,12 @@ public class ProductUtilityImpl implements ProductUtility {
 					callableStatement.setDouble(6, vendorInventory.getTotalWeight());
 					callableStatement.setDouble(7, vendorInventory.getCost());
 					callableStatement.setString(8, vendorInventory.getNotes());
-					callableStatement.setByte(9, (byte)0);
 					if (vendorInventory.isEstimate()) {
-						callableStatement.setByte(10, (byte)1);
+						callableStatement.setByte(9, (byte)1);
 					} else {
-						callableStatement.setByte(10, (byte)0);
+						callableStatement.setByte(9, (byte)0);
 					}
+					callableStatement.setInt(10, status);					
 				}
 				hasResults = callableStatement.execute();
 				if (hasResults) { 
@@ -367,20 +362,17 @@ public class ProductUtilityImpl implements ProductUtility {
 				resultSet.close();
 			} catch (Exception se) {
 				log.error("Unable to close resultSet: " , se);
-				se.printStackTrace();
 			}			
 			try {
 				callableStatement.close();
 			} catch (Exception se) {
 				log.error("Unable to close callableStatement: " , se);
-				se.printStackTrace();
 			}			
 			if (closeConnection) { //we weren't passed a connection so this is a connection created within this method and must be closed
 				try {
 					connection.close();
 				} catch (Exception se) {
 					log.error("Unable to close connection: " , se);
-					se.printStackTrace();
 				}
 			}
 		}
@@ -448,19 +440,16 @@ public class ProductUtilityImpl implements ProductUtility {
 				resultSet.close();
 			} catch (Exception se) {
 				log.error("Unable to close resultSet: " , se);
-				se.printStackTrace();
 			}
 			try {
 				callableStatement.close();
 			} catch (Exception se) {
 				log.error("Unable to close callableStatement: " , se);
-				se.printStackTrace();
 			}							
 			try {
 				connection.close();
 			} catch (Exception se) {
 				log.error("Unable to close connection: " , se);
-				se.printStackTrace();
 			}			
 		}
 		return vendorInventoryItems;
@@ -553,19 +542,16 @@ public class ProductUtilityImpl implements ProductUtility {
 				resultSet.close();
 			} catch (Exception se) {
 				log.error("Unable to close resultSet: " , se);
-				se.printStackTrace();
 			}
 			try {
 				callableStatement.close();
 			} catch (Exception se) {
 				log.error("Unable to close callableStatement: " , se);
-				se.printStackTrace();
 			}									
 			try {
 				connection.close();
 			} catch (Exception se) {
 				log.error("Unable to close connection: " , se);
-				se.printStackTrace();
 			}			
 		}
 		return productGroup;
@@ -617,24 +603,19 @@ public class ProductUtilityImpl implements ProductUtility {
 			return null;
 		} finally {
 			try {
-				if (resultSet != null) {
-					resultSet.close();
-				}
+				resultSet.close();
 			} catch (Exception se) {
 				log.error("Unable to close resultSet: " , se);
-				se.printStackTrace();
 			}			
 			try {
 				callableStatement.close();
 			} catch (Exception se) {
 				log.error("Unable to close callableStatement: " , se);
-				se.printStackTrace();
 			}						
 			try {
 				connection.close();
 			} catch (Exception se) {
 				log.error("Unable to close connection: " , se);
-				se.printStackTrace();
 			}			
 		}
 		return uploadLogs;
@@ -712,19 +693,16 @@ public class ProductUtilityImpl implements ProductUtility {
 				resultSet.close();
 			} catch (Exception se) {
 				log.error("Unable to close resultSet: " , se);
-				se.printStackTrace();
 			}			
 			try {
 				callableStatement.close();
 			} catch (Exception se) {
 				log.error("Unable to close callableStatement: " , se);
-				se.printStackTrace();
 			}						
 			try {
 				connection.close();
 			} catch (Exception se) {
 				log.error("Unable to close connection: " , se);
-				se.printStackTrace();
 			}			
 		}
 		return uploadLogs;

@@ -548,7 +548,13 @@ order.populateCustomerDiv = function() { //populate customer div from customer d
 	} else {
 		additionalInfo = additionalInfo.substring(0,additionalInfo.length-2) + "<br/>"; //remove ", " and add line break if there isn't an email address 
 	}
-	customerInfo = $.makeArray($("div#orderPanel .customerAddress")).reduce(order.addInfo, customerInfo); //reduce address fields to single piece of HTML
+	if ($.makeArray($("div#orderPanel .customerAddress")) > 0) {
+		if ($.makeArray($("div#orderPanel .customerAddress")) == 1) {
+			customerInfo = order.addInfo (customerInfo, $.makeArray($("div#orderPanel .customerAddress"))[0]);
+		} else {
+			customerInfo = $.makeArray($("div#orderPanel .customerAddress")).reduce(order.addInfo, customerInfo); //reduce address fields to single piece of HTML
+		}
+	}
 	$("div#orderPanel #selectedCustomerDiv").html(customerInfo+additionalInfo); //populate customer div with customer information
 };
 
@@ -675,7 +681,15 @@ order.validateAndSubmitCustomer = function () { //validate and submit customer d
 };
 
 order.validateAndSubmit = function () {
-	var orderItemQueryString = escape(order.orderItems.reduce(ExtractItemData));
+	
+	var orderItemQueryString = "";
+	if (order.orderItems.length > 0) {
+		if (order.orderItems.length == 1) {
+			orderItemQueryString = escape(ExtractItemData("", order.orderItems[0]));
+		} else {
+			orderItemQueryString = escape(order.orderItems.reduce(ExtractItemData));
+		}
+	}
 	
     $.ajax({ //make ajax call to submit order
         url: "submitOrder",

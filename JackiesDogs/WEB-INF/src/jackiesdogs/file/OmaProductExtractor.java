@@ -44,7 +44,6 @@ public class OmaProductExtractor implements ExcelExtractorUtility{
             }
         } catch (Exception e) {
         	log.error("Error extracting data: ", e);
-            e.printStackTrace();
         }        
         return sheetHolder;
     }

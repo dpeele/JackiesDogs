@@ -5,7 +5,6 @@ import javax.servlet.http.*;
 import javax.servlet.annotation.WebServlet;
 
 import org.apache.log4j.Logger;
-import org.json.JSONArray;
 
 import java.io.*;
 import java.util.*;
@@ -16,6 +15,8 @@ import jackiesdogs.utility.*;
 
 import org.springframework.context.ApplicationContext;
 import org.springframework.web.context.support.WebApplicationContextUtils;
+
+import com.google.gson.Gson;
 
 @WebServlet("/submitVendorOrder")
 public class VendorOrderSubmit extends HttpServlet {
@@ -115,7 +116,8 @@ public class VendorOrderSubmit extends HttpServlet {
 			}
 		}
 				
-		JSONArray newOrderItemsJSON = new JSONArray(newOrderItems);
+        Gson gson = new Gson();
+        String newOrderItemsJSON = gson.toJson(newOrderItems); //convert list to JSON		
 		out.print("{\"orderId\":\""+orderId+"\",\"totalCost\":\""+totalCost+"\",\"newOrderItems\":\""+newOrderItemsJSON+"\"}"); // send customer id back to front end		
 	}
 }

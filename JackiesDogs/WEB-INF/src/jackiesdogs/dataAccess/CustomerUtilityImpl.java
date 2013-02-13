@@ -76,19 +76,16 @@ public class CustomerUtilityImpl implements CustomerUtility {
 				resultSet.close();
 			} catch (Exception se) {
 				log.error("Unable to close resultSet: " , se);
-				se.printStackTrace();
 			}
 			try {
 				callableStatement.close();
 			} catch (Exception se) {
 				log.error("Unable to close callableStatement: " , se);
-				se.printStackTrace();
 			}						
 			try {
 				connection.close();
 			} catch (Exception se) {
 				log.error("Unable to close connection: " , se);
-				se.printStackTrace();
 			}			
 		}
 		return customers;
@@ -153,19 +150,16 @@ public class CustomerUtilityImpl implements CustomerUtility {
 				resultSet.close();
 			} catch (Exception se) {
 				log.error("Unable to close resultSet: " , se);
-				se.printStackTrace();
 			}		
 			try {
 				callableStatement.close();
 			} catch (Exception se) {
 				log.error("Unable to close callableStatement: " , se);
-				se.printStackTrace();
 			}							
 			try {
 				connection.close();
 			} catch (Exception se) {
 				log.error("Unable to close connection: " , se);
-				se.printStackTrace();
 			}			
 		}
 		return customer;

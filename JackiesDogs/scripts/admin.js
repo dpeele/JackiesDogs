@@ -30,8 +30,8 @@ admin.onload = function () { //called onload of this panel
     $("div#adminPanel #pricelistInput").css("width","600px").attr("size", 62);
     $("div#adminPanel #invoiceInput").css("width","600px").attr("size", 62);
     $("div#adminPanel #scrapeInput").css("width","600px");
-    $("div#adminPanel #uploadProducts").attr("value","Upload Pricelist");
-    $("div#adminPanel #uploadInvoice").attr("value","Upload Order Invoice");
+    $("div#adminPanel #pricelist").attr("value","Upload Pricelist");
+    $("div#adminPanel #invoice").attr("value","Upload Order Invoice");
     $("div#adminPanel #scrape").attr("value","Scrape Website");    
     
     //set up form for ajax submit
@@ -50,8 +50,13 @@ admin.executeAdminTask = function (event) {
 			cache: false,
 			type: "post",                
 			success: function( data ) {
-				$("div#adminPanel #adminTableDiv").html(data.uploadLogs.reduce(admin.extractTableData));
-				if ($("div#adminPanel #adminTableDiv").html().length == 0) {
+				if (data.uploadLogs.length > 0) {
+					if (data.uploadLogs.length == 1) {
+						$("div#adminPanel #adminTableDiv").html(admin.extractTableData("",data.uploadLogs[0]));
+					} else {
+						$("div#adminPanel #adminTableDiv").html(data.uploadLogs.reduce(admin.extractTableData));
+					}
+				} else {
 					$("div#adminPanel #adminTableDiv").html("There are no errors to report.");
 				}
 			}
@@ -62,13 +67,34 @@ admin.executeAdminTask = function (event) {
 	}
 	return false;
 };
-
 admin.extractTableData = function (string, currentValue) {//generate log table and add it to html string
-	return (string+"<table border=1><caption>"+currentValue.logDescription+"</caption><tr>"+currentValue.headings.reduce(admin.extractHeaderData)+"</tr>"+currentValue.log.reduce(order.extractRowData)+"</tr>");
+	string = string + "<table style='width:100%;' border='1'><caption>"+currentValue.logDescription+"</caption><tr>";
+	if (currentValue.headings.length > 0) {
+		if (currentValue.headings.length == 1) {
+			string = string + admin.extractHeaderData ("",currentValue.headings[0]);
+		} else { 
+			string = string + currentValue.headings.reduce(admin.extractHeaderData);
+		}
+	}
+	string = string + "</tr>";
+	if (currentValue.log.length > 0) {
+		if (currentValue.log.length == 1) {
+			string = string + admin.extractRowData("",currentValue.log[0]) + "</table>";
+		} else {
+			string = string + currentValue.log.reduce(admin.extractRowData) + "</table>";
+		}
+	}
+	return (string);
 };
 
 admin.extractRowData = function (string, currentValue) {//generate row of log table and add it to table string
-		return (string+"<tr>"+currentValue.reduce(order.extractCellData)+"</tr>");
+	if (currentValue.length > 0) {
+		if (currentValue.length == 1) {
+			return (string+"<tr>"+admin.extractCellData("", currentValue[0])+"</tr>");
+		} else {
+			return (string+"<tr>"+currentValue.reduce(admin.extractCellData)+"</tr>");
+		}
+	}
 };
 
 admin.extractCellData = function (string, currentValue) {//generate cell of log table row and add it to row string

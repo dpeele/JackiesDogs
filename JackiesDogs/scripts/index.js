@@ -1,7 +1,8 @@
 $(function () { //onload
 	$("#panels").tabs({ 
 		cache: true, 
-		select: handleTabSelect
+		select: handleTabSelect,
+		show: resizeTab
 	}); //set up main tabbed panel and cache urls	 
 	
 	//resize main body of page on window resize
@@ -42,8 +43,14 @@ switchTabFromHash = function () {
 	$("#panels").tabs( "select" , tabNumber );
 };
 
+//when a tab has been activated
+resizeTab = function () {
+	$(window).resize();
+};
+
 //when the tab is selected update the url with the hash
 handleTabSelect = function (event,ui) {
+
 	var hash="";
 	switch (ui.index) {
 		case 0:
@@ -145,46 +152,37 @@ formatPrice = function (n) {//format price with dollar sign and correct decimal 
 	   return (int + "." + Math.abs(n - i).toFixed(c).slice(2)); //return prices
 };
 
-if (!Array.prototype.reduce) //if it doesn't already exist, add reduce function to array object
-{
-  Array.prototype.reduce = function(fun /*, initial*/)
-  {
-    var len = this.length;
-    if (typeof fun != "function")
-      throw new TypeError();
-
-    // no value to return if no initial value and an empty array
-    if (len == 0 && arguments.length == 1)
-      throw new TypeError();
-
-    var i = 0;
-    if (arguments.length >= 2)
-    {
-      var rv = arguments[1];
-    }
-    else
-    {
-      do
-      {
-        if (i in this)
-        {
-          rv = this[i++];
-          break;
-        }
-
-        // if array contains no values, no initial value to return
-        if (++i >= len)
-          throw new TypeError();
-      }
-      while (true);
-    }
-
-    for (; i < len; i++)
-    {
-      if (i in this)
-        rv = fun.call(null, rv, this[i], i, this);
-    }
-
-    return rv;
-  };
+if (!Array.prototype.reduce) { //if it doesn't already exist, add reduce function to array object
+	Array.prototype.reduce = function reduce(accumulator) {
+		if (this===null || this===undefined) {
+			throw new TypeError("Object is null or undefined");
+		}
+		
+		var index = 0;
+		var length = this.length >> 0; //ensure this is an unsigned 32 bit integer
+		var current;
+		
+		if (typeof accumulator !== "function") { // ES5 : "If IsCallable(callbackfn) is false, throw a TypeError exception."
+			throw new TypeError("First argument is not callable");
+		}
+		 
+		if(arguments.length < 2) {
+			if (length === 0) {
+				throw new TypeError("Array length is 0 and no second argument");
+			}
+				
+			current = this[0];
+			index=1;
+			
+		} else {
+			current = arguments[1];
+		}
+		while (index < length) {
+			if (index in this) { //array contains this index
+				current = accumulator.call(undefined, current, this[index], index, this);
+				index++;
+			}
+		}		    	 
+		return current;
+	};
 }

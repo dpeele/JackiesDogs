@@ -475,10 +475,17 @@ vendorOrder.popDelivery = function () { //pop delivery calculator div
 
 
 vendorOrder.validateAndSubmit = function () { //validate form data and ajax submit to server
-	var orderItemQueryString = escape(order.orderItems.reduce(ExtractItemData));
+	var orderItemQueryString = "";
+	if (vendorOrder.orderItems.length > 0) {
+		if (vendorOrder.orderItems.length == 1) {
+			orderItemQueryString = escape(ExtractItemData("", vendorOrder.orderItems[0]));
+		} else {
+			orderItemQueryString = escape(vendorOrder.orderItems.reduce(ExtractItemData));
+		}
+	}
 	
     $.ajax({ //make ajax call to submit order
-        url: "submitOrder",
+        url: "submitVendorOrder",
         cache: false,
         type: "post",        
         data: orderItemQueryString + $("div#vendorOrderPanel #orderForm").serialize(),

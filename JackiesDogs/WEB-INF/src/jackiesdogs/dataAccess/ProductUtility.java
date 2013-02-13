@@ -19,7 +19,7 @@ public interface ProductUtility {
 	
 	public List<VendorInventory> findVendorInventoryByOrderId (int vendorOrderId);
 	
-	public List<VendorInventory> updateVendorInventoryItems (List<VendorInventory> vendorInventoryItems, int vendorOrderId, Connection connection);
+	public List<VendorInventory> updateVendorInventoryItems (List<VendorInventory> vendorInventoryItems, int vendorOrderId, Connection connection, int status);
 	
 	public ProductGroup updateProductGroup (ProductGroup productGroup);
 	

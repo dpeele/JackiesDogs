@@ -5,7 +5,6 @@ import javax.servlet.http.*;
 import javax.servlet.annotation.WebServlet;
 
 import org.apache.log4j.Logger;
-import org.json.*;
 
 import java.io.*;
 import java.util.*;
@@ -16,6 +15,8 @@ import jackiesdogs.utility.*;
 
 import org.springframework.context.ApplicationContext;
 import org.springframework.web.context.support.WebApplicationContextUtils;
+
+import com.google.gson.Gson;
 
 @WebServlet("/productLookup")
 public class ProductLookup extends HttpServlet {
@@ -43,7 +44,6 @@ public class ProductLookup extends HttpServlet {
 			maxRowsInt = Integer.parseInt(maxRows); //try to convert maxRows parameter from request to int
 		} catch (NumberFormatException nfe) { //parameter was missing or not an int
 			log.error ("Unable to parse maxRows to int: ", nfe);
-			nfe.printStackTrace();
 		}
 		
 		String match = ServletUtilities.getParameter(request, "match"); //retrieve substring to match from request
@@ -64,7 +64,8 @@ public class ProductLookup extends HttpServlet {
 		if (products.size() == 0) {
 			out.print("{[]}");
 		} else {
-			JSONArray productJSON = new JSONArray(products, false); //convert List to JSON
+	        Gson gson = new Gson();
+	        String productJSON = gson.toJson(products); //convert list to JSON		
 			out.print("{\"products\":"+productJSON+"}"); //send back JSON string
 		}
 	}

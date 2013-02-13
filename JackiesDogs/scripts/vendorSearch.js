@@ -4,8 +4,8 @@ vendorSearch.onload = function () { //called onload of this panel
 
     $(window).resize(function() { //resize main body of form on window resize
         $("div#vendorSearchPanel #vendorSearch").height($(window).height() - ($("div#vendorSearchPanel #vendorSearch").offset().top + 75));
-        $("div#vendorSearchPanel #leftSearch").height($(window).height() - ($("div#vendorSearchPanel #vendorSearch").offset().top + 65));
-        $("div#vendorSearchPanel #rightSearch").height($(window).height() - ($("div#vendorSearchPanel #vendorSearch").offset().top + 65));
+        $("div#vendorSearchPanel #leftVendorSearch").height($(window).height() - ($("div#vendorSearchPanel #vendorSearch").offset().top + 65));
+        $("div#vendorSearchPanel #rightVendorSearch").height($(window).height() - ($("div#vendorSearchPanel #vendorSearch").offset().top + 65));
     });
     $(window).resize();	
 	

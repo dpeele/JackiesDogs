@@ -188,7 +188,7 @@ CREATE TABLE vendor_order_info /* table to store info for each vendor order sent
   , total_weight FLOAT
   , vendor_status_id INT
   , vendor_id INT
-  , change_due FLOAT
+  , vendor_order_id VARCHAR(8)
   , notes VARCHAR (2048)
   , last_modified_date DATETIME
 	
@@ -208,7 +208,7 @@ CREATE TABLE vendor_inventory /*table to store inventory requested/received from
   , vendor_order_id INT
   , product_id INT
   , quantity INT NOT NULL
-  , total_weight INT NOT NULL
+  , total_weight FLOAT NOT NULL
   , cost FLOAT NOT NULL
   , notes VARCHAR(2048)
   , deleted BOOLEAN
@@ -232,8 +232,8 @@ CREATE TABLE inventory /*table to store inventory in stock*/
 	id INT NOT NULL PRIMARY KEY AUTO_INCREMENT
   , product_id INT
   , quantity INT NOT NULL
-  , total_weight INT NOT NULL
-  , cost FLOAT NOT NULL
+  , total_weight FLOAT NOT NULL
+  , cost FLOAT
   , reserved_quantity INT NOT NULL
   , reserved_weight FLOAT NOT NULL
   , notes VARCHAR(2048)
@@ -756,10 +756,10 @@ CREATE PROCEDURE inventory_update
 	IN in_id INT
   , IN in_product_id INT
   , IN in_quantity INT
-  , IN in_total_weight INT
+  , IN in_total_weight FLOAT
   , IN in_cost FLOAT
-  , IN in_special_quantity INT
-  , IN in_special_cost FLOAT
+  , IN in_reserved_quantity INT
+  , IN in_reserved_weight FLOAT
   , IN in_notes VARCHAR(2048)
   , IN in_vendor_id VARCHAR(8)
 )
@@ -788,12 +788,12 @@ BEGIN
 	IF in_id IS NOT NULL THEN
 
 		UPDATE 	inventory 
-		SET 	reserved_quantity = in_special_quantity + quantity
+		SET 	reserved_quantity = reserved_quantity + in_reserved_quantity
 			  , quantity = quantity + in_quantity
-			  , total_weight = in_total_weight
-			  , reserved_weight = cost
-			  , cost = in_cost
-			  , notes = in_notes
+			  , total_weight = total_weight + in_total_weight
+			  , reserved_weight = reserved_weight + in_reserved_weight
+			  , cost = IF (in_cost IS NULL, cost, in_cost)
+			  , notes = IF (in_notes IS NULL, notes, in_notes)
 			  , last_modified_date = NOW()
 		WHERE 	(in_id IS NULL OR id = in_id)
 			AND (in_vendor_id IS NULL OR id = (SELECT id FROM product WHERE vendor_id = in_vendor_id));
@@ -810,8 +810,8 @@ BEGIN
 			  , in_quantity
 			  , in_total_weight
 			  , in_cost
-			  , in_special_quantity
-			  , in_special_cost
+			  , in_reserved_quantity
+			  , in_reserved_weight
 			  , in_notes
 			  , NOW();
 
@@ -1191,23 +1191,47 @@ CREATE PROCEDURE order_item_update
   , IN in_quantity INT
   , IN in_weight FLOAT
   , IN in_notes VARCHAR (2048)
-  , IN in_deleted BOOLEAN
   , IN in_estimated BOOLEAN
+  , IN in_status INT
 )
 BEGIN
 
+	DECLARE previous_quantity INT;
+	DECLARE previous_weight FLOAT;
+	
 	/* if we passed an id, this is an update or delete*/
 	IF in_id IS NOT NULL THEN
 
 		/* we want to "delete" this order item by setting the deleted column to "true"*/
-		IF in_delete = TRUE THEN
+		IF in_status = 7 THEN
 
 			UPDATE 	order_item
 			SET 	deleted = TRUE
 			WHERE 	id = in_id;
+			
+			/*update inventory and remove quantity and weight from reserved amounts*/
+			IF (SELECT status_id FROM order_info WHERE id = in_order_id) BETWEEN 2 AND 7 THEN
+
+				SELECT quantity, WEIGHT INTO previous_quantity, previous_weight FROM order_item WHERE id=in_id;
+				CALL inventory_update (in_id, in_product_id, 0, 0.0, null, - previous_quantity, - previous_weight, null, null);
+
+			END IF;
 		
 		/*this is an update*/
 		ELSE
+			
+			/*update inventory and add quantity and weight to reserved amounts*/
+			IF (SELECT status_id FROM order_info WHERE id = in_order_id) = 1 AND in_status BETWEEN 2 AND 6 THEN
+
+				CALL inventory_update (in_id, in_product_id, 0, 0.0, null, in_quantity, in_weight, null, null);
+
+			/*update inventory and add quantity and weight minus previous quantity and weight to reserved amounts*/
+			ELSEIF (SELECT status_id FROM order_info WHERE id = in_order_id) BETWEEN 2 AND 6 AND in_status BETWEEN 2 AND 6 THEN
+
+				SELECT quantity, weight INTO previous_quantity, previous_weight FROM order_item WHERE id=in_id;
+				CALL inventory_update (in_id, in_product_id, 0, 0.0, null, in_quantity-previous_quantity, in_weight-previous_weight, null, null);
+
+			END IF;
 			
 			UPDATE 	order_item 
 			SET 	order_id = in_order_id
@@ -1227,6 +1251,9 @@ BEGIN
 
 	/* doesn't exist, insert into database*/
 	ELSE 
+
+		/*update inventory and add quantity and weight to reserved amounts*/
+		CALL inventory_update (in_id, in_product_id, 0, 0.0, null, in_quantity, in_weight, null, null);
 
 		INSERT 	order_item
 		SELECT 	0
@@ -1505,6 +1532,7 @@ BEGIN
 			  , oi.toll_expense
 			  , oi.total_cost
 			  , oi.total_weight
+			  , oi.vendor_order_id
 			  , s.vendor_status_name
 			  , v.vendor_name
 			  , oi.notes
@@ -1542,6 +1570,7 @@ CREATE PROCEDURE vendor_order_info_update
 	  , IN in_vendor_status_id INT
 	  , IN in_vendor_id INT
 	  , IN in_notes VARCHAR (2048)
+	  , IN in_vendor_order_id VARCHAR(8)
 	  , IN in_delete_flag BOOLEAN
 )
 BEGIN
@@ -1572,6 +1601,7 @@ BEGIN
 				  , total_weight = in_total_weight
 				  , vendor_status_id = in_vendor_status_id
 				  , vendor_id = in_vendor_id
+				  , vendor_order_id = in_vendor_order_id
 				  , notes = in_notes
 				  , last_modified_date = NOW()
 			WHERE 	id = in_id;
@@ -1579,29 +1609,42 @@ BEGIN
 		END IF;
 
 		/* return id*/
-		SELECT 	in_id; 
+		SELECT in_id; 
 
 	/* doesn't exist, insert into database*/
 	ELSE 
 
-		INSERT 	vendor_order_info
-		SELECT 	0
-			  , in_order_date
-			  , in_delivery_date_time
-			  , in_discount
-			  , in_credit
-			  , in_delivery_fee
-			  , in_toll_expense
-			  , in_mileage
-			  , in_total_cost
-			  , in_total_weight
-			  , in_vendor_status_id
-			  , in_vendor_id
-			  , in_notes
-			  , NOW();
+		IF (SELECT 	COUNT(*) 
+			FROM 	vendor_order_info 
+			WHERE 	vendor_order_id = in_vendor_order_id) = 0
+		THEN
 
-		/* capture auto_increment value*/
-		SELECT 	LAST_INSERT_ID(); 
+			INSERT 	vendor_order_info
+			SELECT 	0
+				  , in_order_date
+				  , in_delivery_date_time
+				  , in_discount
+				  , in_credit
+				  , in_delivery_fee
+				  , in_toll_expense
+				  , in_mileage
+				  , in_total_cost
+				  , in_total_weight
+				  , in_vendor_status_id
+				  , in_vendor_id
+				  , in_vendor_order_id
+				  , in_notes
+				  , NOW();
+
+			/* capture auto_increment value*/
+			SELECT 	LAST_INSERT_ID(); 
+		
+		/* this is a duplicate*/
+		ELSE
+	
+			SELECT "DUPLICATE";
+
+		END IF;
 
 END IF;
 
@@ -1678,26 +1721,61 @@ CREATE PROCEDURE vendor_inventory_update
   , IN in_vendor_id VARCHAR(8)
   , IN in_quantity INT
   , IN in_total_weight FLOAT
-  , IN cost FLOAT
+  , IN in_cost FLOAT
   , IN in_notes VARCHAR (2048)
-  , IN in_deleted BOOLEAN
-  , IN estimate BOOLEAN
+  , IN in_estimate BOOLEAN
+  , IN in_status INT
 
 )
 BEGIN
+
+	DECLARE previous_quantity INT;
+	DECLARE previous_weight FLOAT;				
+
 
 	/* if we passed an id, this is an update or delete*/
 	IF in_id IS NOT NULL THEN
 
 		/* we want to "delete" this vendor inventory item by setting the deleted column to "true"*/
-		IF in_delete = TRUE THEN
+		IF in_status = 3 THEN
 
 			UPDATE 	vendor_inventory
 			SET 	deleted = TRUE
 			WHERE 	id = in_id;
+
+			/*update inventory and remove quantity and weight from total amounts*/
+			IF (SELECT vendor_status_id FROM vendor_order_info WHERE id = in_vendor_order_id) BETWEEN 1 AND 2 THEN
+				SELECT quantity, weight INTO previous_quantity, previous_weight FROM vendor_inventory WHERE id=in_id;
+				CALL inventory_update (in_id, in_product_id, - previous_quantity, - previous_weight, null, 0, 0.0, null, in_vendor_id);
+
+			END IF;
+
 		
 		/*this is an update*/
 		ELSE
+
+			IF in_product_id IS NULL THEN
+			
+				SELECT 	id
+				INTO 	in_product_id
+				FROM	product
+				WHERE 	vendor_id = in_vendor_id;
+	
+			END IF;
+
+			/*update inventory and add quantity and weight to total amounts and set cost*/
+			IF (SELECT vendor_status_id FROM vendor_order_info WHERE id = in_vendor_order_id) = 1 AND in_status = 2 THEN
+
+				CALL inventory_update (in_id, in_product_id, in_quantity, in_total_weight, in_cost, 0, 0.0, null, null);
+
+			/*update inventory and add quantity and weight minus previous quantity and weight to total amounts and set cost*/
+			ELSEIF (SELECT status_id FROM order_info WHERE id = in_order_id) = 2 AND in_status = 2 THEN
+
+				SELECT quantity, weight INTO previous_quantity, previous_weight FROM order_item WHERE id=in_id;
+				CALL inventory_update (in_id, in_product_id, in_quantity-previous_quantity, in_total_weight-previous_weight, in_cost, 0, 0.0, null, null);
+
+			END IF;
+
 			
 			UPDATE 	vendor_inventory 
 			SET 	vendor_order_id = in_order_id
@@ -1727,6 +1805,9 @@ BEGIN
 			WHERE 	vendor_id = in_vendor_id;
 	
 		END IF;
+
+		/*update inventory and add quantity and weight to total amounts and set cost*/
+		CALL inventory_update (in_id, in_product_id, in_quantity, in_total_weight, in_cost, 0, 0.0, null, in_vendor_id);
 
 		INSERT 	vendor_inventory
 		SELECT 	0

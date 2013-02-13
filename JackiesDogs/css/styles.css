@@ -40,6 +40,18 @@
 	width:79%;
 }
 
+#leftVendorSearch {
+	width:19%;
+	float:left;
+	white-space:nowrap;
+	overflow:auto;
+}
+
+#rightVendorSearch {
+	float:right;
+	width:79%;
+}
+
 #leftAdmin {
 	width:49%;
 	float:left;

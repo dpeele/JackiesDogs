@@ -4,7 +4,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class VendorOrder {
-	private String id, status, notes, vendor; 
+	private String id, status, notes, vendor, vendorOrderId; 
 	private Date orderDate, deliveryDate;
 	private int discount, mileage;
 	private double credit, deliveryFee, tollExpense, totalCost, totalWeight;
@@ -17,11 +17,13 @@ public class VendorOrder {
 		STATUS.put("Received", 2);
 		STATUS.put("Cancelled", 3);
 	}
+	
+	public VendorOrder() {}
 
 	public VendorOrder(String id, Date orderDate, Date deliveryDate,
 			String status, String vendor, String notes, int discount,
 			double credit, int mileage, double deliveryFee, double tollExpense,
-			double totalCost, double totalWeight) {
+			double totalCost, double totalWeight, String vendorOrderId) {
 		this.id = id;
 		this.orderDate = orderDate;
 		this.deliveryDate = deliveryDate;
@@ -34,7 +36,8 @@ public class VendorOrder {
 		this.deliveryFee = deliveryFee;
 		this.tollExpense = tollExpense;
 		this.totalCost = totalCost;
-		this.totalWeight = totalWeight;		
+		this.totalWeight = totalWeight;
+		this.vendorOrderId = vendorOrderId;		
 	}
 	
 	public VendorOrder(Date orderDate, Date deliveryDate,
@@ -79,6 +82,18 @@ public class VendorOrder {
 		this.totalCost = totalCost;
 		this.vendor = vendor;
 	}
+	
+	public VendorOrder(double credit, double deliveryFee, double totalCost, String vendor, String status, Date orderDate, Date deliveryDate, String vendorOrderId) {
+
+		this.credit = credit;
+		this.deliveryFee = deliveryFee;
+		this.totalCost = totalCost;
+		this.vendor = vendor;
+		this.status = status;
+		this.orderDate = orderDate;
+		this.deliveryDate = deliveryDate;
+		this.vendorOrderId = vendorOrderId;
+	}	
 
 	public VendorOrder(double totalWeight, double totalCost, String vendor, List<VendorInventory> vendorInventoryItems) {
 
@@ -89,6 +104,14 @@ public class VendorOrder {
 		this.vendorInventoryItems = vendorInventoryItems;
 	}	
 	
+	public String getVendorOrderId() {
+		return vendorOrderId;
+	}
+
+	public void setVendorOrderId(String vendorOrderId) {
+		this.vendorOrderId = vendorOrderId;
+	}
+
 	public double getTotalWeight() {
 		return totalWeight;
 	}

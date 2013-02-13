@@ -60,7 +60,6 @@ public class ServletUtilities {
 			return (new SimpleDateFormat("MM/d/yyyy h:mm a", Locale.ENGLISH).parse(dateString)); //convert string to date
 		} catch (ParseException pe) {
 			log.error("Unable to parse date", pe);
-			pe.printStackTrace();
 			return null;
 		}
 	}
@@ -85,8 +84,7 @@ public class ServletUtilities {
 				doubleValue = Double.parseDouble(doubleString);
 			} catch (NumberFormatException nfe) {
 				log.error("Unable to format credit", nfe);
-				nfe.printStackTrace();
-				return doubleValue;
+				return null;
 			}
 		}				
 		return doubleValue;
@@ -100,8 +98,7 @@ public class ServletUtilities {
 				intValue = Integer.parseInt(intString);
 			} catch (NumberFormatException nfe) {
 				log.error("Unable to format credit.", nfe);
-				nfe.printStackTrace();
-				return intValue;
+				return 0;
 			}
 		}				
 		return intValue;

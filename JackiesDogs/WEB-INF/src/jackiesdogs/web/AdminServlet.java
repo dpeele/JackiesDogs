@@ -6,7 +6,8 @@ import javax.servlet.http.*;
 import javax.servlet.annotation.WebServlet;
 
 import org.apache.log4j.Logger;
-import org.json.JSONArray;
+
+import com.google.gson.Gson;
 
 import java.io.*;
 import java.util.List;
@@ -27,7 +28,7 @@ public class AdminServlet extends HttpServlet {
 	private UploadUtility uploadUtility;
 	private ScrapingUtility scrapingUtility;
 	
-	private final Logger log = Logger.getLogger(OrderSubmit.class);
+	private final Logger log = Logger.getLogger(AdminServlet.class);
 
 	private ApplicationContext applicationContext;
 	
@@ -101,8 +102,10 @@ public class AdminServlet extends HttpServlet {
 					log.error("No url passed");
 				}
 			}			
-			PrintWriter out = response.getWriter();
-			out.print("{\"uploadLogs\":"+new JSONArray(output)+"}");
+			PrintWriter out = response.getWriter();		
+	        Gson gson = new Gson();
+	        String outputJSON = gson.toJson(output); //convert list to JSON			
+			out.print("{\"uploadLogs\":"+outputJSON+"}");
 		} else {
 			request.setAttribute("defaultOmaUrl", defaultOmaUrl);			
 			log.debug("No command passed");

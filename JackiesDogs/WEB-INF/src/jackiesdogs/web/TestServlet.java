@@ -38,7 +38,7 @@ public class TestServlet extends HttpServlet {
 				System.out.println(resultSet.getString(1));
 			}
 		} catch (SQLException se) {
-			se.printStackTrace();
+			log ("Unable to select customers",se);
 		}
 	}
 }

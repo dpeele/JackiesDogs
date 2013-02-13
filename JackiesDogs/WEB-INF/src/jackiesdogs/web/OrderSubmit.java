@@ -5,7 +5,6 @@ import javax.servlet.http.*;
 import javax.servlet.annotation.WebServlet;
 
 import org.apache.log4j.Logger;
-import org.json.JSONArray;
 
 import java.io.*;
 import java.util.*;
@@ -19,6 +18,8 @@ import jackiesdogs.utility.*;
 
 import org.springframework.context.ApplicationContext;
 import org.springframework.web.context.support.WebApplicationContextUtils;
+
+import com.google.gson.Gson;
 
 @WebServlet("/submitOrder")
 public class OrderSubmit extends HttpServlet {
@@ -133,8 +134,9 @@ public class OrderSubmit extends HttpServlet {
 				log.error ("Unable to update customer order with id: " + orderId); //error, no records updated
 				return;
 			}
-		}
-		JSONArray newOrderItemsJSON = new JSONArray(newOrderItems);
+		}		
+        Gson gson = new Gson();
+        String newOrderItemsJSON = gson.toJson(newOrderItems); //convert list to JSON		
 		out.print("{\"orderId\":\""+orderId+"\",\"totalCost\":\""+totalCost+"\",\"newOrderItems\":\""+newOrderItemsJSON+"\",\"estimates\":"+estimates+"}"); // send customer id back to front end		
 	}
 }

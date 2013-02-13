@@ -4,6 +4,8 @@ import jackiesdogs.bean.*;
 import jackiesdogs.dataAccess.*;
 import jackiesdogs.utility.*;
 
+import java.math.BigDecimal;
+import java.text.*;
 import java.util.*;
 
 import org.apache.log4j.Logger;
@@ -36,8 +38,7 @@ public class OmaUploader implements UploadUtility {
 	public List<UploadLog> uploadInvoice(String fileName) { //upload products to database
 		
 		String line;
-		PdfExtractorUtility testPdfExtractorUtility = new OmaOrderExtractor();
-		List<String> dataHolder = testPdfExtractorUtility.extractOrder(fileName); //extract data from given fileName
+		List<String> dataHolder = pdfExtractorUtility.extractOrder(fileName); //extract data from given fileName
 		int lineNum = 1;
 		List<VendorInventory> inventory = new ArrayList<VendorInventory>();
 		List<VendorInventory> insertionErrors = new ArrayList<VendorInventory>();
@@ -52,9 +53,17 @@ public class OmaUploader implements UploadUtility {
 		double credit = 0;
 		double deliveryFee = 0;
 		double totalPrice = 0;
+		Date orderDate = null;
+		Date deliveryDate = null;
+		Date currentDate = null;
+		String vendorOrderId = null;
 		String weightString;
+		SimpleDateFormat dateFormat;
+		boolean found = false;
+		boolean firstDate = true;
 		for (int i=0; i<dataHolder.size();i++) { //for each row in sheet
         	line = dataHolder.get(i).trim(); //get current row
+        	log.debug(line);
         	splitLine = line.split("^"+lineNum+"\\s{4}");
 			if (splitLine.length > 1) { //this is an item line
 				lineNum++;
@@ -90,52 +99,88 @@ public class OmaUploader implements UploadUtility {
 				price = Double.parseDouble(splitLine[0]); //set price each
 				if (price < 0) { //this is a credit, add to credits
 					if (weight != 0) {
-						credit = credit + (price*weight);
+						credit = credit + (new BigDecimal(price*weight).setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue());
 					} else {					
-						credit = credit + (price*quantity);
+						credit = credit + (new BigDecimal(price*quantity).setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue());
 					}
 					continue;
 				} else { //this is a billed item, add to total bill
 					if (weight != 0) {
-						totalPrice = totalPrice + (price*weight);
+						totalPrice = totalPrice + (new BigDecimal(price*weight).setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue());
+						log.debug("item price so far: " + (new BigDecimal(price*weight).setScale(2,BigDecimal.ROUND_HALF_UP)));
 					} else {					
-						totalPrice = totalPrice + (price*quantity);
+						totalPrice = totalPrice + (new BigDecimal(price*quantity).setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue());
+						log.debug("item price so far: " + (new BigDecimal(price*quantity).setScale(2,BigDecimal.ROUND_HALF_UP)));
 					}					
 				}
+				log.debug("total price so far: " + totalPrice);
 				product = new Product();
 				product.setVendorId(vendorId);
 				inventory.add(new VendorInventory(product, quantity, weight, price, false));
+			} else {
+				if (line.contains("JPEELE") && !found) { //this is line than contains order and delivery dates and order id
+					dateFormat = new SimpleDateFormat("M/d/yy");
+					found = true;
+					splitLine = line.trim().split("\\s+");
+					for (String split: splitLine) {
+						log.debug (split);
+						if (split.contains("/")) {
+							try {
+								currentDate = dateFormat.parse(split);
+							} catch (ParseException pe) {
+								log.error("Unable to parse date", pe);
+							}							
+							if (firstDate) {
+								firstDate = false;
+								orderDate = currentDate;
+							} else {
+								deliveryDate = currentDate;
+							}
+						} else if (!firstDate) { //this is order id
+							vendorOrderId = split;
+						}
+					}					
+					log.debug ("Order Date= " + orderDate + "Delivery Date= " + deliveryDate + "Vendor Order Id= " + vendorOrderId);
+				}				
 			}
     	}	
 		String logDescription;
 		List<String> headers;
 		List<List<String>> logData;
 		String orderId;
-		vendorOrder = new VendorOrder (credit, deliveryFee, totalPrice+deliveryFee-credit, ProductGroup.OMAS);
-		vendorOrder.setStatus("Received");
+		log.debug("credit: " + credit);		
+		log.debug ("total price: " + (totalPrice+deliveryFee+credit));
+		vendorOrder = new VendorOrder (credit*-1, deliveryFee, totalPrice+deliveryFee+credit, ProductGroup.OMAS, "Received", orderDate, deliveryDate, vendorOrderId);
 		if ((vendorOrder = orderUtility.updateVendorOrder(vendorOrder)) == null) {
 			logDescription = "Unable to upload vendor order information.";
 			headers = Arrays.asList("Credit", "Delivery Fee", "Total Cost", "Status");
 			logData = new ArrayList<List<String>>();
 			logData.add(Arrays.asList(String.format("$%.2f",credit), String.format("$%.2f",deliveryFee), String.format("$%.2f",totalPrice), "Received"));
 			errorLogs.add(new UploadLog(logDescription, headers, logData));
-		}
-		orderId = vendorOrder.getId();
-		for (VendorInventory vendorInventory: inventory) {
-			if (productUtility.updateVendorInventoryItems(Arrays.asList(vendorInventory), Integer.parseInt(orderId), null) == null) {
-				insertionErrors.add(vendorInventory);
-			}
-		}
-		if (insertionErrors.size() > 0) {
-			logDescription = "Vendor order items that were not uploaded properly.";
-			headers = Arrays.asList("Vendor Id", "Quantity", "Weight", "Cost");
+		} else if (vendorOrder.getId() == null) {
+			logDescription = "You are attempting to upload a duplicate order.";
+			headers = Arrays.asList("Vendor Order Id");
 			logData = new ArrayList<List<String>>();
-			for (VendorInventory vendorInventory : insertionErrors) {
-				logData.add(Arrays.asList(vendorInventory.getProduct().getVendorId(),Double.toString(vendorInventory.getQuantity()), vendorInventory.getCostFormatted()));
+			logData.add(Arrays.asList(vendorOrderId));
+			errorLogs.add(new UploadLog(logDescription, headers, logData));			
+		} else {
+			orderId = vendorOrder.getId();
+			for (VendorInventory vendorInventory: inventory) {
+				if (productUtility.updateVendorInventoryItems(Arrays.asList(vendorInventory), Integer.parseInt(orderId), null, VendorOrder.STATUS.get("Received")) == null) {
+					insertionErrors.add(vendorInventory);
+				}
 			}
-			errorLogs.add(new UploadLog(logDescription, headers, logData));
+			if (insertionErrors.size() > 0) {
+				logDescription = "Vendor order items that were not uploaded properly.";
+				headers = Arrays.asList("Vendor Id", "Quantity", "Weight", "Cost");
+				logData = new ArrayList<List<String>>();
+				for (VendorInventory vendorInventory : insertionErrors) {
+					logData.add(Arrays.asList(vendorInventory.getProduct().getVendorId(),Double.toString(vendorInventory.getQuantity()), vendorInventory.getCostFormatted()));
+				}
+				errorLogs.add(new UploadLog(logDescription, headers, logData));
+			}
+			log.debug (credit+", "+ deliveryFee);
 		}
-		System.out.println (credit+", "+ deliveryFee);
 		return errorLogs; //this should be report of orphaned products/inventory
     }
 	
@@ -342,8 +387,7 @@ public class OmaUploader implements UploadUtility {
     				try {
     					product = new Product(AdminUtilities.toProperCase(name),msrpDouble,orderBy,billBy,Double.parseDouble(estimatedWeight),"",id);
     				} catch (Exception e) {
-    					System.out.println(name);
-    					e.printStackTrace();
+    					log.error("Unable to add product " + name, e);
     				}
    					products.add(product);   					
         			previousName = name; 
